@@ -4,7 +4,6 @@ import { tools } from "@/lib/tools";
 import { getAllTips } from "@/lib/content";
 import { TipCard } from "@/components/tip-card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 export default async function HomePage({
@@ -40,23 +39,11 @@ export default async function HomePage({
             </h1>
 
             <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
-              {t("hero.subtitle")}
+              {t("hero.subtitleLine1")}
+              <br />
+              {t("hero.subtitleLine2")}
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
-              <Button
-                asChild
-                size="lg"
-                className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white border-0"
-              >
-                <Link href={`/${locale}/claude-code`}>
-                  {t("hero.browseTips")}
-                </Link>
-              </Button>
-              <Button asChild variant="outline" size="lg">
-                <Link href={`/${locale}/gpt-codex`}>GPT Codex</Link>
-              </Button>
-            </div>
           </div>
         </div>
       </section>

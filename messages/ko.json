@@ -17,7 +17,8 @@
   "hero": {
     "title": "AI 코딩 도구를",
     "titleHighlight": "제대로 사용하기",
-    "subtitle": "Claude Code, GPT Codex, Gemini CLI를 위한 실전 팁과 가이드. AI를 잘 사용하고자 하는 모두를 위해 작성했습니다.",
+    "subtitleLine1": "Claude Code, GPT Codex, Gemini CLI를 위한 실전 팁과 가이드",
+    "subtitleLine2": "AI를 잘 사용하고자 하는 모두를 위해 작성했습니다.",
     "browseTips": "팁 둘러보기",
     "getStarted": "시작하기"
   },

@@ -17,7 +17,8 @@
   "hero": {
     "title": "Usa herramientas de IA",
     "titleHighlight": "de la manera correcta",
-    "subtitle": "Consejos prácticos y guías reales para Claude Code, GPT Codex y Gemini CLI. Escrito para todos los que quieran usar la IA correctamente.",
+    "subtitleLine1": "Consejos prácticos y guías reales para Claude Code, GPT Codex y Gemini CLI.",
+    "subtitleLine2": "Escrito para todos los que quieran usar la IA correctamente.",
     "browseTips": "Ver Tips",
     "getStarted": "Comenzar"
   },

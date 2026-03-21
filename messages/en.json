@@ -17,7 +17,8 @@
   "hero": {
     "title": "Use AI Coding Tools",
     "titleHighlight": "The Right Way",
-    "subtitle": "Practical tips and real-world guides for Claude Code, GPT Codex, and Gemini CLI. Written for everyone who wants to use AI well.",
+    "subtitleLine1": "Practical tips and real-world guides for Claude Code, GPT Codex, and Gemini CLI.",
+    "subtitleLine2": "Written for everyone who wants to use AI well.",
     "browseTips": "Browse Tips",
     "getStarted": "Get Started"
   },
