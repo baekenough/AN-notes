@@ -117,6 +117,107 @@ Before writing any code, outline your approach:
 
 This catches architectural mismatches before Claude writes 500 lines in the wrong direction.
 
+## Extended Thinking Mode
+
+Claude Code lets you dial up reasoning depth based on the complexity of your task:
+
+| Situation | Phrasing |
+|-----------|----------|
+| Routine work | Default mode is fine |
+| Complex problems | "think hard", "think carefully" |
+| Architecture decisions | "ultrathink", "think as deeply as possible" |
+
+```
+❌ "How should I restructure the auth layer?"
+✅ "Use ultrathink to analyze migrating our session-based auth to JWT.
+   Include security trade-offs, rollback strategy, and a phased migration plan."
+```
+
+For significant design decisions or complex refactors, this pattern gets Claude to surface edge cases and risks it might otherwise skip.
+
+## Conversation Management
+
+### When to Start a New Conversation
+
+A fresh conversation is often more efficient than a long thread:
+
+- When you're **switching to a different feature** after finishing the current one
+- When Claude's responses seem **overly anchored** to earlier context
+- When response quality noticeably drops after a long session
+
+### Using /compact
+
+Compress context mid-conversation to save tokens and restore focus:
+
+```
+/compact
+```
+
+Claude summarizes the conversation so far, keeping only the essential context. Most useful when you're approaching token limits or working across a long session.
+
+### Paste Screenshots Directly
+
+For UI bugs and layout issues, a screenshot communicates more precisely than text descriptions:
+
+```
+[paste screenshot]
+"The button overlaps the nav bar on mobile. Fix it."
+```
+
+A single screenshot eliminates ambiguity that paragraphs of description can't resolve.
+
+## Iterative Refinement Pattern
+
+Claude Code's key advantage over autonomous tools is the conversation loop. Don't try to write the perfect prompt upfront — refine progressively:
+
+```
+Round 1: "Add login functionality"
+→ Review output
+
+Round 2: "Good. Now make the error messages user-friendly —
+          'Invalid credentials' should say 'Incorrect email or password'"
+→ Review output
+
+Round 3: "Last thing: add rate limiting — lock for 5 minutes after 5 failed attempts"
+```
+
+Each round is a verifiable, contained unit of work. The quality compounds.
+
+## Slash Commands
+
+Claude Code has built-in commands that streamline your workflow:
+
+| Command | What it does |
+|---------|--------------|
+| `/help` | List available commands and capabilities |
+| `/compact` | Compress conversation context to save tokens |
+| `/clear` | Reset the conversation — useful when starting a new task |
+| `/cost` | Check API costs for the current session |
+
+You can also define custom slash commands in CLAUDE.md to automate project-specific workflows.
+
+## "Tell Me" vs "Do It" Pattern
+
+Asking for an explanation and asking for action produce very different results:
+
+```
+❌ "How does the auth system work?"
+   → You get an explanation
+
+✅ "Analyze the auth system and fix any security vulnerabilities you find"
+   → Claude reads the code and makes changes
+```
+
+```
+❌ "Why is this API slow?"
+   → You get a list of possible causes
+
+✅ "Profile this API, find the bottleneck, and fix whatever you can right now"
+   → Diagnosis + implementation
+```
+
+Claude Code is an engineer, not an analyst. Ask for action.
+
 ## Codex Comparison
 
 GPT Codex works differently — you write a task description upfront and it executes autonomously. There's no back-and-forth conversation. This means:

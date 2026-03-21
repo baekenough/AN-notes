@@ -38,7 +38,7 @@ date: "2026-03-21"
 
 ## Why Hooks Matter
 
-Claude Code gets much more useful once it stops being only a smart editor and starts enforcing your team’s workflow automatically.
+Claude Code gets much more useful once it stops being only a smart editor and starts enforcing your team's workflow automatically.
 
 Hooks let Claude run shell commands around tool usage and lifecycle events. That means you can wire in:
 
@@ -49,6 +49,167 @@ Hooks let Claude run shell commands around tool usage and lifecycle events. That
 - context preservation before compaction
 
 In practice, hooks turn repeated review habits into automation.
+
+## The Hook Lifecycle
+
+Every time Claude Code runs a tool, this flow happens:
+
+```
+User request
+    ↓
+PreToolUse hook fires  ← block or pre-check here
+    ↓
+Tool executes (Edit, Write, Bash, etc.)
+    ↓
+PostToolUse hook fires ← post-process, format, notify here
+    ↓
+Claude responds
+```
+
+If a `PreToolUse` hook exits with a non-zero code, the tool is blocked entirely. That is the mechanism behind file protection guardrails.
+
+## Configuring Hooks
+
+Hooks are registered in `.claude/settings.json` at the project root. Create the file if it does not already exist.
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "command": ".claude/hooks/protect-files.sh"
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "command": ".claude/hooks/auto-format.sh"
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": ".*",
+        "command": ".claude/hooks/save-context.sh"
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": ".*",
+        "command": ".claude/hooks/notify-done.sh"
+      }
+    ]
+  }
+}
+```
+
+- **matcher**: a regex that filters which tools trigger the hook. `"Edit|Write"` matches both the Edit and Write tools.
+- **command**: the shell command or script path to execute.
+- Hook scripts need execute permission: `chmod +x .claude/hooks/your-script.sh`.
+
+## Practical Hook Examples
+
+### 1. Auto-format after edits (PostToolUse)
+
+Run Prettier automatically every time a file is modified. This example targets TypeScript and TSX files only.
+
+```bash
+#!/bin/bash
+# .claude/hooks/auto-format.sh
+
+FILE=$(echo "$CLAUDE_TOOL_INPUT" | jq -r '.file_path // empty')
+
+# Exit quietly if no file path was provided
+[[ -z "$FILE" ]] && exit 0
+
+# Apply Prettier to TypeScript files only
+if [[ "$FILE" == *.ts || "$FILE" == *.tsx ]]; then
+  npx prettier --write "$FILE" 2>/dev/null
+  echo "Formatted: $FILE"
+fi
+```
+
+The `CLAUDE_TOOL_INPUT` environment variable contains the tool's input as JSON. Use `jq` to pull out what you need.
+
+### 2. Protect sensitive files (PreToolUse)
+
+Block Claude from accidentally editing `.env` files, migration history, or generated code.
+
+```bash
+#!/bin/bash
+# .claude/hooks/protect-files.sh
+
+FILE=$(echo "$CLAUDE_TOOL_INPUT" | jq -r '.file_path // empty')
+
+# List of path patterns to protect
+PROTECTED=(
+  ".env"
+  ".env.local"
+  ".env.production"
+  "prisma/migrations"
+  "generated/"
+  "__generated__"
+)
+
+for pattern in "${PROTECTED[@]}"; do
+  if [[ "$FILE" == *"$pattern"* ]]; then
+    echo "BLOCKED: '$FILE' is a protected file. Edit manually if this is intentional." >&2
+    exit 1
+  fi
+done
+
+exit 0
+```
+
+Exiting with `1` stops the tool. Exiting with `0` lets it proceed.
+
+### 3. Preserve context before compaction (PreCompact)
+
+When a conversation grows long, Claude Code compacts older content. Save a snapshot before that happens so you can pick up where you left off.
+
+```bash
+#!/bin/bash
+# .claude/hooks/save-context.sh
+
+TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
+SAVE_DIR=".claude/snapshots"
+mkdir -p "$SAVE_DIR"
+
+# Write a context snapshot
+cat > "$SAVE_DIR/context-$TIMESTAMP.md" << EOF
+# Context Snapshot — $TIMESTAMP
+
+## Git status
+$(git status --short 2>/dev/null || echo "no git")
+
+## Recently changed files
+$(git diff --name-only HEAD 2>/dev/null | head -20 || echo "none")
+
+## Notes
+Auto-saved before compaction.
+EOF
+
+echo "Context saved to $SAVE_DIR/context-$TIMESTAMP.md"
+```
+
+### 4. Desktop notification when a task finishes (Notification)
+
+You should not have to watch the terminal the whole time. Send a desktop notification when Claude is done.
+
+```bash
+#!/bin/bash
+# .claude/hooks/notify-done.sh
+
+# macOS
+if command -v osascript &>/dev/null; then
+  osascript -e 'display notification "Claude Code finished the task" with title "Claude Code" sound name "Glass"'
+fi
+
+# Linux (notify-send)
+if command -v notify-send &>/dev/null; then
+  notify-send "Claude Code" "Task complete"
+fi
+```
 
 ## The Mental Model
 
@@ -95,6 +256,37 @@ Before compaction, save useful state into:
 
 For long-running tasks, a hook can notify you when Claude is done instead of making you babysit the terminal.
 
+## Debugging Tips
+
+When a hook does not behave as expected, try these approaches.
+
+**1. Run the script standalone**
+
+```bash
+# Simulate the environment variable and run directly
+export CLAUDE_TOOL_INPUT='{"file_path": "src/app.ts"}'
+bash .claude/hooks/auto-format.sh
+echo "Exit code: $?"
+```
+
+**2. Log to stderr**
+
+Writing to `>&2` inside a hook script surfaces output in Claude Code's error stream.
+
+```bash
+echo "DEBUG: FILE=$FILE" >&2
+```
+
+**3. Check exit codes**
+
+A non-zero exit from a `PreToolUse` hook blocks the tool. If Claude is getting unexpectedly blocked, check what your script exits with.
+
+**4. Verify jq is installed**
+
+```bash
+which jq || echo "jq not found — brew install jq or apt install jq"
+```
+
 ## Security Matters More Here
 
 Anthropic is very explicit: hooks execute arbitrary shell commands on your system.
@@ -118,7 +310,7 @@ A sloppy hook can be more dangerous than a sloppy prompt.
 |------|----------|
 | `CLAUDE.md` | policy, architecture, coding rules |
 | hooks | automatic enforcement and checks |
-| prompt | today’s task |
+| prompt | today's task |
 
 ## When Not to Use Hooks
 

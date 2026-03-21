@@ -96,6 +96,93 @@ Best for:
 - Complex debugging across modules
 - Research requiring discussion and synthesis
 
+## Background Agents
+
+Running agents in the background lets you continue other work without waiting. This is especially useful for long-running tasks.
+
+```
+Run the large refactoring job in the background.
+Notify me when it's done — I'll keep working on other things.
+```
+
+Good candidates for background execution:
+- **Large-scale refactoring** — converting dozens of files
+- **Long test runs** — running the full test suite
+- **Code review** — analyzing all files in a large PR
+- **Dependency analysis** — traversing the full project dependency tree
+
+When the agent completes, you receive a notification with the results. You can pick up wherever you left off.
+
+## Isolation with Git Worktrees
+
+Having each agent work in an isolated git worktree lets you experiment without touching the main branch.
+
+```
+Have each agent work in its own worktree:
+- Agent 1: Refactor the auth module in branch feature/auth-refactor
+- Agent 2: Migrate APIs in branch feature/api-migration
+- Agent 3: Improve test coverage in branch feature/test-coverage
+
+Each should work independently and submit results as a separate branch.
+```
+
+Benefits of worktree isolation:
+- **Safe experimentation** — if it fails, just delete the worktree
+- **Parallel branch work** — develop multiple features simultaneously
+- **No interference** — agents don't conflict with each other
+- **Easy rollback** — discard a branch if the result isn't useful
+
+## Agent Specialization Patterns
+
+Assigning agents specific expert roles produces much deeper analysis than a single generalist agent.
+
+```
+Analyze the entire project using three specialized agents:
+
+Security Agent:
+  - Check against OWASP Top 10
+  - Detect SQL injection, XSS, and CSRF risks
+  - Review authentication and authorization logic
+
+Performance Agent:
+  - Detect N+1 query patterns
+  - Identify potential memory leaks
+  - Flag unnecessary re-renders and expensive computations
+
+Test Coverage Agent:
+  - Measure current code coverage
+  - Identify missing edge cases
+  - List modules lacking integration tests
+```
+
+Each agent focuses on its domain, producing results that a single agent spread across all three areas would miss.
+
+## Real-World Scenario: Frontend + Backend in Parallel
+
+When adding a feature, you can build the frontend, backend, and database layer at the same time:
+
+```
+Add a "User Profile" feature. Have three agents work simultaneously:
+
+Agent 1 (Backend): Implement GET/PUT /api/users/:id endpoints
+Agent 2 (Frontend): Build ProfilePage and ProfileForm React components
+Agent 3 (Database): Write migration to add bio and avatar_url columns to users table
+
+Shared type definitions are in src/types/user.ts.
+After all three finish, propose an integration plan.
+```
+
+With three agents working in parallel, total time is much closer to the time of the slowest agent rather than the sum of all three.
+
+## When Agents Aren't Worth It
+
+More agents isn't always better. Keep these tradeoffs in mind:
+
+- **Simple tasks get slower** — fixing a typo or editing one file is faster with a single agent. Agent creation has overhead.
+- **Context is separate** — each agent has its own context window. Sharing state between agents requires files or a shared task list.
+- **Cost multiplies** — agent count × API calls = increased spend. Use agents when the parallelism is genuinely worth it.
+- **4+ concurrent agents can lose efficiency** — Claude Code recommends up to 4 concurrent agents. Beyond that, coordination overhead grows.
+
 ## Codex Comparison
 
 GPT Codex runs each task as a single sandboxed agent. There's no multi-agent orchestration — but the sandbox model gives full container isolation per task.

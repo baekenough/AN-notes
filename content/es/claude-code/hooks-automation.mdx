@@ -48,6 +48,167 @@ Los hooks permiten ejecutar comandos alrededor del uso de herramientas y de even
 - bloquear cambios en rutas sensibles
 - preservar contexto antes de compactar
 
+## El Ciclo de Vida de un Hook
+
+Cada vez que Claude Code ejecuta una herramienta, ocurre este flujo:
+
+```
+Solicitud del usuario
+    ↓
+Se dispara PreToolUse  ← bloquear o verificar aquí
+    ↓
+Se ejecuta la herramienta (Edit, Write, Bash, etc.)
+    ↓
+Se dispara PostToolUse ← post-procesar, formatear, notificar aquí
+    ↓
+Claude responde
+```
+
+Si un hook `PreToolUse` termina con un código de salida distinto de cero, la herramienta queda bloqueada por completo. Así es como funcionan los guardrails de protección de archivos.
+
+## Cómo Configurar los Hooks
+
+Los hooks se registran en `.claude/settings.json` en la raíz del proyecto. Si el archivo no existe, créalo.
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "command": ".claude/hooks/protect-files.sh"
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "command": ".claude/hooks/auto-format.sh"
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": ".*",
+        "command": ".claude/hooks/save-context.sh"
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": ".*",
+        "command": ".claude/hooks/notify-done.sh"
+      }
+    ]
+  }
+}
+```
+
+- **matcher**: expresión regular que filtra qué herramientas activan el hook. `"Edit|Write"` aplica tanto a Edit como a Write.
+- **command**: el comando de shell o ruta del script a ejecutar.
+- Los scripts necesitan permiso de ejecución: `chmod +x .claude/hooks/tu-script.sh`.
+
+## Ejemplos Prácticos de Hooks
+
+### 1. Formatear automáticamente tras editar (PostToolUse)
+
+Ejecuta Prettier de forma automática cada vez que se modifica un archivo. Este ejemplo aplica solo a archivos TypeScript y TSX.
+
+```bash
+#!/bin/bash
+# .claude/hooks/auto-format.sh
+
+FILE=$(echo "$CLAUDE_TOOL_INPUT" | jq -r '.file_path // empty')
+
+# Salir silenciosamente si no hay ruta de archivo
+[[ -z "$FILE" ]] && exit 0
+
+# Aplicar Prettier solo a archivos TypeScript
+if [[ "$FILE" == *.ts || "$FILE" == *.tsx ]]; then
+  npx prettier --write "$FILE" 2>/dev/null
+  echo "Formateado: $FILE"
+fi
+```
+
+La variable de entorno `CLAUDE_TOOL_INPUT` contiene la entrada de la herramienta en formato JSON. Usa `jq` para extraer lo que necesitas.
+
+### 2. Proteger archivos sensibles (PreToolUse)
+
+Impide que Claude edite accidentalmente archivos `.env`, historial de migraciones o código generado.
+
+```bash
+#!/bin/bash
+# .claude/hooks/protect-files.sh
+
+FILE=$(echo "$CLAUDE_TOOL_INPUT" | jq -r '.file_path // empty')
+
+# Lista de patrones de ruta a proteger
+PROTECTED=(
+  ".env"
+  ".env.local"
+  ".env.production"
+  "prisma/migrations"
+  "generated/"
+  "__generated__"
+)
+
+for pattern in "${PROTECTED[@]}"; do
+  if [[ "$FILE" == *"$pattern"* ]]; then
+    echo "BLOQUEADO: '$FILE' es un archivo protegido. Edítalo manualmente si es intencional." >&2
+    exit 1
+  fi
+done
+
+exit 0
+```
+
+Salir con `1` detiene la herramienta. Salir con `0` permite que continúe.
+
+### 3. Preservar contexto antes de compactar (PreCompact)
+
+Cuando una conversación crece, Claude Code compacta el contenido antiguo. Guarda un snapshot antes de que eso pase para poder retomar donde lo dejaste.
+
+```bash
+#!/bin/bash
+# .claude/hooks/save-context.sh
+
+TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
+SAVE_DIR=".claude/snapshots"
+mkdir -p "$SAVE_DIR"
+
+# Escribir un snapshot del contexto
+cat > "$SAVE_DIR/context-$TIMESTAMP.md" << EOF
+# Snapshot de Contexto — $TIMESTAMP
+
+## Estado de Git
+$(git status --short 2>/dev/null || echo "sin git")
+
+## Archivos modificados recientemente
+$(git diff --name-only HEAD 2>/dev/null | head -20 || echo "ninguno")
+
+## Notas
+Guardado automáticamente antes de compactar.
+EOF
+
+echo "Contexto guardado en $SAVE_DIR/context-$TIMESTAMP.md"
+```
+
+### 4. Notificación al completar una tarea (Notification)
+
+No tienes que quedarte mirando la terminal todo el tiempo. Envía una notificación de escritorio cuando Claude termine.
+
+```bash
+#!/bin/bash
+# .claude/hooks/notify-done.sh
+
+# macOS
+if command -v osascript &>/dev/null; then
+  osascript -e 'display notification "Claude Code terminó la tarea" with title "Claude Code" sound name "Glass"'
+fi
+
+# Linux (notify-send)
+if command -v notify-send &>/dev/null; then
+  notify-send "Claude Code" "Tarea completada"
+fi
+```
+
 ## Modelo Mental
 
 Piensa en los hooks como guardrails dirigidos por eventos.
@@ -58,6 +219,37 @@ Piensa en los hooks como guardrails dirigidos por eventos.
 - ejecutar lint o `tsc` tras ediciones
 - guardar estado antes de compactar
 - mandar notificaciones al terminar tareas largas
+
+## Consejos de Depuración
+
+Cuando un hook no se comporta como esperas, prueba lo siguiente.
+
+**1. Ejecutar el script por separado**
+
+```bash
+# Simular la variable de entorno y ejecutar directamente
+export CLAUDE_TOOL_INPUT='{"file_path": "src/app.ts"}'
+bash .claude/hooks/auto-format.sh
+echo "Código de salida: $?"
+```
+
+**2. Escribir logs en stderr**
+
+Usar `>&2` dentro del script muestra la salida en el flujo de error de Claude Code.
+
+```bash
+echo "DEBUG: FILE=$FILE" >&2
+```
+
+**3. Verificar los códigos de salida**
+
+Un código de salida distinto de cero en un hook `PreToolUse` bloquea la herramienta. Si Claude está siendo bloqueado sin razón aparente, revisa qué devuelve tu script.
+
+**4. Confirmar que jq está instalado**
+
+```bash
+which jq || echo "jq no encontrado — brew install jq o apt install jq"
+```
 
 ## Seguridad
 

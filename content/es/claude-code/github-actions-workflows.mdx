@@ -69,6 +69,254 @@ No fuerces Claude Code en trabajos que requieren invención amplia, acceso muy s
 4. salida como comentario, resumen o artifact
 5. humano sigue en el camino del merge
 
+---
+
+## Configuración Básica
+
+### Registrar la clave de API
+
+Ve a `Settings → Secrets and variables → Actions` en tu repositorio y añade `ANTHROPIC_API_KEY`. Sin esta clave, el workflow no podrá ejecutarse.
+
+### Usar la acción oficial
+
+Anthropic ofrece `anthropics/claude-code-action@v1` como la forma oficial de ejecutar Claude Code dentro de GitHub Actions. No necesitas instalar ni configurar nada extra.
+
+```yaml
+- uses: anthropics/claude-code-action@v1
+  with:
+    anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+    prompt: "Describe aquí la tarea que quieres que realice Claude."
+```
+
+Si tu repositorio tiene un archivo `CLAUDE.md` en la raíz, la acción lo lee automáticamente para entender las convenciones de código y la arquitectura del proyecto. Es una de las formas más sencillas de mejorar la calidad de la automatización.
+
+---
+
+## Workflow de Revisión Automática de PRs
+
+Claude publica comentarios de revisión automáticamente cada vez que se abre un PR o se añaden nuevos commits.
+
+```yaml
+name: Claude Code Review
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Revisa este PR teniendo en cuenta:
+            - Vulnerabilidades de seguridad
+            - Problemas de rendimiento
+            - Consistencia del estilo de código
+            Proporciona feedback concreto y accionable como comentarios en el PR.
+```
+
+`pull-requests: write` es obligatorio en `permissions`. Sin él, la acción no puede publicar comentarios.
+
+Los prompts específicos producen mejores resultados. "Revisa este código" es demasiado vago. "Concéntrate en riesgos de migración y gestión de errores faltante" le da a Claude un objetivo claro con resultados medibles.
+
+---
+
+## Workflow de Triage de Issues
+
+Cuando se registra un nuevo issue, Claude lo lee y automáticamente le asigna etiquetas y publica una respuesta inicial.
+
+```yaml
+name: Issue Triage
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Analiza este issue recién registrado:
+
+            Título: ${{ github.event.issue.title }}
+            Contenido: ${{ github.event.issue.body }}
+
+            Por favor realiza lo siguiente:
+            1. Clasifícalo como reporte de bug, solicitud de funcionalidad o pregunta
+            2. Si faltan pasos de reproducción o contexto, publica un comentario solicitándolos
+            3. Sugiere etiquetas apropiadas (bug, enhancement, question, needs-info)
+            4. Evalúa la urgencia (critical, high, medium, low)
+
+            Publica un resumen del triage como comentario en el issue.
+```
+
+El triage de issues es especialmente útil en proyectos de código abierto donde el volumen de issues entrantes hace que la primera respuesta manual sea lenta e inconsistente.
+
+---
+
+## Workflow de Análisis de Fallos
+
+Cuando un workflow de CI falla, Claude lee los logs, analiza la causa raíz y publica un comentario resumen en el PR relacionado.
+
+```yaml
+name: Analyze Failure
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+
+jobs:
+  analyze:
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      actions: read
+    steps:
+      - name: Obtener logs del workflow
+        id: logs
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const logs = await github.rest.actions.downloadWorkflowRunLogs({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: context.payload.workflow_run.id,
+            });
+            return Buffer.from(logs.data).toString('utf-8').slice(0, 8000);
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Aquí están los logs del workflow de CI que ha fallado:
+
+            ${{ steps.logs.outputs.result }}
+
+            Por favor analiza:
+            1. Qué falló primero
+            2. La causa raíz más probable
+            3. Próximos pasos concretos para solucionarlo
+
+            Publica el análisis como comentario en el PR relacionado.
+```
+
+Pasar los logs completos consume muchos tokens. Recortarlos a la parte relevante con `slice(0, 8000)` o similar mantiene los costes razonables sin perder la información importante.
+
+---
+
+## Seguridad y Permisos
+
+### Principio de mínimos privilegios
+
+Otorga solo los permisos que el workflow realmente necesita. Si solo publica comentarios, `pull-requests: write` es suficiente. `contents: write` solo es necesario cuando la acción modifica archivos directamente.
+
+```yaml
+permissions:
+  contents: read        # leer código fuente
+  pull-requests: write  # publicar comentarios en PRs
+  issues: write         # publicar comentarios y aplicar etiquetas en issues
+  # actions: read       # leer logs de workflows (solo cuando sea necesario)
+```
+
+### Gestión de secretos
+
+- Guarda siempre `ANTHROPIC_API_KEY` en GitHub Secrets. Nunca la pongas directamente en los archivos de workflow.
+- Usa GitHub Environments si necesitas claves separadas por entorno.
+- Rota las claves de forma regular.
+
+### Límite de peticiones y consideraciones de coste
+
+Cada ejecución de GitHub Actions que llama a la API de Claude consume créditos de la API de Anthropic. Algunos puntos a tener en cuenta:
+
+- En repositorios grandes, los PRs pueden abrirse con mucha frecuencia. Asociar un workflow de revisión a cada PR puede acumular costes rápidamente.
+- Usa filtros `paths` para ejecutar el workflow solo cuando cambien archivos relevantes.
+- Usa `concurrency` para evitar ejecuciones duplicadas en el mismo PR.
+
+```yaml
+on:
+  pull_request:
+    paths:
+      - "src/**"
+      - "tests/**"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+```
+
+---
+
+## Buenas Prácticas
+
+### 1. Empieza con acciones de solo lectura
+
+Comienza con comentarios, resúmenes y borradores antes de intentar acciones de escritura o auto-merge. Construye confianza en la calidad del output antes de ampliar el alcance.
+
+### 2. Mantén a las personas en el camino del merge
+
+Aunque los comentarios de Claude sean de alta calidad, la decisión final de hacer merge debe quedarse con un revisor humano. El comportamiento de auto-merge es tentador pero hace que el análisis de causas raíz sea mucho más difícil cuando algo sale mal.
+
+### 3. Establece límites de tiempo
+
+Evita workflows que se ejecuten indefinidamente usando `timeout-minutes`.
+
+```yaml
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+```
+
+### 4. Usa CLAUDE.md para dar contexto del repo a la acción
+
+Pon tus convenciones de código, decisiones de arquitectura y checklists de revisión en `CLAUDE.md` en la raíz del repositorio. La acción lo recoge automáticamente y produce resultados significativamente mejores cuando entiende el contexto del proyecto.
+
+Ejemplo de contenido de `CLAUDE.md` para automatización:
+
+```markdown
+## Reglas de Código
+- TypeScript en modo strict obligatorio
+- Todos los endpoints de API deben tener gestión de errores
+- Las nuevas funcionalidades requieren tests
+
+## Checklist de Revisión
+- Verificar vectores de inyección SQL
+- Comprobar autenticación y autorización
+- Validar todos los inputs externos
+```
+
+### 5. Escribe prompts específicos
+
+Los prompts vagos producen resultados vagos. Sé explícito sobre qué debe verificar Claude y en qué formato debe presentar el output. Trata el prompt como una descripción de puesto para un revisor cuidadoso.
+
+---
+
+## Complementar con Guías del Repositorio
+
+La automatización mejora cuando el repo ya tiene instrucciones sólidas.
+
+Fuentes de guía útiles:
+
+- `CLAUDE.md` para reglas de código y arquitectura
+- plantillas de issues para dar forma a las tareas
+- checklists de revisión para política estable
+- hooks para enforcement local durante el trabajo interactivo
+
+Si las guías de tu repo son débiles, la automatización de GitHub solo escalará la ambigüedad más rápido.
+
 ## Claude vs Codex en CI
 
 - Claude: mejor para review, síntesis y explicación
@@ -77,3 +325,18 @@ No fuerces Claude Code en trabajos que requieren invención amplia, acceso muy s
 ## Empieza Comentando, No Mergeando
 
 El mejor primer paso suele ser automatización que comenta, resume o redacta, no que mergea sola.
+
+Ejemplos:
+
+- comentarios de revisión en PRs
+- resúmenes de fallos en trabajos de CI
+- release notes generadas
+
+Saltar directamente a comportamiento de merge autónomo suele ser el punto de partida equivocado.
+
+## El Valor Real
+
+El beneficio real no es la autonomía llamativa.
+Es hacer que los flujos de trabajo repetidos del equipo sean más rápidos, más consistentes y más fáciles de revisar.
+
+Ahí es donde la automatización con Claude Code se vuelve genuinamente útil.

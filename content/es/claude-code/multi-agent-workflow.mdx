@@ -82,6 +82,93 @@ La función Agent Teams de Claude Code habilita comunicación peer-to-peer entre
 - Depuración compleja entre módulos
 - Investigación que requiere discusión y síntesis
 
+## Agentes en Segundo Plano
+
+Ejecutar agentes en segundo plano te permite seguir trabajando en otras cosas sin esperar. Es especialmente útil para tareas largas.
+
+```
+Ejecuta la refactorización grande en segundo plano.
+Avísame cuando termine — seguiré con otras cosas mientras tanto.
+```
+
+Casos ideales para ejecución en segundo plano:
+- **Refactorización a gran escala** — convertir decenas de archivos
+- **Ejecución de tests largos** — correr la suite de tests completa
+- **Revisión de código** — analizar todos los archivos de un PR grande
+- **Análisis de dependencias** — recorrer el árbol de dependencias del proyecto
+
+Cuando el agente termina, recibes una notificación con los resultados. Puedes retomar tu trabajo cuando quieras.
+
+## Aislamiento con Git Worktrees
+
+Que cada agente trabaje en su propio git worktree permite experimentar sin tocar la rama principal.
+
+```
+Haz que cada agente trabaje en su propio worktree:
+- Agente 1: Refactorizar módulo de auth en la rama feature/auth-refactor
+- Agente 2: Migrar APIs en la rama feature/api-migration
+- Agente 3: Mejorar cobertura de tests en la rama feature/test-coverage
+
+Cada uno trabaja de forma independiente y entrega resultados en su propia rama.
+```
+
+Ventajas del aislamiento con worktrees:
+- **Experimentación segura** — si falla, solo borras el worktree
+- **Trabajo en ramas en paralelo** — desarrolla varias funcionalidades a la vez
+- **Sin interferencias** — los agentes no se pisan entre sí
+- **Rollback sencillo** — descarta una rama si el resultado no convence
+
+## Patrones de Especialización de Agentes
+
+Asignar a cada agente un rol experto específico produce análisis mucho más profundos que un único agente generalista.
+
+```
+Analiza el proyecto completo con tres agentes especializados:
+
+Agente de Seguridad:
+  - Verificar contra OWASP Top 10
+  - Detectar riesgos de SQL injection, XSS y CSRF
+  - Revisar lógica de autenticación y autorización
+
+Agente de Rendimiento:
+  - Detectar patrones de consultas N+1
+  - Identificar posibles fugas de memoria
+  - Detectar re-renders innecesarios y cálculos costosos
+
+Agente de Cobertura de Tests:
+  - Medir la cobertura de código actual
+  - Identificar casos límite no cubiertos
+  - Listar módulos sin tests de integración
+```
+
+Cada agente se centra en su dominio y produce resultados que un único agente repartido entre las tres áreas no alcanzaría.
+
+## Escenario Real: Frontend + Backend al Mismo Tiempo
+
+Al añadir una nueva funcionalidad, puedes construir el frontend, el backend y la base de datos a la vez:
+
+```
+Añade la funcionalidad "Perfil de Usuario". Que tres agentes trabajen a la vez:
+
+Agente 1 (Backend): Implementar endpoints GET/PUT /api/users/:id
+Agente 2 (Frontend): Construir componentes React ProfilePage y ProfileForm
+Agente 3 (Base de datos): Migración para añadir columnas bio y avatar_url a la tabla users
+
+Los tipos compartidos están en src/types/user.ts.
+Cuando los tres terminen, propón un plan de integración.
+```
+
+Con tres agentes en paralelo, el tiempo total se acerca al del agente más lento, en lugar de ser la suma de los tres.
+
+## Cuándo los Agentes No Valen la Pena
+
+Más agentes no siempre es mejor. Ten en cuenta estos puntos:
+
+- **Las tareas simples se vuelven más lentas** — corregir un typo o editar un archivo es más rápido con un solo agente. Crear agentes tiene su coste de arranque.
+- **El contexto es independiente** — cada agente tiene su propia ventana de contexto. Compartir estado entre agentes requiere archivos o una lista de tareas compartida.
+- **El coste se multiplica** — número de agentes × llamadas a la API = mayor gasto. Úsalos cuando el paralelismo realmente lo justifique.
+- **Más de 4 agentes puede perder eficiencia** — Claude Code recomienda un máximo de 4 agentes simultáneos. Por encima de eso, la sobrecarga de coordinación crece.
+
 ## Comparación con Codex
 
 GPT Codex ejecuta cada tarea como un único agente en sandbox. No hay orquestación multi-agente, pero el modelo de sandbox da aislamiento completo de contenedor por tarea.

@@ -59,9 +59,9 @@ Claude Code works well in automation when the work is:
 
 Examples:
 
-- “Review this PR for security and migration risks”
-- “Summarize failing checks and propose likely fixes”
-- “Draft release notes from merged PRs”
+- "Review this PR for security and migration risks"
+- "Summarize failing checks and propose likely fixes"
+- "Draft release notes from merged PRs"
 
 ## Bad Automation Jobs
 
@@ -84,7 +84,242 @@ A healthy GitHub Actions workflow usually looks like this:
 4. capture output as a comment, summary, or artifact
 5. keep a human reviewer in the merge path
 
-That balance matters. The goal is not “remove humans.” It is “reduce repetitive team work.”
+That balance matters. The goal is not "remove humans." It is "reduce repetitive team work."
+
+---
+
+## Basic Setup
+
+### Add the API Key
+
+Go to your repository's `Settings → Secrets and variables → Actions` and add `ANTHROPIC_API_KEY`. Without this, no workflow will run.
+
+### Use the Official Action
+
+Anthropic provides `anthropics/claude-code-action@v1` as the official way to run Claude Code inside GitHub Actions. No manual installation or environment setup required.
+
+```yaml
+- uses: anthropics/claude-code-action@v1
+  with:
+    anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+    prompt: "Describe the task you want Claude to perform here."
+```
+
+If your repository has a `CLAUDE.md` file at the root, the action reads it automatically to understand your coding conventions and architecture. This is one of the simplest ways to improve automation quality.
+
+---
+
+## PR Review Automation Workflow
+
+Claude automatically posts review comments whenever a PR is opened or updated with new commits.
+
+```yaml
+name: Claude Code Review
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Review this PR for:
+            - Security vulnerabilities
+            - Performance issues
+            - Code style consistency
+            Provide actionable feedback as PR comments.
+```
+
+`pull-requests: write` is required in `permissions`. Without it, the action cannot post comments.
+
+Specific prompts produce better results. "Review this code" is weak. "Focus on migration risks and missing error handling" gives Claude a clear job with measurable output.
+
+---
+
+## Issue Triage Workflow
+
+When a new issue is filed, Claude reads it and automatically labels it and posts an initial response.
+
+```yaml
+name: Issue Triage
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Analyze this newly filed issue:
+
+            Title: ${{ github.event.issue.title }}
+            Body: ${{ github.event.issue.body }}
+
+            Please do the following:
+            1. Classify as bug report, feature request, or question
+            2. If reproduction steps or context are missing, post a comment requesting them
+            3. Suggest appropriate labels (bug, enhancement, question, needs-info)
+            4. Assess urgency (critical, high, medium, low)
+
+            Post a triage summary as an issue comment.
+```
+
+Issue triage is especially effective for open-source projects where the volume of incoming issues makes manual first-response slow and inconsistent.
+
+---
+
+## Failure Log Analysis Workflow
+
+When a CI workflow fails, Claude reads the logs, analyzes the root cause, and posts a summary comment on the related PR.
+
+```yaml
+name: Analyze Failure
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+
+jobs:
+  analyze:
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      actions: read
+    steps:
+      - name: Get workflow logs
+        id: logs
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const logs = await github.rest.actions.downloadWorkflowRunLogs({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: context.payload.workflow_run.id,
+            });
+            return Buffer.from(logs.data).toString('utf-8').slice(0, 8000);
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Here are the logs from a failed CI workflow:
+
+            ${{ steps.logs.outputs.result }}
+
+            Please analyze:
+            1. What failed first
+            2. The most likely root cause
+            3. Concrete next steps to fix it
+
+            Post the analysis as a comment on the related PR.
+```
+
+Passing full logs burns tokens quickly. Trimming to the relevant portion with `slice(0, 8000)` or similar keeps costs reasonable without losing the signal.
+
+---
+
+## Security and Permissions
+
+### Minimal Permissions Principle
+
+Only grant the permissions a workflow actually needs. If it only posts comments, `pull-requests: write` is enough. `contents: write` is only needed when the action modifies files directly.
+
+```yaml
+permissions:
+  contents: read        # read source code
+  pull-requests: write  # post PR comments
+  issues: write         # post issue comments and apply labels
+  # actions: read       # read workflow logs (only when needed)
+```
+
+### Secret Management
+
+- Always store `ANTHROPIC_API_KEY` in GitHub Secrets. Never put it directly in workflow files.
+- Use GitHub Environments if you need per-environment key separation.
+- Rotate keys on a regular schedule.
+
+### Rate Limiting and Cost Awareness
+
+Every GitHub Actions run that calls the Claude API consumes Anthropic API credits. A few things to watch:
+
+- In large repositories, PRs can open very frequently. Attaching a review workflow to every PR will accumulate costs quickly.
+- Use `paths` filters to run the workflow only when relevant files change.
+- Use `concurrency` to prevent duplicate runs on the same PR.
+
+```yaml
+on:
+  pull_request:
+    paths:
+      - "src/**"
+      - "tests/**"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+```
+
+---
+
+## Best Practices
+
+### 1. Start with read-only actions
+
+Begin with comments, summaries, and drafts before attempting write actions or auto-merge. Build confidence in the output quality before expanding scope.
+
+### 2. Keep humans in the merge path
+
+Even with high-quality Claude comments, the final merge decision should stay with a human reviewer. Autonomous merge behavior is tempting but makes root cause analysis much harder when something goes wrong.
+
+### 3. Set timeout limits
+
+Prevent runaway workflows with `timeout-minutes`.
+
+```yaml
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+```
+
+### 4. Use CLAUDE.md to give repo context to the action
+
+Put your coding conventions, architecture decisions, and review checklists in `CLAUDE.md` at the repository root. The action picks it up automatically and produces significantly better output when it understands the repo.
+
+Example `CLAUDE.md` content for automation:
+
+```markdown
+## Coding Rules
+- TypeScript strict mode required
+- All API endpoints must have error handling
+- New features require tests
+
+## Review Checklist
+- Check for SQL injection vectors
+- Verify authentication and authorization
+- Validate all external input
+```
+
+### 5. Write specific prompts
+
+Vague prompts produce vague results. Be explicit about what Claude should check and what format the output should take. Treat the prompt like a job description for a careful reviewer.
+
+---
 
 ## Pair It with Repository Guidance
 
@@ -98,36 +333,6 @@ Useful guidance sources:
 - hooks for local enforcement during interactive work
 
 If your repo guidance is weak, GitHub automation will just scale ambiguity faster.
-
-## Strong Use Cases
-
-### PR review assistant
-
-Claude reviews the diff and comments on:
-
-- risky assumptions
-- missing tests
-- security concerns
-- style violations relative to repo rules
-
-### Failure triage assistant
-
-Claude reads failing workflow logs and summarizes:
-
-- what failed first
-- likely root causes
-- suggested next steps
-
-### Documentation assistant
-
-Claude updates:
-
-- release notes
-- migration checklists
-- onboarding docs
-- PR summaries
-
-These are all good because they are high-frequency and structurally repetitive.
 
 ## Claude Code vs Codex in CI
 
