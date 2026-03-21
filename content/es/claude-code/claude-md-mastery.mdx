@@ -1,0 +1,130 @@
+---
+title: "Domina CLAUDE.md — El Cerebro AI de Tu Proyecto"
+description: "Cómo escribir un CLAUDE.md efectivo que transforma Claude Code de asistente genérico a experto en tu proyecto"
+difficulty: intermediate
+tags: ["claude-md", "configuracion", "proyecto"]
+connections:
+  - slug: "effective-prompting"
+    tool: "claude-code"
+    type: "enhances"
+  - slug: "mcp-power-tools"
+    tool: "claude-code"
+    type: "enhances"
+  - slug: "codex-instructions"
+    tool: "gpt-codex"
+    type: "compare"
+featured: true
+order: 1
+date: "2026-03-21"
+---
+
+> **Referencias Oficiales**: [Overview](https://docs.anthropic.com/en/docs/claude-code/overview) · [Memory & CLAUDE.md](https://docs.anthropic.com/en/docs/claude-code/memory#claudemd-files) · [Settings](https://docs.anthropic.com/en/docs/claude-code/settings)
+
+<!-- curriculum:start -->
+## Ruta del currículo
+
+1. **CLAUDE.md Mastery** — memoria del repo, convenciones y arquitectura ← **Estás aquí**
+2. [Effective Prompting](/claude-code/effective-prompting) — comunicar tareas con claridad
+3. [MCP Power Tools](/claude-code/mcp-power-tools) — conectar herramientas y datos
+4. [Multi-Agent Workflows](/claude-code/multi-agent-workflow) — delegar y paralelizar
+5. [Hooks Automation](/claude-code/hooks-automation) — guardrails automáticos en local
+6. [GitHub Actions Workflows](/claude-code/github-actions-workflows) — mover trabajo repetible a automatización de equipo
+
+### Documentación oficial usada en esta guía
+- **Qué hace `CLAUDE.md` y cómo funciona la memoria** — [Memory & CLAUDE.md files](https://docs.anthropic.com/en/docs/claude-code/memory#claudemd-files)
+- **Settings y convenciones compartidas** — [Settings](https://docs.anthropic.com/en/docs/claude-code/settings)
+- **Modelo operativo general** — [Overview](https://docs.anthropic.com/en/docs/claude-code/overview)
+<!-- curriculum:end -->
+
+## Por Qué Importa CLAUDE.md
+
+CLAUDE.md es el archivo más impactante que puedes crear para Claude Code. Se carga automáticamente en cada conversación, dando a Claude contexto persistente sobre tu proyecto.
+
+Es la diferencia entre un contratista que lee el wiki de tu proyecto vs. uno que llega sin saber nada.
+
+## La Anatomía de un Buen CLAUDE.md
+
+### 1. Contexto del Proyecto (Qué)
+
+```markdown
+# MiProyecto
+
+Dashboard de analíticas en tiempo real con Next.js 16 y PostgreSQL.
+Monorepo con turborepo: apps/web, apps/api, packages/shared.
+```
+
+Sé factual. Claude puede leer tu código — no repitas lo obvio de `package.json`.
+
+### 2. Convenciones (Cómo)
+
+```markdown
+## Convenciones
+- Nombres de archivo en kebab-case, componentes en PascalCase
+- Todas las rutas API retornan `{ data, error }`
+- Tests co-ubicados: `foo.ts` → `foo.test.ts`
+- Commits siguen Conventional Commits
+```
+
+Aquí es donde más se suele invertir poco. Cada convención documentada evita que Claude adivine mal.
+
+### 3. Decisiones de Arquitectura (Por Qué)
+
+```markdown
+## Decisiones de Arquitectura
+- Server Components por defecto, 'use client' solo para interactividad
+- PostgreSQL sobre MongoDB — datos relacionales con joins complejos
+- Sin ORM — SQL nativo con queries tipadas via pgtyped
+```
+
+El "por qué" evita que Claude sugiera alternativas que ya evaluaste y rechazaste.
+
+### 4. Patrones Prohibidos (No Hacer)
+
+```markdown
+## No Hacer
+- No usar tipo `any` — usar `unknown` y estrechar
+- No agregar barrel exports (re-exports en index.ts)
+- No mockear la base de datos en tests — usar test containers
+```
+
+Las instrucciones negativas son poderosas. Claude respeta los límites explícitos.
+
+## Consejos Pro
+
+### Capas de CLAUDE.md
+
+Claude Code soporta archivos CLAUDE.md en múltiples niveles:
+- **Raíz**: Reglas globales del proyecto
+- **Subdirectorio**: Contexto específico del dominio
+
+```
+project/
+├── CLAUDE.md              # Convenciones globales
+├── apps/
+│   ├── web/CLAUDE.md      # Específico de frontend
+│   └── api/CLAUDE.md      # Específico de backend
+```
+
+### Mantenerlo Bajo 200 Líneas
+
+Los archivos CLAUDE.md largos diluyen el contexto importante. Si necesitas más detalle, enlaza a documentos.
+
+### Ponlo en Control de Versiones
+
+CLAUDE.md debe commitearse. Es un recurso compartido del equipo.
+
+## Errores Comunes
+
+| Error | Por Qué Duele | Solución |
+|-------|--------------|---------|
+| Muy vago ("escribir código limpio") | No restringe el comportamiento | Específico: "máx 20 líneas por función" |
+| Muy largo (500+ líneas) | Dilución de contexto | Priorizar, enlazar a docs |
+| Sin actualizar | Reglas obsoletas confunden a Claude | Revisar mensualmente |
+
+## Comparación con GPT Codex
+
+GPT Codex usa `AGENTS.md` y `codex.md` para propósitos similares, con diferencias clave:
+- Codex lee las instrucciones una vez al inicio de la tarea (sin recarga en vivo)
+- Codex corre en sandbox — las convenciones de rutas de archivo importan más
+- Ver la [Guía de Instrucciones de Codex](/gpt-codex/codex-instructions) para detalles
+

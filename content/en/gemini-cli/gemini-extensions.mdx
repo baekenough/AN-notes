@@ -1,0 +1,175 @@
+---
+title: "Gemini Extensions & MCP — Building Custom Workflows"
+description: "Understand Gemini CLI extensions, when to use MCP, and how to package reusable tools, prompts, and skills"
+difficulty: advanced
+tags: ["extensions", "mcp", "hooks", "skills", "customization"]
+connections:
+  - slug: "mcp-power-tools"
+    tool: "claude-code"
+    type: "compare"
+  - slug: "codex-sandbox"
+    tool: "gpt-codex"
+    type: "compare"
+  - slug: "getting-started"
+    tool: "gemini-cli"
+    type: "prerequisite"
+  - slug: "trusted-folders-sandboxing"
+    tool: "gemini-cli"
+    type: "enhances"
+featured: false
+order: 3
+date: "2026-03-21"
+---
+
+> **Official References**: [Extensions overview](https://geminicli.com/docs/extensions/) · [Extension reference](https://geminicli.com/docs/extensions/reference/) · [Tools](https://geminicli.com/docs/tools/) · [Trusted folders](https://geminicli.com/docs/cli/trusted-folders/)
+
+## Extensions are broader than "plugins"
+
+Current Gemini CLI docs describe extensions as packages that can include:
+
+- prompts
+- MCP servers
+- custom commands
+- themes
+- hooks
+- sub-agents
+- agent skills
+
+That is more flexible than the simpler "install one plugin, get one command" mental model.
+
+## The practical layering model
+
+When customizing Gemini CLI, think in layers:
+
+### Layer 1: `GEMINI.md`
+
+Use this for stable instructions and team rules.
+
+Best for:
+- coding standards
+- repository constraints
+- content or review policies
+
+### Layer 2: MCP servers
+
+Use MCP when the model needs access to external systems or specialized tools.
+
+Best for:
+- databases
+- internal docs
+- ticketing systems
+- design systems
+- external APIs
+
+### Layer 3: Extensions
+
+Use extensions when you want to **package and share** workflows across machines or teammates.
+
+Best for:
+- reusable internal commands
+- company-specific hooks
+- curated prompt packs
+- bundled MCP setups
+- sharable agent skills
+
+## What you can manage today
+
+Inside the interactive CLI:
+
+```text
+/extensions list
+```
+
+From the terminal:
+
+```bash
+gemini extensions list
+```
+
+Install from GitHub:
+
+```bash
+gemini extensions install https://github.com/gemini-cli-extensions/workspace
+```
+
+The official reference also supports installing from a **local path**, which is useful when developing an internal extension before publishing it.
+
+## When to use MCP directly vs package it in an extension
+
+| Need | Better choice | Why |
+|------|---------------|-----|
+| One project needs one server | Direct MCP config | Lowest overhead |
+| Team needs consistent setup | Extension | Easier reuse |
+| You are experimenting locally | Local extension path | Fast iteration |
+| You need only persistent instructions | `GEMINI.md` | No packaging needed |
+
+## A strong team pattern
+
+A realistic team rollout often looks like this:
+
+1. define repo rules in `GEMINI.md`
+2. add one or two MCP servers
+3. once the workflow stabilizes, package it as an extension
+
+That keeps early experimentation cheap while still giving you a path to standardization.
+
+## Example use cases
+
+### Internal docs assistant
+
+Bundle:
+- one docs-search MCP server
+- one release-notes prompt
+- one engineering-style skill
+
+### Content ops extension
+
+Bundle:
+- locale parity commands
+- frontmatter validation hooks
+- prompt templates for rewriting docs by language
+
+### Platform engineering extension
+
+Bundle:
+- GCP or deployment MCP tools
+- incident response prompts
+- shell-safe review hooks
+
+## Gemini vs Claude vs Codex here
+
+| Tool | Best extensibility angle |
+|------|--------------------------|
+| Claude Code | MCP-first local tool expansion |
+| GPT Codex | environment and setup-script control |
+| Gemini CLI | packaged extensions + MCP + skills + hooks |
+
+That comparison is partly an inference from the product surfaces, but it is a useful one when deciding how portable you want your workflow to be.
+
+## Security matters more once you extend the CLI
+
+The more power you add, the more you should care about:
+
+- trusted folders
+- confirmation prompts
+- sandboxing for risky tasks
+- checkpointing before large file edits
+
+That is especially true if an extension includes hooks, MCP servers, or automation that can modify files.
+
+## Recommendation for this project
+
+If AN-Con keeps growing, a good Gemini CLI package would likely bundle:
+
+- content parity review commands
+- MDX frontmatter validation helpers
+- localization review prompts
+- maybe one MCP integration for docs or CMS systems later
+
+Start with plain `GEMINI.md` + prompts first. Package it as an extension only when the workflow repeats.
+
+## Recommended next reads
+
+- [Trusted Folders, Sandboxing, and Restore](/gemini-cli/trusted-folders-sandboxing)
+- [Headless Automation](/gemini-cli/headless-automation)
+- [MCP Power Tools for Claude Code](/claude-code/mcp-power-tools)

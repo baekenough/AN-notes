@@ -1,0 +1,127 @@
+---
+title: "MCP 파워 도구 — Claude의 능력 확장"
+description: "MCP 서버를 설정하고 활용해 Claude Code에 초능력을 부여하는 방법"
+difficulty: intermediate
+tags: ["mcp", "도구", "통합", "서버"]
+connections:
+  - slug: "claude-md-mastery"
+    tool: "claude-code"
+    type: "prerequisite"
+  - slug: "hooks-automation"
+    tool: "claude-code"
+    type: "enhances"
+  - slug: "codex-sandbox"
+    tool: "gpt-codex"
+    type: "compare"
+featured: true
+order: 2
+date: "2026-03-21"
+---
+
+> **공식 참고 자료**: [MCP](https://docs.anthropic.com/en/docs/claude-code/mcp) · [MCP Specification](https://modelcontextprotocol.io/) · [Overview](https://docs.anthropic.com/en/docs/claude-code/overview)
+
+<!-- curriculum:start -->
+## 커리큘럼 흐름
+
+1. [CLAUDE.md Mastery](/claude-code/claude-md-mastery) — 저장소 메모리와 규칙
+2. [Effective Prompting](/claude-code/effective-prompting) — 작업 framing과 제약 설정
+3. **MCP Power Tools** — 도구와 라이브 컨텍스트 연결 ← **현재 문서**
+4. [Multi-Agent Workflows](/claude-code/multi-agent-workflow) — 위임과 병렬 실행
+5. [Hooks Automation](/claude-code/hooks-automation) — 로컬 가드레일 자동화
+6. [GitHub Actions Workflows](/claude-code/github-actions-workflows) — 반복 작업을 팀 자동화로 옮기기
+
+### 이 문서에서 참고한 공식 문서
+- **Claude Code가 MCP 서버와 연결되는 방식** — [MCP](https://docs.anthropic.com/en/docs/claude-code/mcp)
+- **project-scope / user-scope 설정 차이** — [MCP](https://docs.anthropic.com/en/docs/claude-code/mcp)
+- **왜 MCP가 Claude Code에 잘 맞는지** — [Overview](https://docs.anthropic.com/en/docs/claude-code/overview)
+<!-- curriculum:end -->
+
+## MCP란?
+
+Model Context Protocol (MCP)은 Claude Code에 외부 도구와 데이터 소스에 대한 접근 권한을 부여합니다. AI 어시스턴트의 플러그인이라고 생각하세요.
+
+MCP 없이 Claude는 파일을 읽고 셸 명령을 실행할 수 있습니다. MCP가 있으면:
+- 데이터베이스를 직접 쿼리
+- 회사 내부 문서 검색
+- API와 상호작용 (Jira, Slack, GitHub)
+- 전문 도구 사용 (브라우저, 디자인 도구)
+
+## MCP 서버 설정하기
+
+### 설정 위치
+
+MCP 서버는 프로젝트 루트의 `.mcp.json`에서 설정합니다:
+
+```json
+{
+  "mcpServers": {
+    "postgres": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres"],
+      "env": {
+        "DATABASE_URL": "postgresql://user:pass@localhost:5432/mydb"
+      }
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_TOKEN": "your-token"
+      }
+    }
+  }
+}
+```
+
+### 필수 MCP 서버
+
+| 서버 | 기능 | 사용 시점 |
+|------|-----|----------|
+| `server-postgres` | 데이터베이스 직접 쿼리 | 스키마나 데이터를 이해해야 할 때 |
+| `server-github` | GitHub API 접근 | PR 리뷰, 이슈 관리 |
+| `server-filesystem` | 확장된 파일 접근 | 여러 레포에서 작업 시 |
+| `server-memory` | 영속적 메모리 | 세션 간 컨텍스트가 필요한 장기 프로젝트 |
+| `context7` | 라이브러리 문서 조회 | 모든 라이브러리의 최신 API 문서 필요 시 |
+
+### context7 패턴
+
+가장 유용한 MCP 서버 중 하나입니다. Claude가 학습 데이터에서 API 시그니처를 추측하는 대신:
+
+```
+사용자: "이 Next.js 페이지에 페이지네이션 추가해줘"
+Claude: *context7로 최신 Next.js 문서 조회*
+Claude: *최신 API로 구현, 오래된 패턴이 아님*
+```
+
+## MCP vs. Codex 샌드박스
+
+GPT Codex는 다른 접근 방식을 취합니다 — 도구를 미리 설치하는 샌드박스 컨테이너에서 실행됩니다. MCP는 더 유연하지만 로컬 설정이 필요합니다.
+
+| 측면 | MCP (Claude Code) | 샌드박스 (Codex) |
+|------|-------------------|-----------------|
+| 설정 | 프로젝트별 설정 파일 | Dockerfile/설정 스크립트 |
+| 접근 | 도구별 권한 | 전체 컨테이너 접근 |
+| 보안 | 세밀한 프로토콜 수준 | 컨테이너 격리 |
+| 확장성 | 모든 MCP 서버 | 모든 CLI 도구 |
+
+## 프로 팁
+
+### 과도하게 연결하지 마세요
+
+각 MCP 서버는 컨텍스트 오버헤드를 추가합니다. 필수적인 2-3개로 시작하고 필요에 따라 추가하세요.
+
+### 프로젝트 레벨 설정 사용
+
+`.mcp.json`은 프로젝트 범위입니다. 커밋된 파일에 개인 API 키를 넣지 마세요 — 환경 변수를 사용하세요.
+
+### CLAUDE.md와 결합하세요
+
+Claude에게 어떤 MCP 도구를 언제 사용할지 알려주세요:
+
+```markdown
+## 도구
+- 라이브러리 API 구현 전에 context7 사용
+- 스키마 질문에는 postgres MCP 쿼리, 추측 금지
+- PR 설명에는 GitHub MCP 사용, 수동 복사-붙여넣기 금지
+```
+

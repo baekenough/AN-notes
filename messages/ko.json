@@ -1,0 +1,120 @@
+{
+  "site": {
+    "title": "AN-Con",
+    "subtitle": "AI-Native Con",
+    "description": "AI 코딩 도구를 마스터하세요 — Claude Code, GPT Codex, 그리고 더 많은 도구들",
+    "tagline": "AI 기반 개발을 위한 팁, 가이드, 베스트 프랙티스"
+  },
+  "nav": {
+    "home": "홈",
+    "claudeCode": "Claude Code",
+    "gptCodex": "GPT Codex",
+    "geminiCli": "Gemini CLI",
+    "allTips": "모든 팁",
+    "language": "언어",
+    "whatsNew": "새 소식"
+  },
+  "hero": {
+    "title": "AI 코딩 도구를",
+    "titleHighlight": "제대로 사용하기",
+    "subtitle": "Claude Code, GPT Codex, Gemini CLI를 위한 실전 팁과 가이드. AI를 잘 사용하고자 하는 모두를 위해 작성했습니다.",
+    "browseTips": "팁 둘러보기",
+    "getStarted": "시작하기"
+  },
+  "tools": {
+    "sectionTitle": "도구 선택",
+    "tips": "{count}개의 팁",
+    "comingSoon": "준비 중",
+    "viewGuide": "가이드 보기"
+  },
+  "tip": {
+    "readingTime": "{minutes}분 소요",
+    "difficulty": {
+      "beginner": "입문",
+      "intermediate": "중급",
+      "advanced": "고급"
+    },
+    "connections": {
+      "title": "연결된 가이드",
+      "prerequisite": "먼저 읽기",
+      "enhances": "함께 활용하기",
+      "compare": "비교하기",
+      "combines": "같이 사용하기"
+    },
+    "backToList": "{tool}로 돌아가기"
+  },
+  "footer": {
+    "builtWith": "Next.js로 제작 — PyCon에서 영감을 받음",
+    "openSource": "GitHub에서 오픈소스"
+  },
+  "common": {
+    "featured": "추천",
+    "new": "신규",
+    "updated": "업데이트"
+  },
+  "whatsNew": {
+    "title": "새 소식",
+    "subtitle": "알아야 할 혁신적인 기능들",
+    "updated": "{date} 업데이트",
+    "claudeCode": {
+      "title": "Claude Code",
+      "features": [
+        {
+          "tag": "혁신",
+          "title": "Agent Teams — AI 간 직접 협업",
+          "description": "여러 Claude 에이전트가 서로 직접 소통하며 컨텍스트를 공유하고 복잡한 작업을 조율합니다. 코드 리뷰 → 수정 → 재리뷰 사이클, 모두 자율적으로."
+        },
+        {
+          "tag": "강력",
+          "title": "훅 시스템 — 이벤트 기반 자동화",
+          "description": "PreToolUse, PostToolUse, PreCompact, PostCompact 훅으로 린팅, 보안 점검, 컨텍스트 보존을 자동화합니다. Claude Code가 프로그래밍 가능해집니다."
+        },
+        {
+          "tag": "실용적",
+          "title": "백그라운드 에이전트 + Git Worktrees",
+          "description": "격리된 git worktree에서 백그라운드로 에이전트를 실행합니다. 리팩토링을 시작하고 코딩을 계속하세요 — 에이전트가 완료되면 브랜치를 만듭니다."
+        }
+      ]
+    },
+    "gptCodex": {
+      "title": "GPT Codex",
+      "features": [
+        {
+          "tag": "혁신",
+          "title": "레이어드 AGENTS.md — 전역에서 로컬까지 이어지는 저장소 컨텍스트",
+          "description": "Codex는 이제 개인 지침, 저장소 규칙, 하위 폴더 override로 이어지는 instruction chain에서 가장 잘 동작합니다. 매 작업마다 반복 설명하지 않고도 팀 규칙을 코드 가까이에 둘 수 있습니다."
+        },
+        {
+          "tag": "강력",
+          "title": "Sandbox + Approval Policy — 가드레일을 갖춘 빠른 로컬 자동화",
+          "description": "로컬 Codex는 sandbox mode와 approval policy를 함께 조정할 때 가장 실용적입니다. workspace-write와 on-request 조합이면 수정과 검증은 빠르게, 머신 전체 권한은 과도하게 열지 않을 수 있습니다."
+        },
+        {
+          "tag": "혁명적",
+          "title": "Cloud Environments — setup script, offline agent, 선택적 인터넷",
+          "description": "Cloud Codex는 준비 단계와 실행 단계를 분리합니다. 먼저 설치와 부트스트랩을 끝내고, 이후 더 좁은 환경에서 에이전트를 돌립니다. 인터넷은 기본적으로 꺼져 있고 필요 시 allowlist로 제한할 수 있습니다."
+        }
+      ]
+    },
+    "geminiCli": {
+      "title": "Gemini CLI",
+      "features": [
+        {
+          "tag": "충격적",
+          "title": "100만 토큰 컨텍스트 — 모든 것을 본다",
+          "description": "전체 코드베이스를 한 대화에서 읽습니다. 파일 선택도, 컨텍스트 제한도 없습니다. 500개 이상의 파일을 동시에 처리합니다."
+        },
+        {
+          "tag": "혁신",
+          "title": "오픈소스 + 무료 티어",
+          "description": "Apache 2.0 라이선스, 분당 60회 요청 무료. 포크하고, 확장하고, 셀프호스트하세요. 진정으로 오픈된 최초의 주요 AI 코딩 도구."
+        },
+        {
+          "tag": "강력",
+          "title": "멀티모달 입력 — 스크린샷에서 코드로",
+          "description": "스크린샷, Figma 내보내기, 손 그림 와이어프레임을 넣으세요. Gemini가 이미지를 네이티브로 보고 매칭되는 코드를 생성합니다."
+        }
+      ]
+    }
+  }
+}

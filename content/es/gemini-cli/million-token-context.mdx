@@ -1,0 +1,157 @@
+---
+title: "La ventaja de 1M tokens — trabajar con codebases completas"
+description: "Cómo aprovechar la ventana de contexto grande de Gemini CLI sin desperdiciar tokens y cuándo conviene de verdad"
+difficulty: intermediate
+tags: ["context-window", "repositorios-grandes", "arquitectura", "token-caching"]
+connections:
+  - slug: "multi-agent-workflow"
+    tool: "claude-code"
+    type: "compare"
+  - slug: "getting-started"
+    tool: "gemini-cli"
+    type: "prerequisite"
+  - slug: "headless-automation"
+    tool: "gemini-cli"
+    type: "enhances"
+featured: true
+order: 2
+date: "2026-03-21"
+---
+
+> **Referencias oficiales**: [Resumen de Gemini CLI](https://github.com/google-gemini/gemini-cli) · [Contexto con GEMINI.md](https://geminicli.com/docs/cli/gemini-md/) · [Token caching](https://geminicli.com/docs/cli/token-caching/) · [Tools](https://geminicli.com/docs/tools/)
+
+## El titular de 1M tokens es real, pero la estrategia importa más
+
+El repositorio oficial y la documentación de Gemini CLI presentan **1M tokens** como una ventaja principal. En la práctica eso sí permite razonamiento a nivel de repositorio que otras herramientas más pequeñas suelen approximar.
+
+Pero la lección real no es "mete todo el repo en cada prompt". La forma útil suele ser:
+
+- hacer una **pasada amplia una vez**
+- luego seguir con **turnos enfocados** en archivos o áreas críticas
+- mover reglas repetidas a `GEMINI.md` para no reenviarlas cada vez
+
+## Dónde encaja mejor
+
+| Tipo de repo | Resultado típico con Gemini CLI |
+|--------------|---------------------------------|
+| App con 30–80 archivos | Suele caber bien para lectura amplia |
+| Repo de producto mediano | Muy bueno para resúmenes de arquitectura y planes de refactor |
+| Monolito grande | Útil por áreas completas, no siempre por todos los archivos |
+| Monorepo | Conviene usarlo por paquete, dominio o migración |
+
+Una ventana de 1M no reemplaza el scoping; lo vuelve más flexible.
+
+## Patrones que sí funcionan bien
+
+### 1) Mapear arquitectura antes de editar
+
+```bash
+gemini "@src @content @package.json mapea la arquitectura de esta app, su pipeline de contenido y los riesgos de mantenimiento"
+```
+
+### 2) Analizar cambios transversales
+
+```bash
+gemini "@src @package.json Queremos cambiar el modelo de contenido. Muéstrame qué partes afectarían: loaders, rutas, UI y localización. Agrupa el riesgo por área."
+```
+
+### 3) Revisiones amplias pero aterrizadas
+
+```bash
+gemini "@src @content revisa este repo para detectar: 1) desbalance entre idiomas 2) lógica duplicada 3) claims desactualizados en docs 4) protecciones faltantes"
+```
+
+### 4) Preparar upgrades de dependencias
+
+```bash
+gemini "@package.json @src usamos Next.js 16. Resume dónde aparecen supuestos del framework y qué conviene verificar antes de actualizar."
+```
+
+## Cómo no desperdiciar la ventana de contexto
+
+### Mejor inclusión estructurada que prompts vagos
+
+Malo:
+
+```text
+Lee todo y dime qué importa.
+```
+
+Mejor:
+
+```text
+@src @content @messages
+Explica la arquitectura de contenido, la estrategia de locales y dónde podría romperse la paridad de slugs.
+```
+
+### Deja reglas persistentes en `GEMINI.md`
+
+No repitas una y otra vez cosas como:
+
+- mantener paridad de slugs entre idiomas
+- conservar el esquema de frontmatter
+- no inventar flags o comandos
+
+Eso debe vivir en `GEMINI.md`.
+
+### Secuencia amplia → estrecha
+
+Un buen flujo en Gemini CLI suele verse así:
+
+1. escaneo amplio del repo
+2. resumen de riesgos
+3. seguimiento puntual de un subsistema
+4. implementación o revisión
+
+## El token caching cambia el costo real
+
+La documentación oficial indica que **token caching** está disponible cuando autenticas con **Gemini API key** o **Vertex AI**. No está disponible actualmente para login OAuth con cuenta de Google.
+
+Eso significa que los flujos con contexto grande suelen salir mejor cuando usas:
+
+- `GEMINI_API_KEY`, o
+- autenticación de Vertex AI
+
+Usa `/stats` para inspeccionar consumo y ahorro por tokens cacheados.
+
+## Límites que conviene asumir
+
+- Los contextos grandes tardan más.
+- La salida sigue siendo limitada aunque la entrada sea enorme.
+- Los monorepos todavía requieren partición deliberada.
+- Mucho contexto no equivale a memoria perfecta.
+
+Si la calidad baja, normalmente conviene **reducir el alcance** en lugar de repetir el mismo prompt gigante.
+
+## Cuándo gana Gemini y cuándo no
+
+| Escenario | Mejor herramienta | Motivo |
+|-----------|-------------------|--------|
+| Resumen arquitectónico de todo el repo | Gemini CLI | Ventana de contexto grande |
+| Sesión larga de edición interactiva | Claude Code | Iteración conversacional más fuerte |
+| Tarea de implementación aislada | GPT Codex | Ejecución orientada a sandbox |
+| Rename transversal o auditoría de políticas | Gemini CLI | Puede ver muchos archivos juntos |
+| Revisión de paridad entre idiomas | Gemini CLI | Buen ajuste para conjuntos amplios de archivos |
+
+## Patrón útil para AN-Con
+
+En este repositorio Gemini CLI encaja muy bien para:
+
+- validar paridad de slugs `ko / en / es`
+- revisar consistencia del frontmatter
+- detectar diferencias de profundidad o tono entre idiomas
+- encontrar huecos temáticos en la sección de Gemini CLI
+
+Ejemplo:
+
+```bash
+gemini "@content compara todos los artículos de gemini-cli entre ko, en y es. Detecta temas faltantes, claims inconsistentes y diferencias claras de profundidad."
+```
+
+Después conviene pasar a un turno más estrecho para ejecutar cambios.
+
+## Qué leer después
+
+- [Primeros pasos con Gemini CLI](/gemini-cli/getting-started)
+- [Gemini Extensions & MCP](/gemini-cli/gemini-extensions)
+- [Headless Automation](/gemini-cli/headless-automation)

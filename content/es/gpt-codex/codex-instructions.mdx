@@ -1,0 +1,241 @@
+---
+title: "Instrucciones de Codex — Cómo Hacer que AGENTS.md Sirva de Verdad"
+description: "Usa archivos AGENTS.md en capas, prompts bien estructurados y config.toml para que GPT Codex sea mucho más confiable entre repositorios y tareas"
+difficulty: beginner
+tags: ["agents-md", "configuracion", "workflow", "verificacion"]
+connections:
+  - slug: "codex-sandbox"
+    tool: "gpt-codex"
+    type: "enhances"
+  - slug: "codex-task-design"
+    tool: "gpt-codex"
+    type: "enhances"
+  - slug: "claude-md-mastery"
+    tool: "claude-code"
+    type: "compare"
+featured: true
+order: 1
+date: "2026-03-21"
+---
+
+> **Referencias Oficiales**: [Guía de AGENTS.md](https://developers.openai.com/codex/guides/agents-md) · [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [Config Basics](https://developers.openai.com/codex/config-basic)
+
+<!-- curriculum:start -->
+## Ruta del currículo
+
+1. **Instrucciones de Codex** — capas de instrucciones, reglas del repo y config básica ← **Estás aquí**
+2. [Sandboxing en Codex](/gpt-codex/codex-sandbox) — permisos, approvals y cloud environments
+3. [Diseño de Tareas en Codex](/gpt-codex/codex-task-design) — scope, prompts y descomposición
+4. [Codex en CI/CD](/gpt-codex/codex-ci-cd-workflows) — automatización repetible y trabajo por lotes
+
+### Documentación oficial usada en esta guía
+- **Descubrimiento de instrucciones, guía global y overrides locales** — [Custom instructions with AGENTS.md](https://developers.openai.com/codex/guides/agents-md)
+- **Instrucciones por capas y fallback filenames** — [Custom instructions with AGENTS.md](https://developers.openai.com/codex/guides/agents-md), [Config basics](https://developers.openai.com/codex/config-basic)
+- **Qué debe contener un `AGENTS.md` práctico** — [Best practices](https://developers.openai.com/codex/learn/best-practices)
+<!-- curriculum:end -->
+
+## Por Qué Importa
+
+Codex mejora muchísimo cuando dejas de tratarlo como una simple caja de prompts y empiezas a darle contexto persistente del proyecto.
+
+La documentación actual de OpenAI recomienda combinar dos capas:
+
+1. **El prompt de la tarea** para el cambio que quieres ahora
+2. **`AGENTS.md`** para las reglas duraderas que Codex debe seguir dentro del repo
+
+Una buena forma de pensarlo: el prompt explica **la tarea de hoy** y `AGENTS.md` explica **cómo trabaja este equipo**.
+
+## Cómo Descubre Codex las Instrucciones
+
+Codex ya no depende de un único archivo plano. Usa una **cadena de instrucciones**:
+
+1. **Guía global** en `~/.codex/AGENTS.md`
+2. **Guía del proyecto** desde la raíz del repo hasta el directorio actual
+3. **Los archivos más cercanos mandan** porque se aplican al final
+
+Eso te permite organizar reglas así:
+
+```text
+~/.codex/AGENTS.md               # hábitos personales
+repo/AGENTS.md                   # reglas del repositorio
+repo/services/payments/AGENTS.md # overrides del dominio payments
+```
+
+Esto es mucho mejor que un solo archivo gigante:
+- Archivo global = tus preferencias reutilizables
+- Archivo del repo = convenciones del equipo
+- Archivo local = reglas específicas de una carpeta
+
+## AGENTS.md vs config.toml vs Prompt
+
+Cada superficie sirve para algo distinto.
+
+| Superficie | Úsala para | No la uses para |
+|-----------|------------|-----------------|
+| `AGENTS.md` | convenciones, arquitectura, comandos de test, límites | pedidos puntuales de una sola tarea |
+| `~/.codex/config.toml` o `.codex/config.toml` | sandbox, approvals, perfiles, fallback filenames | reglas de negocio o estilo del proyecto |
+| Prompt | el cambio exacto de ahora | política permanente del repositorio |
+
+Un error muy común es meter todo en el prompt. Funciona una vez, pero te obliga a repetirlo siempre.
+
+## Qué Debe Incluir un Buen AGENTS.md
+
+La guía oficial de OpenAI y el uso real de Codex suelen converger en la misma estructura.
+
+### 1. Contexto del proyecto
+
+Dale a Codex hechos que no puede inferir rápido:
+
+```markdown
+## Contexto del proyecto
+- App Next.js 16 con App Router
+- PostgreSQL vía Drizzle ORM
+- Los componentes UI viven en `src/components/`
+- Los tests de integración dependen de fixtures en `scripts/test-data/`
+```
+
+### 2. Acuerdos de trabajo
+
+Define qué significa “buen trabajo” aquí:
+
+```markdown
+## Acuerdos de trabajo
+- Preferir editar archivos existentes antes de crear nuevas abstracciones
+- Mantener diffs pequeños y revisables
+- No agregar dependencias sin aprobación
+- Reutilizar los schemas de Zod existentes
+```
+
+### 3. Verificación
+
+Esta suele ser la sección con más impacto para un agente autónomo.
+
+```markdown
+## Verificación
+- Ejecutar `npm run lint`
+- Ejecutar `npm run typecheck`
+- Ejecutar `npm test -- --runInBand` para cambios en `src/api/`
+- No declarar terminado si algún comando falla
+```
+
+### 4. Límites de seguridad
+
+Las reglas negativas evitan errores caros:
+
+```markdown
+## No hacer
+- No editar archivos generados en `src/__generated__/`
+- No tocar migraciones de base de datos en feature work
+- No renombrar campos públicos del API sin actualizar docs y tests
+```
+
+## Una Plantilla Práctica
+
+```markdown
+# AGENTS.md
+
+## Contexto del proyecto
+- Monorepo con apps/web, apps/api y packages/ui
+- Package manager: pnpm
+- Base principal: PostgreSQL
+
+## Acuerdos de trabajo
+- Reutilizar utilidades existentes antes de crear helpers nuevos
+- Mantener funciones por debajo de ~40 líneas cuando sea razonable
+- Evitar default exports en paquetes compartidos
+
+## Comandos
+- Dev: `pnpm dev`
+- Lint: `pnpm lint`
+- Typecheck: `pnpm typecheck`
+- Test: `pnpm test`
+
+## Verificación
+- Ejecutar lint + typecheck en todo cambio de código
+- Ejecutar tests afectados en los paquetes tocados
+- Resumir qué se verificó en la respuesta final
+
+## No hacer
+- No instalar dependencias sin aprobación
+- No editar lockfiles salvo que el cambio lo requiera
+- No ocultar tests fallidos
+```
+
+## Usa el Prompt Como si Fuera un Issue de GitHub
+
+Las best practices de Codex recomiendan estructurar la tarea como lo harías en un issue o descripción de PR.
+
+Un buen prompt suele incluir cuatro cosas:
+
+- **Objetivo** — qué quieres cambiar
+- **Contexto** — qué archivos, ejemplos o errores importan
+- **Restricciones** — qué no debe romper Codex
+- **Done when** — cómo sabrás que ya terminó
+
+Ejemplo:
+
+```text
+Agrega optimistic updates al cart drawer.
+
+Contexto:
+- La UI vive en src/components/cart/
+- Las server actions están en src/app/actions/cart.ts
+- Sigue el mismo patrón de loading usado en src/components/wishlist/
+
+Restricciones:
+- No cambies el shape del API
+- No agregues una nueva librería de estado
+
+Done when:
+- los cambios de cantidad se sienten instantáneos
+- hay rollback si falla
+- pasan lint, typecheck y los tests del carrito
+```
+
+## Cuándo Conviene un AGENTS.md Anidado
+
+Agrega instrucciones por subdirectorio solo cuando esa zona del repo tenga reglas realmente distintas:
+
+- `apps/web/AGENTS.md` para renderizado y UI
+- `apps/api/AGENTS.md` para auth, logging y contratos del API
+- `infra/AGENTS.md` para Terraform o despliegue
+
+No los crees solo para repetir lo que ya dice la raíz. Úsalos como overrides locales.
+
+## Configuraciones de Alto Valor
+
+`config.toml` importa cuando quieres que el comportamiento de Codex sea consistente entre sesiones.
+
+Ejemplos útiles:
+
+```toml
+model = "gpt-5.3-codex"
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+project_doc_fallback_filenames = ["TEAM_GUIDE.md", ".agents.md"]
+```
+
+Usa config para cambiar **cómo opera Codex**. Usa `AGENTS.md` para cambiar **cómo piensa Codex sobre tu proyecto**.
+
+## Errores Comunes
+
+| Error | Por qué duele | Mejor alternativa |
+|------|----------------|-------------------|
+| Reglas vagas como “escribe código limpio” | no son accionables | define comandos y restricciones concretas |
+| Poner preferencias personales solo en el AGENTS del repo | ensucia la guía compartida | muévelas a `~/.codex/AGENTS.md` |
+| Esconder comandos clave en un README largo | Codex puede pasarlos por alto | súbelos a `AGENTS.md` |
+| Usar el prompt como memoria permanente | repetitivo y frágil | guarda guía duradera en archivos |
+| No definir criterio de cierre | Codex termina demasiado pronto | define “done when” |
+
+## Codex vs Claude Code
+
+Claude Code y Codex se benefician mucho de buenas instrucciones de repositorio, pero su modelo operativo es diferente.
+
+| Aspecto | Claude Code | Codex |
+|--------|-------------|-------|
+| Archivo principal | `CLAUDE.md` | `AGENTS.md` |
+| Modelo de alcance | raíz + archivos anidados | global + cadena del proyecto + overrides |
+| Ajuste de comportamiento | settings + workflow | `config.toml` + sandbox/approvals |
+| Estilo de trabajo | conversacional e iterativo | orientado a tareas y autonomía |
+
+Si usas ambas herramientas, no copies archivos a ciegas. Mantén alineada la **intención** y adapta la redacción al modelo real de descubrimiento y seguridad de cada herramienta.

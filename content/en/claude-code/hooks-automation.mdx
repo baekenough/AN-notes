@@ -1,0 +1,130 @@
+---
+title: "Hooks Automation — Make Claude Code Enforce Your Workflow"
+description: "Use Claude Code hooks to automate linting, file protection, notifications, and project guardrails without repeating the same review steps by hand"
+difficulty: intermediate
+tags: ["hooks", "automation", "workflow", "safety"]
+connections:
+  - slug: "mcp-power-tools"
+    tool: "claude-code"
+    type: "prerequisite"
+  - slug: "effective-prompting"
+    tool: "claude-code"
+    type: "combines"
+  - slug: "codex-sandbox"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 5
+date: "2026-03-21"
+---
+
+> **Official References**: [Hooks](https://docs.anthropic.com/en/docs/claude-code/hooks) · [Settings](https://docs.anthropic.com/en/docs/claude-code/settings) · [Overview](https://docs.anthropic.com/en/docs/claude-code/overview)
+
+<!-- curriculum:start -->
+## Curriculum path
+
+1. [CLAUDE.md Mastery](/claude-code/claude-md-mastery) — repo memory and rules
+2. [Effective Prompting](/claude-code/effective-prompting) — task framing and constraints
+3. [MCP Power Tools](/claude-code/mcp-power-tools) — connect tools and live context
+4. [Multi-Agent Workflows](/claude-code/multi-agent-workflow) — delegation and parallel execution
+5. **Hooks Automation** — local workflow enforcement ← **You are here**
+6. [GitHub Actions Workflows](/claude-code/github-actions-workflows) — move repeatable work into team automation
+
+### Official docs used in this guide
+- **Hook lifecycle and configuration model** — [Hooks](https://docs.anthropic.com/en/docs/claude-code/hooks)
+- **Security considerations for hook scripts** — [Hooks](https://docs.anthropic.com/en/docs/claude-code/hooks)
+- **Settings surface and local configuration** — [Settings](https://docs.anthropic.com/en/docs/claude-code/settings)
+<!-- curriculum:end -->
+
+## Why Hooks Matter
+
+Claude Code gets much more useful once it stops being only a smart editor and starts enforcing your team’s workflow automatically.
+
+Hooks let Claude run shell commands around tool usage and lifecycle events. That means you can wire in:
+
+- formatting after edits
+- lint or test checks before risky operations
+- notifications when long tasks finish
+- guards that block edits in sensitive paths
+- context preservation before compaction
+
+In practice, hooks turn repeated review habits into automation.
+
+## The Mental Model
+
+Think of hooks as event-driven guardrails.
+
+Claude Code exposes lifecycle points such as:
+
+- before a tool runs
+- after a tool runs
+- before compaction
+- after compaction
+
+That gives you a way to inject your own checks without repeating the same prompt every session.
+
+## High-Value Uses
+
+### 1. Protect critical files
+
+Block accidental edits to files like:
+
+- `.env`
+- production deployment config
+- generated code
+- migration history
+
+### 2. Auto-run checks
+
+After edit-heavy operations, trigger:
+
+- `eslint`
+- `tsc --noEmit`
+- targeted tests
+- formatter checks
+
+### 3. Preserve context
+
+Before compaction, save useful state into:
+
+- task notes
+- summary files
+- progress artifacts
+
+### 4. Send notifications
+
+For long-running tasks, a hook can notify you when Claude is done instead of making you babysit the terminal.
+
+## Security Matters More Here
+
+Anthropic is very explicit: hooks execute arbitrary shell commands on your system.
+
+That means hooks are powerful, but also dangerous if written carelessly.
+
+Security habits that matter:
+
+- quote shell variables
+- validate inputs
+- use absolute paths
+- block path traversal
+- skip secrets and sensitive files
+- test hooks in a safe environment first
+
+A sloppy hook can be more dangerous than a sloppy prompt.
+
+## Hooks vs CLAUDE.md
+
+| Tool | Best for |
+|------|----------|
+| `CLAUDE.md` | policy, architecture, coding rules |
+| hooks | automatic enforcement and checks |
+| prompt | today’s task |
+
+## When Not to Use Hooks
+
+Avoid hooks when the workflow is still changing quickly, when the commands are too slow to run constantly, or when the logic depends on nuanced human judgment.
+
+## Claude Code vs Codex
+
+Codex usually leans on sandbox and approval boundaries.
+Claude Code hooks lean on local event-driven automation.

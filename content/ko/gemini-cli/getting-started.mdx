@@ -1,0 +1,196 @@
+---
+title: "Gemini CLI 시작하기"
+description: "Gemini CLI 설치, 인증 방식 선택, 그리고 실전용 GEMINI.md 구성까지 한 번에 정리합니다"
+difficulty: beginner
+tags: ["설치", "인증", "gemini-md", "워크플로"]
+connections:
+  - slug: "claude-md-mastery"
+    tool: "claude-code"
+    type: "compare"
+  - slug: "codex-instructions"
+    tool: "gpt-codex"
+    type: "compare"
+  - slug: "headless-automation"
+    tool: "gemini-cli"
+    type: "enhances"
+featured: true
+order: 1
+date: "2026-03-21"
+---
+
+> **공식 레퍼런스**: [개요](https://geminicli.com/docs/get-started/) · [설치](https://geminicli.com/docs/get-started/installation/) · [인증](https://geminicli.com/docs/get-started/authentication/) · [GEMINI.md](https://geminicli.com/docs/cli/gemini-md/)
+
+## 왜 Gemini CLI를 따로 봐야 할까?
+
+Gemini CLI는 Google의 오픈소스 터미널 에이전트입니다. 지금 기준으로 보면 강점은 명확합니다. **Gemini 모델**, **로컬 도구**, **웹 접근**, **프로젝트 메모리**를 한 CLI 안에 묶어 둔 형태입니다.
+
+이 프로젝트 같은 문서/콘텐츠 저장소에서는 특히 아래 상황에서 강합니다.
+
+1. **큰 저장소 빠르게 이해하기** — 100만 토큰 컨텍스트로 구조를 넓게 볼 수 있습니다.
+2. **로컬 파일 + 웹 정보 같이 다루기** — 파일 읽기, 셸 실행, 웹 검색을 한 흐름에서 이어갈 수 있습니다.
+3. **지시문 재사용** — `GEMINI.md`에 프로젝트 규칙을 적어 두면 매번 프롬프트를 길게 쓰지 않아도 됩니다.
+
+## 설치는 이렇게 가면 됩니다
+
+공식 문서 기준 Gemini CLI는 **Node.js 20+**를 권장합니다.
+
+```bash
+# npm 전역 설치
+npm install -g @google/gemini-cli
+
+# macOS / Linux
+brew install gemini-cli
+
+# 설치 없이 체험
+npx @google/gemini-cli
+```
+
+최신 GitHub 버전을 바로 시험해 보고 싶다면 공식 저장소 실행도 가능합니다.
+
+```bash
+npx https://github.com/google-gemini/gemini-cli
+```
+
+## 인증은 사용 방식에 맞춰 고르기
+
+공식 문서는 인증 경로를 꽤 분명하게 나눕니다.
+
+| 상황 | 추천 방식 | 메모 |
+|------|-----------|------|
+| 개인 로컬 사용 | Google 계정 로그인 | 가장 쉬운 기본값 |
+| 스크립트 / CI / 헤드리스 | Gemini API 키 | 환경변수 기반으로 단순 |
+| GCP 중심 조직 환경 | Vertex AI | 기존 Google Cloud 운영 방식과 잘 맞음 |
+| 회사 / 학교 / Workspace 계정 | Google 로그인 + 프로젝트 설정 | Cloud 프로젝트가 필요한 경우가 많음 |
+
+### 1) Google 계정으로 로그인
+
+대부분의 로컬 개발자는 이 경로가 가장 편합니다.
+
+```bash
+gemini
+```
+
+실행 후 CLI에서 Google 로그인 흐름을 선택하면 됩니다.
+
+### 2) Gemini API 키 사용
+
+헤드리스 실행이나 자동화에는 이 경로가 가장 실용적입니다.
+
+```bash
+export GEMINI_API_KEY="YOUR_GEMINI_API_KEY"
+gemini
+```
+
+### 3) Vertex AI 사용
+
+팀이 이미 Google Cloud에서 모델 접근을 관리하고 있다면 이쪽이 자연스럽습니다.
+
+```bash
+export GOOGLE_CLOUD_PROJECT="your-project-id"
+export GOOGLE_CLOUD_LOCATION="us-central1"
+gemini
+```
+
+## 먼저 익혀 둘 명령 패턴
+
+Gemini CLI는 긴 자연어만 던질 때보다, **도구 문법**을 같이 쓸 때 훨씬 좋습니다.
+
+### 대화형 모드 시작
+
+```bash
+gemini
+```
+
+### `@`로 파일/디렉터리 포함
+
+```bash
+gemini "@package.json @src 앱 아키텍처를 설명해줘"
+```
+
+### `!`로 셸 명령 실행
+
+```text
+!npm test
+```
+
+이 패턴은 에이전트가 명령 결과를 읽고 바로 다음 판단으로 이어가게 할 때 유용합니다.
+
+### 시작 프롬프트를 붙여 대화 시작
+
+```bash
+gemini -i "이 저장소를 리뷰하고 온보딩 계획을 만들어줘"
+```
+
+## 진짜 핵심은 `GEMINI.md`
+
+많은 팀이 설치만 해 보고 끝나는데, 실전 생산성 차이는 여기서 납니다. Gemini CLI는 `GEMINI.md`를 계층적으로 읽습니다.
+
+1. `~/.gemini/GEMINI.md`
+2. 워크스페이스 및 상위 경로의 컨텍스트 파일
+3. 특정 디렉터리를 건드릴 때 즉시 발견되는 JIT 컨텍스트 파일
+
+즉 다음처럼 나눌 수 있습니다.
+
+- **전역 선호도**: 홈 디렉터리
+- **저장소 공통 규칙**: 프로젝트 루트
+- **모듈별 세부 지침**: 하위 디렉터리
+
+### 예시 `GEMINI.md`
+
+```markdown
+# Project: AN-Con
+
+## Stack
+- Next.js 16
+- TypeScript
+- next-intl
+- /content 기반 MDX 구조
+
+## Content rules
+- 로케일별 frontmatter 구조를 동일하게 유지
+- 마케팅 문구보다 실전 예시 우선
+- ko / en / es slug를 맞춘다
+
+## Safety
+- 문서 확인 없이 CLI 플래그를 지어내지 말 것
+- 추정보다 공식 Gemini CLI 동작을 우선할 것
+```
+
+### 같이 알아두면 좋은 메모리 명령
+
+```text
+/memory show
+/memory reload
+/memory add Always preserve locale parity when editing content.
+```
+
+### 의외로 좋은 기능: import
+
+`GEMINI.md`는 `@file.md` 형태 import를 지원합니다. 긴 지침을 한 파일에 몰아 넣지 않고 역할별로 분리해 재사용하기 좋습니다.
+
+## 이 저장소에 맞는 시작 워크플로
+
+```text
+gemini
+→ @content @src/lib/content.ts 콘텐츠 모델 파악
+→ gemini-cli 주제 공백 찾기
+→ 한 언어 초안 먼저 작성
+→ ko / en / es 동일 slug로 확장
+→ frontmatter parity 검증
+```
+
+## Claude Code / GPT Codex / Gemini CLI 비교
+
+| 항목 | Claude Code | GPT Codex | Gemini CLI |
+|------|-------------|-----------|------------|
+| 핵심 지시 파일 | CLAUDE.md | AGENTS.md | GEMINI.md |
+| 컨텍스트 성격 | 대화형 메모리 강점 | 태스크 단위 실행 | 계층형 메모리 + 대형 컨텍스트 |
+| 로컬 도구 접근 | 로컬 + MCP | 샌드박스 중심 | 로컬 도구 + 웹 + MCP |
+| 첫 사용 추천 | 함께 고치며 탐색 | 경계가 분명한 구현 작업 | 저장소 이해 + 자동화 |
+| 팀 인증 선택지 | 벤더 계정 중심 | 제품 워크스페이스 | Google 로그인 / API 키 / Vertex AI |
+
+## 다음에 읽으면 좋은 글
+
+- 저장소 단위 분석 패턴은 [100만 토큰 컨텍스트 활용법](/gemini-cli/million-token-context)
+- 도구/확장은 [Gemini Extensions & MCP](/gemini-cli/gemini-extensions)
+- 스크립트/CI는 [Headless Automation](/gemini-cli/headless-automation)

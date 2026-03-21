@@ -1,0 +1,103 @@
+---
+title: "Prompting Efectivo — Habla con Claude Como un Tech Lead"
+description: "Estrategias de prompting que obtienen mejores resultados de Claude Code, desde tareas simples hasta refactorizaciones complejas"
+difficulty: beginner
+tags: ["prompting", "flujo-de-trabajo", "productividad"]
+connections:
+  - slug: "claude-md-mastery"
+    tool: "claude-code"
+    type: "prerequisite"
+  - slug: "multi-agent-workflow"
+    tool: "claude-code"
+    type: "enhances"
+  - slug: "codex-task-design"
+    tool: "gpt-codex"
+    type: "compare"
+featured: true
+order: 3
+date: "2026-03-21"
+---
+
+> **Referencias Oficiales**: [Overview](https://docs.anthropic.com/en/docs/claude-code/overview) · [Best practices](https://docs.anthropic.com/en/docs/claude-code/best-practices) · [Prompt engineering](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering)
+
+<!-- curriculum:start -->
+## Ruta del currículo
+
+1. [CLAUDE.md Mastery](/claude-code/claude-md-mastery) — memoria del repo y reglas
+2. **Effective Prompting** — framing de tareas y restricciones ← **Estás aquí**
+3. [MCP Power Tools](/claude-code/mcp-power-tools) — herramientas y contexto vivo
+4. [Multi-Agent Workflows](/claude-code/multi-agent-workflow) — delegar y paralelizar
+5. [Hooks Automation](/claude-code/hooks-automation) — guardrails automáticos en local
+6. [GitHub Actions Workflows](/claude-code/github-actions-workflows) — mover trabajo repetible a automatización de equipo
+
+### Documentación oficial usada en esta guía
+- **Patrones de prompting y buenas prácticas** — [Best practices](https://docs.anthropic.com/en/docs/claude-code/best-practices)
+- **Conceptos generales de prompt engineering** — [Prompt engineering](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering)
+- **Modelo de uso de Claude Code** — [Overview](https://docs.anthropic.com/en/docs/claude-code/overview)
+<!-- curriculum:end -->
+
+## La Idea Clave
+
+Claude Code no es un chatbot — es un ingeniero junior con memoria perfecta y paciencia infinita. Los mejores prompts son las mismas instrucciones que darías a un compañero de equipo competente.
+
+## Niveles de Prompting
+
+### Nivel 1: Comandos Directos
+
+Bueno para tareas simples y bien definidas:
+
+```
+Corrige el error de TypeScript en src/auth/login.ts
+```
+
+### Nivel 2: Contexto + Intención
+
+Mejor para tareas que requieren juicio:
+
+```
+El endpoint /api/users es lento (~2s). Haz un perfil y sugiere optimizaciones.
+No cambies el schema de la base de datos — estamos en medio de una migración.
+```
+
+La restricción ("no cambiar schema") evita que Claude tome el camino equivocado.
+
+### Nivel 3: Delegación Arquitectónica
+
+Para trabajo complejo de múltiples pasos:
+
+```
+Refactoriza el módulo de pagos de callbacks a async/await.
+1. Empieza con la integración de stripe (src/payments/stripe.ts)
+2. Actualiza el procesador de órdenes que depende de él
+3. Asegúrate que los tests existentes siguen pasando
+4. No toques la integración de PayPal — eso es el próximo sprint
+```
+
+## Anti-Patrones
+
+### La Petición Vaga
+
+```
+❌ "Mejora el código"
+✅ "Reduce la complejidad ciclomática de processOrder() — tiene 12 ramas"
+```
+
+### El Patrón "Plan Primero"
+
+Para tareas no triviales, pide a Claude que planifique antes de ejecutar:
+
+```
+Quiero agregar notificaciones en tiempo real usando WebSockets.
+Antes de escribir código, describe tu enfoque:
+- ¿Qué librería?
+- ¿Dónde vive el servidor WebSocket?
+- ¿Cómo se integra con nuestra autenticación existente?
+```
+
+## Comparación con Codex
+
+GPT Codex funciona diferente — escribes una descripción de tarea por adelantado y se ejecuta de forma autónoma. No hay conversación back-and-forth. Esto significa:
+- Los prompts de Codex necesitan ser más completos desde el inicio
+- Claude Code permite refinamiento iterativo
+- Ambos se benefician de restricciones y ejemplos explícitos
+

@@ -1,0 +1,203 @@
+---
+title: "Diseño de Tareas en Codex — Escribe Prompts Como Issues, No Como Deseos"
+description: "Aprende a delimitar tareas para Codex, dividir el trabajo sin caos y redactar prompts con forma de issue para obtener mejores diffs"
+difficulty: intermediate
+tags: ["prompting", "planificacion", "descomposicion", "workflow"]
+connections:
+  - slug: "codex-instructions"
+    tool: "gpt-codex"
+    type: "prerequisite"
+  - slug: "codex-sandbox"
+    tool: "gpt-codex"
+    type: "combines"
+  - slug: "codex-ci-cd-workflows"
+    tool: "gpt-codex"
+    type: "enhances"
+featured: false
+order: 3
+date: "2026-03-21"
+---
+
+> **Referencias Oficiales**: [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [How OpenAI uses Codex](https://openai.com/business/guides-and-resources/how-openai-uses-codex/) · [Guía de AGENTS.md](https://developers.openai.com/codex/guides/agents-md)
+
+<!-- curriculum:start -->
+## Ruta del currículo
+
+1. [Instrucciones de Codex](/gpt-codex/codex-instructions) — capas de instrucciones y reglas del repo
+2. [Sandboxing en Codex](/gpt-codex/codex-sandbox) — permisos y límites de ejecución
+3. **Diseño de Tareas en Codex** — scope, prompts y descomposición ← **Estás aquí**
+4. [Codex en CI/CD](/gpt-codex/codex-ci-cd-workflows) — automatización repetible y trabajo por lotes
+
+### Documentación oficial usada en esta guía
+- **Goal / Context / Constraints / Done when** — [Best practices](https://developers.openai.com/codex/learn/best-practices)
+- **Plan primero en tareas difíciles** — [Best practices](https://developers.openai.com/codex/learn/best-practices)
+- **Best-of-N y task queue como backlog ligero** — [How OpenAI uses Codex](https://openai.com/business/guides-and-resources/how-openai-uses-codex/)
+<!-- curriculum:end -->
+
+## La Idea Central
+
+Codex funciona mejor cuando la tarea parece un ticket real de ingeniería.
+
+OpenAI recomienda explícitamente estructurar los prompts como si fueran issues de GitHub o descripciones de PR. En la práctica, eso significa incluir:
+
+- un objetivo claro
+- contexto concreto de archivos o módulos
+- restricciones que limiten malas soluciones
+- criterios de cierre explícitos
+
+Si solo dices “mejora esto” o “hazlo más limpio”, le estás obligando al modelo a inventarse el trabajo.
+
+## Plantilla de Prompt con Forma de Issue
+
+Para tareas medianas o grandes, usa una estructura como esta:
+
+```text
+Objetivo:
+Agregar optimistic updates al cart drawer.
+
+Contexto:
+- La UI está en src/components/cart/
+- Las server actions están en src/app/actions/cart.ts
+- Sigue el patrón de src/components/wishlist/
+
+Restricciones:
+- no cambies el shape del API
+- no agregues una nueva librería de estado
+- mantén el diff pequeño y localizado
+
+Done when:
+- los cambios se sienten instantáneos
+- hay rollback si falla
+- pasan lint, typecheck y los tests del carrito
+```
+
+Este formato facilita la revisión tanto para humanos como para Codex.
+
+## El Scope Lo Es Todo
+
+Codex es fuerte en ejecución acotada. Por eso, muchas veces tu trabajo no es “escribir el prompt perfecto”, sino **cortar la tarea al tamaño correcto**.
+
+Buenas formas de tarea:
+
+- una feature en un subsistema
+- un refactor en un área limitada
+- un bug con fallo reproducible
+- un patrón de migración repetido en muchos archivos
+
+Formas malas de tarea:
+
+- “moderniza toda la app”
+- “arregla toda la deuda técnica”
+- “rehaz auth, onboarding y billing juntos”
+
+Si a un ingeniero humano le pedirías antes un documento de diseño, la tarea para Codex probablemente es demasiado amplia.
+
+## Cuándo Dividir una Tarea
+
+Divide en varias tareas cuando:
+
+- los archivos viven en dominios distintos
+- los pasos de validación cambian
+- una parte es exploratoria y otra determinista
+- quieres revisar una parte antes de aprobar la siguiente
+
+Ejemplo:
+
+1. Agregar campo y wiring de esquema
+2. Actualizar handlers del API
+3. Actualizar UI y tests
+
+Es menos “mágico” que una sola tarea gigante, pero mucho más confiable.
+
+## Da Ejemplos Locales, No Consejos Abstractos
+
+Codex responde mejor a anclas concretas dentro del repo.
+
+Mejor:
+
+```text
+Implementa esto igual que en src/features/profile/actions.ts.
+```
+
+Peor:
+
+```text
+Usa nuestra arquitectura habitual.
+```
+
+Cuanto más puedas señalar un patrón existente, menos tendrá que adivinar Codex.
+
+## Reglas en AGENTS.md, Intención en el Prompt
+
+Un antipatrón común es repetir reglas permanentes en cada tarea.
+
+Mejor:
+
+- reglas duraderas en `AGENTS.md`
+- intención del día en el prompt
+
+Ejemplo:
+
+- `AGENTS.md`: ejecutar lint + typecheck; no tocar archivos generados
+- prompt: agregar soporte para draft invoices en billing export
+
+## Las Restricciones Mejoran el Resultado
+
+Las restricciones no son fricción. Son dirección.
+
+Restricciones útiles:
+
+- no agregar dependencias
+- no cambiar el shape del API público
+- mantener cambios dentro de una carpeta
+- preservar tests actuales
+- reutilizar una utilidad existente
+
+Sin restricciones, Codex puede resolver el problema, pero no necesariamente como tu equipo quiere.
+
+## Define el “Done” con Precisión
+
+Una de las mejoras más fáciles es definir el final en términos observables.
+
+Buenos ejemplos:
+
+- `pnpm lint` pasa
+- se arregla el test que falla en `auth.spec.ts`
+- el empty state usa el mismo estilo que las cards del dashboard
+- no hay cambios fuera de `src/payments/`
+
+“Se ve bien” no es un criterio suficientemente fuerte.
+
+## Best-of-N para Tareas Inciertas
+
+OpenAI destaca **Best-of-N** como patrón útil para trabajo más difícil.
+
+Úsalo cuando:
+
+- hay varias implementaciones razonables
+- importan mucho los nombres y la arquitectura
+- quieres comparar tradeoffs antes de mergear
+
+## La Cola de Tareas Como Backlog Ligero
+
+OpenAI también recomienda usar la task queue de Codex como backlog ligero.
+
+Sirve para:
+
+- capturar fixes laterales sin perder foco
+- dejar una limpieza preparada para revisar después
+- encadenar follow-ups tras un cambio mayor
+
+No toda tarea de Codex tiene que convertirse en PR final inmediatamente.
+
+## Checklist Rápido
+
+Antes de lanzar una tarea no trivial, revisa:
+
+- ¿el objetivo es singular?
+- ¿nombré archivos o carpetas relevantes?
+- ¿listé restricciones importantes?
+- ¿definí cómo se valida el éxito?
+- ¿se leería como un issue sensato para otro ingeniero?
+
+Si la respuesta es sí, la tarea probablemente ya tiene la forma correcta.

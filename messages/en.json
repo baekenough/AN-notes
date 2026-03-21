@@ -1,0 +1,120 @@
+{
+  "site": {
+    "title": "AN-Con",
+    "subtitle": "AI-Native Con",
+    "description": "Master your AI coding tools — Claude Code, GPT Codex, and more",
+    "tagline": "Tips, guides, and best practices for AI-powered development"
+  },
+  "nav": {
+    "home": "Home",
+    "claudeCode": "Claude Code",
+    "gptCodex": "GPT Codex",
+    "geminiCli": "Gemini CLI",
+    "allTips": "All Tips",
+    "language": "Language",
+    "whatsNew": "What's New"
+  },
+  "hero": {
+    "title": "Use AI Coding Tools",
+    "titleHighlight": "The Right Way",
+    "subtitle": "Practical tips and real-world guides for Claude Code, GPT Codex, and Gemini CLI. Written for everyone who wants to use AI well.",
+    "browseTips": "Browse Tips",
+    "getStarted": "Get Started"
+  },
+  "tools": {
+    "sectionTitle": "Choose Your Tool",
+    "tips": "{count} tips",
+    "comingSoon": "Coming Soon",
+    "viewGuide": "View Guide"
+  },
+  "tip": {
+    "readingTime": "{minutes} min read",
+    "difficulty": {
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced"
+    },
+    "connections": {
+      "title": "Connected Guides",
+      "prerequisite": "Start here first",
+      "enhances": "Works great with",
+      "compare": "Compare approaches",
+      "combines": "Use together"
+    },
+    "backToList": "Back to {tool}"
+  },
+  "footer": {
+    "builtWith": "Built with Next.js — Inspired by PyCon",
+    "openSource": "Open Source on GitHub"
+  },
+  "common": {
+    "featured": "Featured",
+    "new": "New",
+    "updated": "Updated"
+  },
+  "whatsNew": {
+    "title": "What's New",
+    "subtitle": "Game-changing features you should know about",
+    "updated": "Updated {date}",
+    "claudeCode": {
+      "title": "Claude Code",
+      "features": [
+        {
+          "tag": "GAME CHANGER",
+          "title": "Agent Teams — Peer-to-Peer AI Collaboration",
+          "description": "Multiple Claude agents can now communicate directly with each other, sharing context and coordinating complex tasks. Think code review → fix → re-review cycles, all autonomous."
+        },
+        {
+          "tag": "MASSIVE",
+          "title": "Hooks System — Event-Driven Automation",
+          "description": "PreToolUse, PostToolUse, PreCompact, PostCompact hooks let you automate linting, security checks, and context preservation. Claude Code becomes programmable."
+        },
+        {
+          "tag": "POWERFUL",
+          "title": "Background Agents + Git Worktrees",
+          "description": "Spawn agents that work in isolated git worktrees in the background. Start a refactor, keep coding — the agent creates a branch with its changes when done."
+        }
+      ]
+    },
+    "gptCodex": {
+      "title": "GPT Codex",
+      "features": [
+        {
+          "tag": "GAME CHANGER",
+          "title": "Layered AGENTS.md — Global to Local Repo Context",
+          "description": "Codex now works best with an instruction chain: personal guidance, repo rules, and nested overrides. You can keep durable team conventions close to the code instead of repeating them in every task."
+        },
+        {
+          "tag": "POWERFUL",
+          "title": "Sandbox + Approval Policies — Fast Local Automation with Guardrails",
+          "description": "Local Codex is most practical when sandbox mode and approval policy are tuned together. Workspace-write plus on-request gives you fast edits and test runs without handing over your whole machine."
+        },
+        {
+          "tag": "REVOLUTIONARY",
+          "title": "Cloud Environments — Setup Scripts, Offline Agents, Optional Internet",
+          "description": "Cloud Codex separates setup from execution: install and bootstrap first, then run the agent in a tighter environment. Internet access stays off by default and can be narrowed with allowlists when needed."
+        }
+      ]
+    },
+    "geminiCli": {
+      "title": "Gemini CLI",
+      "features": [
+        {
+          "tag": "MIND-BLOWING",
+          "title": "1 Million Token Context — See Everything",
+          "description": "Read your entire codebase in one conversation. No file selection, no context limits. Gemini processes 500+ files simultaneously for cross-module refactoring."
+        },
+        {
+          "tag": "GAME CHANGER",
+          "title": "Open Source + Free Tier",
+          "description": "Apache 2.0 license, 60 requests/minute free. Fork it, extend it, self-host it. The first major AI coding tool that's truly open."
+        },
+        {
+          "tag": "POWERFUL",
+          "title": "Multimodal Input — Screenshots to Code",
+          "description": "Drop a screenshot, a Figma export, or a hand-drawn wireframe. Gemini sees images natively and generates matching code — no plugins needed."
+        }
+      ]
+    }
+  }
+}

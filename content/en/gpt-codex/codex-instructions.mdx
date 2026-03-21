@@ -1,0 +1,241 @@
+---
+title: "Codex Instructions — Make AGENTS.md Actually Useful"
+description: "Use layered AGENTS.md files, smart prompts, and config.toml to make GPT Codex far more reliable across repositories and tasks"
+difficulty: beginner
+tags: ["agents-md", "config", "workflow", "verification"]
+connections:
+  - slug: "codex-sandbox"
+    tool: "gpt-codex"
+    type: "enhances"
+  - slug: "codex-task-design"
+    tool: "gpt-codex"
+    type: "enhances"
+  - slug: "claude-md-mastery"
+    tool: "claude-code"
+    type: "compare"
+featured: true
+order: 1
+date: "2026-03-21"
+---
+
+> **Official References**: [AGENTS.md Guide](https://developers.openai.com/codex/guides/agents-md) · [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [Config Basics](https://developers.openai.com/codex/config-basic)
+
+<!-- curriculum:start -->
+## Curriculum path
+
+1. **Codex Instructions** — instruction layering, repo rules, config basics ← **You are here**
+2. [Codex Sandboxing](/gpt-codex/codex-sandbox) — permissions, approvals, cloud environments
+3. [Codex Task Design](/gpt-codex/codex-task-design) — scope, prompts, decomposition
+4. [Codex in CI/CD](/gpt-codex/codex-ci-cd-workflows) — repeatable automation and batch work
+
+### Official docs used in this guide
+- **Instruction discovery, global guidance, and local overrides** — [Custom instructions with AGENTS.md](https://developers.openai.com/codex/guides/agents-md)
+- **Layered project instructions and fallback filenames** — [Custom instructions with AGENTS.md](https://developers.openai.com/codex/guides/agents-md), [Config basics](https://developers.openai.com/codex/config-basic)
+- **What a practical `AGENTS.md` should contain** — [Best practices](https://developers.openai.com/codex/learn/best-practices)
+<!-- curriculum:end -->
+
+## Why This Matters
+
+Codex gets dramatically better when you stop treating it like a generic prompt box and start giving it durable project guidance.
+
+OpenAI’s current docs recommend two layers working together:
+
+1. **Task prompt** for the change you want right now
+2. **AGENTS.md** for durable rules Codex should keep following in this repo
+
+A good mental model: the prompt explains **today’s assignment**, while `AGENTS.md` explains **how this team works**.
+
+## How Codex Discovers Instructions
+
+Codex now uses an **instruction chain**, not a single flat file:
+
+1. **Global guidance** in `~/.codex/AGENTS.md`
+2. **Project guidance** from the repo root down to your current directory
+3. **Closer files win** because later files override earlier guidance
+
+That means you can layer instructions like this:
+
+```text
+~/.codex/AGENTS.md              # personal defaults
+repo/AGENTS.md                  # repo-wide rules
+repo/services/payments/AGENTS.md # payments-specific overrides
+```
+
+This is much more powerful than a single monolithic file:
+- Global file = your personal habits
+- Repo file = team conventions
+- Subdirectory file = domain-specific rules
+
+## AGENTS.md vs config.toml vs Prompt
+
+These three surfaces do different jobs.
+
+| Surface | Best for | Bad for |
+|--------|----------|---------|
+| `AGENTS.md` | coding conventions, architecture, test commands, “don’t do X” rules | task-specific requests |
+| `~/.codex/config.toml` or `.codex/config.toml` | sandbox defaults, approval policy, profiles, fallback filenames | business logic or style rules |
+| Prompt | the exact change you want now | permanent repo policy |
+
+A common mistake is stuffing everything into the prompt. That works once, then you have to repeat yourself forever.
+
+## What a Strong AGENTS.md Includes
+
+OpenAI’s guidance and real-world Codex usage converge on the same structure.
+
+### 1. Project context
+
+Give Codex the facts it cannot infer quickly:
+
+```markdown
+## Project context
+- Next.js 16 App Router app
+- PostgreSQL via Drizzle ORM
+- UI components live in `src/components/`
+- Integration tests depend on seeded fixtures in `scripts/test-data/`
+```
+
+### 2. Working agreements
+
+Tell Codex what “good work” means here:
+
+```markdown
+## Working agreements
+- Prefer editing existing files over creating new abstractions
+- Keep diffs small and reviewable
+- Do not add dependencies without approval
+- Use existing Zod schemas instead of duplicating validation
+```
+
+### 3. Verification
+
+This is the highest-leverage section for autonomous agents.
+
+```markdown
+## Verification
+- Run `npm run lint`
+- Run `npm run typecheck`
+- Run `npm test -- --runInBand` for files under `src/api/`
+- Do not claim completion if any command fails
+```
+
+### 4. Safety boundaries
+
+Negative rules prevent expensive mistakes:
+
+```markdown
+## Do not
+- Do not edit generated files in `src/__generated__/`
+- Do not change database migrations for feature work
+- Do not rename public API fields without updating docs and tests
+```
+
+## A Practical Template
+
+```markdown
+# AGENTS.md
+
+## Project context
+- Monorepo with apps/web, apps/api, packages/ui
+- Package manager: pnpm
+- Primary database: PostgreSQL
+
+## Working agreements
+- Prefer existing utilities before creating new helpers
+- Keep functions under ~40 lines when practical
+- Avoid default exports in shared packages
+
+## Commands
+- Dev: `pnpm dev`
+- Lint: `pnpm lint`
+- Typecheck: `pnpm typecheck`
+- Test: `pnpm test`
+
+## Verification
+- Run lint + typecheck for all code changes
+- Run affected tests for touched packages
+- Summarize what was verified in the final response
+
+## Do not
+- Do not install dependencies without approval
+- Do not edit lockfiles unless dependency changes are required
+- Do not skip failing tests silently
+```
+
+## Use the Prompt Like a GitHub Issue
+
+OpenAI’s Codex best practices recommend giving tasks the same shape you would use in a real issue or PR description.
+
+A strong prompt usually contains four things:
+
+- **Goal** — what needs to change
+- **Context** — which files, examples, or errors matter
+- **Constraints** — what Codex must not break
+- **Done when** — how you will know it is complete
+
+Example:
+
+```text
+Add optimistic updates to the cart drawer.
+
+Context:
+- UI lives in src/components/cart/
+- Existing server actions are in src/app/actions/cart.ts
+- Follow the same loading-state pattern used in src/components/wishlist/
+
+Constraints:
+- Do not change the API shape
+- Do not add a new state library
+
+Done when:
+- quantity updates feel instant
+- rollback happens on failure
+- lint, typecheck, and cart tests pass
+```
+
+## When to Use Nested AGENTS.md
+
+Add subdirectory instructions when a folder has truly different rules:
+
+- `apps/web/AGENTS.md` for frontend rendering conventions
+- `apps/api/AGENTS.md` for auth, logging, and API guarantees
+- `infra/AGENTS.md` for Terraform or deployment constraints
+
+Do **not** create nested files just to repeat the root file. Use them only for local overrides.
+
+## High-Value Config Knobs
+
+`config.toml` matters when you want Codex behavior to be stable across sessions.
+
+Useful examples:
+
+```toml
+model = "gpt-5.3-codex"
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+project_doc_fallback_filenames = ["TEAM_GUIDE.md", ".agents.md"]
+```
+
+Reach for config when you want to change **how Codex operates**. Reach for `AGENTS.md` when you want to change **how Codex reasons about your project**.
+
+## Common Mistakes
+
+| Mistake | Why it hurts | Better move |
+|--------|---------------|-------------|
+| Writing vague rules like “write clean code” | Not actionable | define concrete commands and constraints |
+| Putting personal preferences only in repo AGENTS | pollutes team guidance | move them to `~/.codex/AGENTS.md` |
+| Hiding key commands in a long README | Codex may miss them | surface them in `AGENTS.md` |
+| Using the prompt as permanent memory | repetitive and brittle | store durable guidance in files |
+| No completion criteria | Codex stops too early | define “done when” explicitly |
+
+## Codex vs Claude Code
+
+Claude Code and Codex both reward strong repository instructions, but their operating model is different.
+
+| Aspect | Claude Code | Codex |
+|--------|-------------|-------|
+| Main instruction file | `CLAUDE.md` | `AGENTS.md` |
+| Scope model | root + nested files | global + project chain + overrides |
+| Behavior tuning | app settings + workflow | `config.toml` + approval/sandbox controls |
+| Task style | conversational and iterative | task-driven, autonomous by default |
+
+If you use both tools, the best move is not copying files blindly. Keep the **intent** aligned, then adapt wording to each tool’s actual discovery and security model.

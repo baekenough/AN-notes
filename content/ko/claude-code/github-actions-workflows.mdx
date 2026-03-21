@@ -1,0 +1,79 @@
+---
+title: "GitHub Actions 워크플로우 — 반복 팀 작업에 Claude Code 넣기"
+description: "Claude Code를 GitHub Actions, PR 리뷰 자동화, 저장소 유지보수 흐름에 무리 없이 녹이는 방법"
+difficulty: advanced
+tags: ["github-actions", "자동화", "리뷰", "팀워크플로우"]
+connections:
+  - slug: "multi-agent-workflow"
+    tool: "claude-code"
+    type: "prerequisite"
+  - slug: "hooks-automation"
+    tool: "claude-code"
+    type: "enhances"
+  - slug: "codex-ci-cd-workflows"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 6
+date: "2026-03-21"
+---
+
+> **공식 참고 자료**: [GitHub Actions](https://docs.anthropic.com/en/docs/claude-code/github-actions) · [Overview](https://docs.anthropic.com/en/docs/claude-code/overview) · [SDK](https://docs.anthropic.com/en/docs/claude-code/sdk)
+
+<!-- curriculum:start -->
+## 커리큘럼 흐름
+
+1. [CLAUDE.md Mastery](/claude-code/claude-md-mastery) — 저장소 메모리와 규칙
+2. [Effective Prompting](/claude-code/effective-prompting) — 작업 framing과 제약 설정
+3. [MCP Power Tools](/claude-code/mcp-power-tools) — 도구와 라이브 컨텍스트 연결
+4. [Multi-Agent Workflows](/claude-code/multi-agent-workflow) — 위임과 병렬 실행
+5. [Hooks Automation](/claude-code/hooks-automation) — 로컬 워크플로우 enforcement
+6. **GitHub Actions Workflows** — 반복 팀 자동화 ← **현재 문서**
+
+### 이 문서에서 참고한 공식 문서
+- **GitHub Actions 안에서 Claude Code 사용하기** — [GitHub Actions](https://docs.anthropic.com/en/docs/claude-code/github-actions)
+- **자동화와 SDK 표면** — [SDK](https://docs.anthropic.com/en/docs/claude-code/sdk)
+- **Claude Code가 더 넓은 워크플로우에 들어가는 방식** — [Overview](https://docs.anthropic.com/en/docs/claude-code/overview)
+<!-- curriculum:end -->
+
+## 팀 자동화에서 Claude Code가 잘 맞는 지점
+
+Claude Code는 원래 대화형 개발에 강하지만, Anthropic은 GitHub Actions 같은 자동화 흐름도 지원합니다.
+
+좋은 사용 사례:
+
+- 체크리스트 기반 PR 리뷰
+- 이슈 triage
+- 실패한 워크플로우 로그 요약
+- 릴리즈 노트 초안 작성
+- 라벨/코멘트 기반 반복 작업
+
+## 자동화에 잘 맞는 일
+
+다음 조건이면 잘 맞습니다.
+
+- 작업 범위가 좁음
+- 결과를 리뷰할 수 있음
+- PR/issue 같은 실제 아티팩트에 연결됨
+- 최종 판단은 여전히 사람이 함
+
+## 자동화에 안 맞는 일
+
+너무 넓은 제품 판단, 민감한 권한, 고위험 배포 변경은 여전히 사람 중심으로 다루는 편이 낫습니다.
+
+## 실전 패턴
+
+1. PR, issue, label로 트리거
+2. 저장소 컨텍스트 제공
+3. Claude가 좁은 작업 수행
+4. 결과를 코멘트/요약/artifact로 남김
+5. merge 경로는 사람 유지
+
+## Claude와 Codex의 차이
+
+- Claude: 리뷰, 설명, 요약에 강함
+- Codex: 경계 있는 실행, 코드 수정, 검증에 강함
+
+## 처음엔 merge보다 comment부터
+
+가장 안전한 시작점은 자동 merge가 아니라 자동 코멘트, 요약, 초안 생성입니다.

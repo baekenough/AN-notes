@@ -1,0 +1,109 @@
+---
+title: "멀티 에이전트 워크플로우 — 복잡한 작업 오케스트레이션"
+description: "병렬 실행, 코드 리뷰, 대규모 리팩토링을 위한 Claude Code 서브에이전트 시스템 활용법"
+difficulty: advanced
+tags: ["에이전트", "병렬", "워크플로우", "오케스트레이션"]
+connections:
+  - slug: "effective-prompting"
+    tool: "claude-code"
+    type: "prerequisite"
+  - slug: "github-actions-workflows"
+    tool: "claude-code"
+    type: "enhances"
+  - slug: "codex-ci-cd-workflows"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 4
+date: "2026-03-21"
+---
+
+> **공식 참고 자료**: [Sub-agents](https://docs.anthropic.com/en/docs/claude-code/sub-agents) · [Agent SDK](https://docs.anthropic.com/en/docs/agents-and-tools/agent-sdk) · [CLI usage](https://docs.anthropic.com/en/docs/claude-code/cli-usage)
+
+<!-- curriculum:start -->
+## 커리큘럼 흐름
+
+1. [CLAUDE.md Mastery](/claude-code/claude-md-mastery) — 저장소 메모리와 규칙
+2. [Effective Prompting](/claude-code/effective-prompting) — 작업 framing과 제약 설정
+3. [MCP Power Tools](/claude-code/mcp-power-tools) — 도구와 라이브 컨텍스트 연결
+4. **Multi-Agent Workflows** — 위임과 병렬 실행 ← **현재 문서**
+5. [Hooks Automation](/claude-code/hooks-automation) — 로컬 가드레일 자동화
+6. [GitHub Actions Workflows](/claude-code/github-actions-workflows) — 반복 작업을 팀 자동화로 옮기기
+
+### 이 문서에서 참고한 공식 문서
+- **subagent와 위임 모델** — [Sub-agents](https://docs.anthropic.com/en/docs/claude-code/sub-agents)
+- **프로그래밍 가능한 오케스트레이션 개념** — [Agent SDK](https://docs.anthropic.com/en/docs/agents-and-tools/agent-sdk)
+- **CLI 실행 패턴** — [CLI usage](https://docs.anthropic.com/en/docs/claude-code/cli-usage)
+<!-- curriculum:end -->
+
+## 서브에이전트란?
+
+Claude Code는 전문화된 서브에이전트를 생성할 수 있습니다 — 집중된 작업을 병렬로 처리하는 별도의 Claude 인스턴스입니다. Claude가 팀에 작업을 위임하는 것으로 생각하세요.
+
+## 서브에이전트 사용 시점
+
+| 시나리오 | 단일 에이전트 | 서브에이전트 |
+|---------|------------|------------|
+| 오타 수정 | ✅ | 과도함 |
+| 파일 3개 리뷰 | ✅ | ✅ (더 빠름) |
+| 파일 20개 리팩토링 | 너무 느림 | ✅ |
+| 리서치 + 구현 | ✅ | ✅ (병렬) |
+| 크로스 모듈 디버깅 | 컨텍스트 손실 | ✅ |
+
+## 오케스트레이터 패턴
+
+메인 대화가 오케스트레이터 역할을 합니다 — 작업을 계획하고 전문가에게 위임합니다:
+
+```
+사용자: "인증 모듈의 보안 문제를 리뷰해줘"
+
+Claude (오케스트레이터):
+  → 에이전트 1 생성: auth/login.ts의 인젝션 위험 리뷰
+  → 에이전트 2 생성: auth/session.ts의 토큰 처리 리뷰
+  → 에이전트 3 생성: auth/middleware.ts의 우회 위험 리뷰
+  → 결과를 단일 보고서로 집계
+```
+
+## 실용 예시: 대규모 리팩토링
+
+```
+모든 API 라우트를 Express 미들웨어 패턴에서 Next.js Route Handler로 마이그레이션해줘.
+
+src/api/에 15개 라우트가 있어. 병렬 에이전트 사용해 —
+라우트 그룹별로 하나씩 (auth, users, products, orders, analytics).
+
+src/api/utils/의 공유 유틸리티 함수는 수정하지 마.
+```
+
+Claude가 수행할 작업:
+1. 라우트 그룹 분석
+2. 5개 병렬 에이전트 생성
+3. 각 에이전트가 3개 라우트 처리
+4. 결과 집계 및 충돌 해결
+
+## Agent Teams (실험적)
+
+Claude Code의 Agent Teams 기능은 에이전트 간 P2P 통신을 가능하게 합니다. 모든 것이 오케스트레이터를 통하지 않고:
+
+```
+리뷰어 에이전트 ←→ 구현자 에이전트
+     ↕                    ↕
+  테스터 에이전트 ←→ 문서화 에이전트
+```
+
+다음에 적합:
+- 코드 리뷰 → 수정 → 재리뷰 사이클
+- 크로스 모듈 복잡한 디버깅
+- 토론과 종합이 필요한 리서치
+
+## Codex 비교
+
+GPT Codex는 각 작업을 단일 샌드박스 에이전트로 실행합니다. 멀티 에이전트 오케스트레이션은 없지만, 샌드박스 모델이 태스크별 전체 컨테이너 격리를 제공합니다.
+
+| 기능 | Claude Code 서브에이전트 | Codex 태스크 |
+|-----|----------------------|------------|
+| 병렬성 | 최대 4개 동시 | 동시 태스크 가능 |
+| 통신 | 공유 컨텍스트, 메시징 | 독립적, 격리됨 |
+| 상태 공유 | 파일과 태스크 목록 | 커밋된 코드 |
+| 적합한 작업 | 복잡하게 연결된 작업 | 독립적, 잘 정의된 작업 |
+

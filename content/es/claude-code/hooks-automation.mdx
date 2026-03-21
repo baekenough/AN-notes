@@ -1,0 +1,86 @@
+---
+title: "Automatización con Hooks — Haz que Claude Code Haga Cumplir Tu Flujo"
+description: "Usa hooks de Claude Code para automatizar linting, protección de archivos, notificaciones y guardrails sin repetir la misma revisión manual"
+difficulty: intermediate
+tags: ["hooks", "automatizacion", "workflow", "seguridad"]
+connections:
+  - slug: "mcp-power-tools"
+    tool: "claude-code"
+    type: "prerequisite"
+  - slug: "effective-prompting"
+    tool: "claude-code"
+    type: "combines"
+  - slug: "codex-sandbox"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 5
+date: "2026-03-21"
+---
+
+> **Referencias Oficiales**: [Hooks](https://docs.anthropic.com/en/docs/claude-code/hooks) · [Settings](https://docs.anthropic.com/en/docs/claude-code/settings) · [Overview](https://docs.anthropic.com/en/docs/claude-code/overview)
+
+<!-- curriculum:start -->
+## Ruta del currículo
+
+1. [CLAUDE.md Mastery](/claude-code/claude-md-mastery) — memoria del repo y reglas
+2. [Effective Prompting](/claude-code/effective-prompting) — framing de tareas y restricciones
+3. [MCP Power Tools](/claude-code/mcp-power-tools) — herramientas y contexto vivo
+4. [Multi-Agent Workflows](/claude-code/multi-agent-workflow) — delegación y ejecución en paralelo
+5. **Hooks Automation** — enforcement local del flujo de trabajo ← **Estás aquí**
+6. [GitHub Actions Workflows](/claude-code/github-actions-workflows) — mover trabajo repetible a automatización de equipo
+
+### Documentación oficial usada en esta guía
+- **Lifecycle de hooks y configuración** — [Hooks](https://docs.anthropic.com/en/docs/claude-code/hooks)
+- **Consideraciones de seguridad para scripts** — [Hooks](https://docs.anthropic.com/en/docs/claude-code/hooks)
+- **Settings y configuración local** — [Settings](https://docs.anthropic.com/en/docs/claude-code/settings)
+<!-- curriculum:end -->
+
+## Por Qué Importan los Hooks
+
+Claude Code se vuelve mucho más útil cuando deja de ser solo un editor inteligente y empieza a hacer cumplir automáticamente el flujo de trabajo del equipo.
+
+Los hooks permiten ejecutar comandos alrededor del uso de herramientas y de eventos del ciclo de vida. Eso sirve para:
+
+- formatear después de editar
+- correr lint o tests antes de operaciones delicadas
+- avisarte cuando termina una tarea larga
+- bloquear cambios en rutas sensibles
+- preservar contexto antes de compactar
+
+## Modelo Mental
+
+Piensa en los hooks como guardrails dirigidos por eventos.
+
+## Usos de Alto Valor
+
+- proteger `.env`, migraciones o código generado
+- ejecutar lint o `tsc` tras ediciones
+- guardar estado antes de compactar
+- mandar notificaciones al terminar tareas largas
+
+## Seguridad
+
+Anthropic deja claro que los hooks ejecutan comandos arbitrarios en tu sistema.
+
+Buenas prácticas:
+
+- validar inputs
+- usar rutas absolutas
+- citar variables de shell
+- bloquear path traversal
+- evitar secretos y archivos sensibles
+- probar primero en un entorno seguro
+
+## Hooks vs CLAUDE.md
+
+| Herramienta | Mejor para |
+|-------------|------------|
+| `CLAUDE.md` | reglas, arquitectura y convenciones |
+| hooks | enforcement automático |
+| prompt | la tarea de hoy |
+
+## Claude Code vs Codex
+
+Codex suele apoyarse más en sandbox y approvals.
+Claude Code hooks se apoya más en automatización local basada en eventos.

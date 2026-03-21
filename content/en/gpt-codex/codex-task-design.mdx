@@ -1,0 +1,207 @@
+---
+title: "Codex Task Design — Write Prompts Like Issues, Not Wishes"
+description: "Learn how to scope Codex tasks, split work cleanly, and write issue-shaped prompts that produce better diffs with less rework"
+difficulty: intermediate
+tags: ["prompting", "planning", "decomposition", "workflow"]
+connections:
+  - slug: "codex-instructions"
+    tool: "gpt-codex"
+    type: "prerequisite"
+  - slug: "codex-sandbox"
+    tool: "gpt-codex"
+    type: "combines"
+  - slug: "codex-ci-cd-workflows"
+    tool: "gpt-codex"
+    type: "enhances"
+featured: false
+order: 3
+date: "2026-03-21"
+---
+
+> **Official References**: [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [How OpenAI uses Codex](https://openai.com/business/guides-and-resources/how-openai-uses-codex/) · [AGENTS.md Guide](https://developers.openai.com/codex/guides/agents-md)
+
+<!-- curriculum:start -->
+## Curriculum path
+
+1. [Codex Instructions](/gpt-codex/codex-instructions) — instruction layering and repo rules
+2. [Codex Sandboxing](/gpt-codex/codex-sandbox) — permissions and runtime boundaries
+3. **Codex Task Design** — scoping, prompts, decomposition ← **You are here**
+4. [Codex in CI/CD](/gpt-codex/codex-ci-cd-workflows) — repeatable automation and batch work
+
+### Official docs used in this guide
+- **Goal / Context / Constraints / Done when** — [Best practices](https://developers.openai.com/codex/learn/best-practices)
+- **Plan first for difficult tasks** — [Best practices](https://developers.openai.com/codex/learn/best-practices)
+- **Best-of-N and task queue as a lightweight backlog** — [How OpenAI uses Codex](https://openai.com/business/guides-and-resources/how-openai-uses-codex/)
+<!-- curriculum:end -->
+
+## The Core Principle
+
+Codex performs best when a task looks like a real engineering ticket.
+
+OpenAI explicitly recommends structuring prompts the way you would write a GitHub issue or PR description. In practice, that means Codex wants:
+
+- a clear goal
+- concrete file or module context
+- constraints that limit bad solutions
+- explicit completion criteria
+
+If you only say “improve this” or “make it cleaner,” you are forcing the model to invent the assignment.
+
+## The Issue-Shaped Prompt Template
+
+Use a shape like this for medium or large tasks:
+
+```text
+Goal:
+Add optimistic updates to the cart drawer.
+
+Context:
+- UI is in src/components/cart/
+- server actions are in src/app/actions/cart.ts
+- follow the pattern already used in src/components/wishlist/
+
+Constraints:
+- do not change the API shape
+- do not add a new state library
+- keep the diff small and localized
+
+Done when:
+- updates appear instantly
+- rollback happens on failure
+- lint, typecheck, and cart tests pass
+```
+
+This format makes review easier for both humans and Codex.
+
+## Scope Is Everything
+
+Codex is strong at bounded execution. That means your job is often not “writing the perfect prompt,” but **cutting the task to the right size**.
+
+Good Codex tasks usually have one of these shapes:
+
+- one feature in one subsystem
+- one refactor in one bounded area
+- one bug with a reproducible failure
+- one migration pattern repeated across many files
+
+Bad task shapes usually look like this:
+
+- “modernize the entire app”
+- “fix all tech debt”
+- “redo auth, onboarding, and billing together”
+
+If a human engineer would ask for a design doc before coding, the Codex task is probably too broad.
+
+## When to Split a Task
+
+Split work into multiple Codex tasks when:
+
+- the files live in unrelated domains
+- the validation steps are different
+- one part is exploratory and another is deterministic
+- you may want to review one result before green-lighting the next
+
+Example split:
+
+1. Add DB field and schema wiring
+2. Update API handlers to use the new field
+3. Update UI forms and tests
+
+This is slower than one giant task, but much faster than recovering from one giant wrong task.
+
+## Give Local Examples, Not Abstract Advice
+
+Codex responds better to concrete repository anchors than generic style requests.
+
+Better:
+
+```text
+Implement this the same way it is done in src/features/profile/actions.ts.
+```
+
+Worse:
+
+```text
+Use our normal architecture.
+```
+
+The more you can point to an existing pattern, the less guessing Codex has to do.
+
+## Use AGENTS.md for Rules, Prompt for Intent
+
+A common anti-pattern is stuffing permanent rules into every task.
+
+Instead:
+
+- put **durable rules** in `AGENTS.md`
+- put **today’s intent** in the task prompt
+
+Example:
+
+- `AGENTS.md`: run lint + typecheck; never edit generated files
+- prompt: add support for draft invoices in billing export
+
+This keeps prompts shorter and more reusable.
+
+## Good Constraints Make Better Code
+
+Constraints are not friction. They are navigation.
+
+High-value constraints include:
+
+- do not add dependencies
+- do not change public API shapes
+- keep changes under a specific folder
+- preserve current tests
+- reuse an existing utility instead of creating a new abstraction
+
+Without constraints, Codex may still solve the problem — just not in the way your team wants.
+
+## Define “Done” Precisely
+
+One of the easiest ways to improve outcomes is to define “done when” in observable terms.
+
+Good examples:
+
+- `pnpm lint` passes
+- the failing test in `auth.spec.ts` is fixed
+- empty-state UI matches the existing dashboard card style
+- no changes outside `src/payments/`
+
+Weak completion criteria like “looks good” encourage premature stopping.
+
+## Best-of-N for Uncertain Tasks
+
+OpenAI highlights **Best-of-N** as a strong pattern for harder work.
+
+Use it when:
+
+- there are multiple reasonable implementations
+- naming and architecture choices matter
+- you want to compare tradeoffs before merging
+
+Best-of-N is especially useful for refactors, UX-adjacent code, and architectural glue.
+
+## Use the Task Queue as a Backlog
+
+OpenAI also recommends using the Codex task queue as a lightweight backlog.
+
+This is useful for:
+
+- capturing side fixes while you stay in flow
+- parking a cleanup task for later review
+- queuing up follow-on work after a larger change
+
+Not every Codex task needs to become a final PR immediately. Some are better treated as structured exploratory work.
+
+## A Fast Review Checklist
+
+Before sending a non-trivial Codex task, check:
+
+- Is the goal singular?
+- Did I name the relevant files or directories?
+- Did I list important constraints?
+- Did I define how success is validated?
+- Would this read like a sensible issue to another engineer?
+
+If yes, the task is probably shaped well enough.

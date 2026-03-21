@@ -1,0 +1,198 @@
+---
+title: "Primeros pasos con Gemini CLI"
+description: "Instala Gemini CLI, elige la autenticación correcta y configura GEMINI.md para proyectos reales"
+difficulty: beginner
+tags: ["instalacion", "autenticacion", "gemini-md", "flujo-de-trabajo"]
+connections:
+  - slug: "claude-md-mastery"
+    tool: "claude-code"
+    type: "compare"
+  - slug: "codex-instructions"
+    tool: "gpt-codex"
+    type: "compare"
+  - slug: "headless-automation"
+    tool: "gemini-cli"
+    type: "enhances"
+featured: true
+order: 1
+date: "2026-03-21"
+---
+
+> **Referencias oficiales**: [Resumen general](https://geminicli.com/docs/get-started/) · [Instalación](https://geminicli.com/docs/get-started/installation/) · [Autenticación](https://geminicli.com/docs/get-started/authentication/) · [GEMINI.md](https://geminicli.com/docs/cli/gemini-md/)
+
+## Por qué Gemini CLI merece una guía aparte
+
+Gemini CLI es el agente de terminal de código abierto de Google. Hoy su propuesta es bastante clara: juntar **modelos Gemini**, **herramientas locales**, **acceso web** y **memoria de proyecto** en una sola CLI que funciona bien tanto en sesiones interactivas como en automatización.
+
+En un repositorio como este, Gemini CLI destaca especialmente en tres casos:
+
+1. **Entender repositorios grandes** — la ventana de 1M tokens ayuda a hacer lecturas amplias.
+2. **Combinar archivos locales y web** — puede leer archivos, ejecutar shell y traer información actual.
+3. **Reutilizar instrucciones** — `GEMINI.md` evita repetir el mismo contexto en cada prompt.
+
+## Instálalo de la forma práctica
+
+La documentación oficial recomienda **Node.js 20+**.
+
+```bash
+# instalación global con npm
+npm install -g @google/gemini-cli
+
+# macOS / Linux
+brew install gemini-cli
+
+# probar sin instalación permanente
+npx @google/gemini-cli
+```
+
+Si quieres probar la versión más reciente desde GitHub:
+
+```bash
+npx https://github.com/google-gemini/gemini-cli
+```
+
+## Elige bien la autenticación
+
+La guía oficial separa claramente varios escenarios:
+
+| Situación | Mejor opción | Nota |
+|-----------|--------------|------|
+| Uso personal en local | Iniciar sesión con Google | Flujo más simple |
+| Scripts / CI / headless | API key de Gemini | Configuración fácil con variables de entorno |
+| Organización centrada en GCP | Vertex AI | Encaja con controles de Google Cloud |
+| Cuenta de empresa / escuela / Workspace | Login con Google + proyecto | A menudo requiere proyecto de Cloud |
+
+### 1) Iniciar sesión con Google
+
+La opción más cómoda para la mayoría de desarrolladores locales:
+
+```bash
+gemini
+```
+
+Luego elige el flujo de login de Google dentro del CLI.
+
+### 2) Usar una API key de Gemini
+
+Ideal para scripts, jobs headless o configuraciones mínimas:
+
+```bash
+export GEMINI_API_KEY="YOUR_GEMINI_API_KEY"
+gemini
+```
+
+### 3) Usar Vertex AI
+
+Útil cuando el equipo ya trabaja con modelos desde Google Cloud:
+
+```bash
+export GOOGLE_CLOUD_PROJECT="your-project-id"
+export GOOGLE_CLOUD_LOCATION="us-central1"
+gemini
+```
+
+## Primeros patrones que sí vale la pena aprender
+
+Gemini CLI mejora mucho cuando usas su sintaxis de herramientas en lugar de depender solo de prompts largos.
+
+### Iniciar modo interactivo
+
+```bash
+gemini
+```
+
+### Incluir archivos o directorios con `@`
+
+```bash
+gemini "@package.json @src explica la arquitectura de la app"
+```
+
+### Ejecutar shell con `!`
+
+```text
+!npm test
+```
+
+Ese atajo es útil cuando quieres que el agente lea la salida del comando y continúe razonando a partir de ella.
+
+### Entrar en sesión con un prompt inicial
+
+```bash
+gemini -i "Revisa este repositorio y crea un plan de onboarding"
+```
+
+## `GEMINI.md` es donde de verdad se vuelve potente
+
+Muchos equipos instalan Gemini CLI y se quedan ahí. La mejora real aparece cuando le das contexto persistente al proyecto.
+
+Gemini CLI carga `GEMINI.md` de forma jerárquica:
+
+1. `~/.gemini/GEMINI.md`
+2. archivos de contexto del workspace y ancestros
+3. contexto JIT descubierto cuando las herramientas tocan directorios concretos
+
+Eso te permite separar:
+
+- **preferencias globales**
+- **reglas del repositorio**
+- **instrucciones específicas por módulo**
+
+### Ejemplo de archivo
+
+```markdown
+# Project: AN-Con
+
+## Stack
+- Next.js 16
+- TypeScript
+- next-intl
+- contenido MDX en /content
+
+## Content rules
+- Mantener frontmatter consistente entre idiomas
+- Preferir ejemplos prácticos a texto de marketing
+- Conservar paridad de slugs entre ko / en / es
+
+## Safety
+- No inventar flags sin revisar la documentación
+- Priorizar el comportamiento oficial de Gemini CLI sobre suposiciones
+```
+
+### Comandos de memoria útiles
+
+```text
+/memory show
+/memory reload
+/memory add Always preserve locale parity when editing content.
+```
+
+### Un detalle poco aprovechado: imports
+
+`GEMINI.md` soporta imports con `@file.md`, así que puedes dividir guías largas en piezas reutilizables en lugar de mantener un único archivo enorme.
+
+## Un flujo inicial razonable para este repo
+
+```text
+gemini
+→ @content @src/lib/content.ts map the content model
+→ detectar vacíos en temas de Gemini CLI
+→ redactar primero un idioma
+→ expandir a ko / en / es con slugs idénticos
+→ verificar paridad de frontmatter
+```
+
+## Gemini CLI vs Claude Code vs GPT Codex
+
+| Aspecto | Claude Code | GPT Codex | Gemini CLI |
+|---------|-------------|-----------|------------|
+| Archivo principal de instrucciones | CLAUDE.md | AGENTS.md | GEMINI.md |
+| Tipo de contexto | memoria conversacional fuerte | ejecución por tarea | memoria jerárquica + contexto grande |
+| Herramientas locales | local + MCP | orientado a sandbox | herramientas locales + web + MCP |
+| Mejor primer uso | edición guiada | tareas de implementación acotadas | entendimiento de repositorio + automatización |
+| Opciones de auth para equipos | cuenta del proveedor | workspace del producto | login Google / API key / Vertex AI |
+
+## Qué leer después
+
+- [La ventaja de 1M tokens](/gemini-cli/million-token-context)
+- [Gemini Extensions & MCP](/gemini-cli/gemini-extensions)
+- [Headless Automation](/gemini-cli/headless-automation)

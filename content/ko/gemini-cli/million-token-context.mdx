@@ -1,0 +1,161 @@
+---
+title: "100만 토큰의 장점 — 전체 코드베이스로 작업하기"
+description: "Gemini CLI의 큰 컨텍스트를 무작정 쓰지 않고, 실제로 도움이 되는 저장소 분석 패턴으로 연결하는 방법"
+difficulty: intermediate
+tags: ["컨텍스트", "대형-저장소", "아키텍처", "토큰-캐싱"]
+connections:
+  - slug: "multi-agent-workflow"
+    tool: "claude-code"
+    type: "compare"
+  - slug: "getting-started"
+    tool: "gemini-cli"
+    type: "prerequisite"
+  - slug: "headless-automation"
+    tool: "gemini-cli"
+    type: "enhances"
+featured: true
+order: 2
+date: "2026-03-21"
+---
+
+> **공식 레퍼런스**: [Gemini CLI 개요](https://github.com/google-gemini/gemini-cli) · [GEMINI.md 컨텍스트](https://geminicli.com/docs/cli/gemini-md/) · [토큰 캐싱](https://geminicli.com/docs/cli/token-caching/) · [도구](https://geminicli.com/docs/tools/)
+
+## 100만 토큰이 중요한 건 맞다. 하지만 전략이 더 중요하다
+
+공식 저장소와 문서는 Gemini CLI의 핵심 장점으로 **1M token context**를 계속 강조합니다. 실제로 작은 도구들이 부분 샘플링에 그치는 상황에서, Gemini CLI는 저장소 단위의 넓은 추론이 가능합니다.
+
+하지만 실전 교훈은 단순히 "매번 전체 저장소를 다 넣어라"가 아닙니다.
+
+좋은 방식은 보통 이렇습니다.
+
+- 먼저 **넓게 한 번 본다**
+- 그다음 **위험한 파일/영역만 좁혀서 본다**
+- 반복되는 규칙은 `GEMINI.md`로 빼서 프롬프트를 아낀다
+
+## 어떤 저장소에서 특히 잘 맞나?
+
+| 저장소 형태 | Gemini CLI 활용 결과 |
+|-------------|----------------------|
+| 30~80개 파일 앱 | 넓게 읽고 요약하기 쉬움 |
+| 중간 규모 제품 저장소 | 아키텍처 요약, 리팩터 계획에 강함 |
+| 큰 모놀리식 저장소 | 영역 단위 전체 분석에 좋음 |
+| 모노레포 | 패키지/도메인 단위로 나눠 쓰는 편이 효율적 |
+
+1M 토큰은 만능 버튼이 아니라, **스코프를 넓힐 수 있는 여유**라고 보는 편이 정확합니다.
+
+## 실제로 좋은 패턴
+
+### 1) 수정 전에 아키텍처 먼저 그리기
+
+```bash
+gemini "@src @content @package.json 이 앱의 아키텍처, 콘텐츠 파이프라인, 유지보수 리스크를 정리해줘"
+```
+
+클린업이나 마이그레이션 전에는 전역 지도가 먼저 필요합니다.
+
+### 2) 여러 레이어를 건드리는 변경 영향 분석
+
+```bash
+gemini "@src @package.json 콘텐츠 모델을 바꾸려 한다. loader, route, UI, localization 중 어디가 영향받는지 영역별로 정리해줘"
+```
+
+Gemini CLI가 특히 좋은 지점이 여기입니다. 콘텐츠, UI, 설정, 문서를 한 턴에서 같이 볼 수 있습니다.
+
+### 3) 넓게 보되 목적은 분명하게
+
+```bash
+gemini "@src @content 이 저장소에서 1) 로케일별 콘텐츠 불균형 2) 중복 로직 3) 오래된 문서 주장 4) 빠진 안전장치를 찾아줘"
+```
+
+### 4) 의존성 업그레이드 영향 점검
+
+```bash
+gemini "@package.json @src Next.js 16 전제를 쓰는 코드가 어디 있는지 요약하고 업그레이드 전에 검증할 항목을 정리해줘"
+```
+
+## 컨텍스트를 낭비하지 않는 방법
+
+### 막연한 요청보다 구조화된 포함이 낫다
+
+나쁜 예:
+
+```text
+전부 읽고 중요한 걸 말해줘.
+```
+
+더 좋은 예:
+
+```text
+@src @content @messages
+콘텐츠 아키텍처, 로케일 전략, slug parity가 깨질 수 있는 지점을 설명해줘.
+```
+
+### 반복 규칙은 `GEMINI.md`로 올리기
+
+예를 들어 아래 규칙은 매번 프롬프트에 적기보다 `GEMINI.md`로 올리는 게 좋습니다.
+
+- ko / en / es slug를 맞춘다
+- frontmatter 스키마를 유지한다
+- 문서 확인 없이 플래그를 만들지 않는다
+
+### 넓게 한 번, 좁게 여러 번
+
+좋은 Gemini CLI 루프는 보통 이렇게 갑니다.
+
+1. 저장소 넓게 스캔
+2. 리스크 요약
+3. 한 서브시스템만 집중 추적
+4. 구현 또는 검토
+
+## 토큰 캐싱은 비용 구조를 바꾼다
+
+공식 문서에 따르면 **토큰 캐싱**은 **Gemini API 키** 또는 **Vertex AI** 인증에서 사용할 수 있습니다. 반대로 Google 계정 OAuth 로그인에서는 현재 캐싱이 지원되지 않습니다.
+
+즉 큰 컨텍스트 워크플로를 자주 돌릴수록 아래 조합이 유리합니다.
+
+- `GEMINI_API_KEY`
+- 또는 Vertex AI 인증
+
+긴 세션에서는 `/stats`로 사용량과 cached token 절감량을 확인할 수 있습니다.
+
+## 한계도 분명히 알아두기
+
+- 컨텍스트가 클수록 처리 시간도 늘어납니다.
+- 입력이 커도 출력 길이는 여전히 제한됩니다.
+- 모노레포는 여전히 의식적인 분할이 필요합니다.
+- 큰 컨텍스트가 곧 완벽한 기억력을 뜻하지는 않습니다.
+
+답변 품질이 떨어지면, 더 크게 넣기보다 **범위를 줄이는 쪽**이 보통 맞습니다.
+
+## 언제 Gemini가 더 낫고, 언제 다른 도구가 낫나?
+
+| 상황 | 적합한 도구 | 이유 |
+|------|-------------|------|
+| 저장소 전체 아키텍처 브리프 | Gemini CLI | 큰 컨텍스트 |
+| 긴 대화형 편집 세션 | Claude Code | 상호작용 루프 강점 |
+| 고립된 구현 작업 | GPT Codex | 샌드박스 중심 실행 |
+| 크로스 모듈 rename / 정책 감사 | Gemini CLI | 여러 파일을 함께 보기 좋음 |
+| 다국어 콘텐츠 parity 점검 | Gemini CLI | 넓은 파일 집합을 한 번에 검토 가능 |
+
+## AN-Con 저장소에서 특히 좋은 활용
+
+이 저장소에서는 Gemini CLI가 특히 아래 작업에 잘 맞습니다.
+
+- `ko / en / es` slug parity 확인
+- frontmatter 일관성 점검
+- 언어별 문체/깊이 차이 분석
+- Gemini CLI 섹션 자체의 주제 공백 찾기
+
+예시:
+
+```bash
+gemini "@content ko, en, es의 gemini-cli 글을 비교해서 빠진 주제와 불균형한 설명을 찾아줘"
+```
+
+그다음 더 좁은 실행 턴으로 넘어가면 됩니다.
+
+## 다음에 읽으면 좋은 글
+
+- [Gemini CLI 시작하기](/gemini-cli/getting-started)
+- [Gemini Extensions & MCP](/gemini-cli/gemini-extensions)
+- [Headless Automation](/gemini-cli/headless-automation)

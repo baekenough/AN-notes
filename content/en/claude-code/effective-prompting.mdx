@@ -1,0 +1,125 @@
+---
+title: "Effective Prompting — Talk to Claude Like a Tech Lead"
+description: "Prompting strategies that get better results from Claude Code, from simple tasks to complex refactors"
+difficulty: beginner
+tags: ["prompting", "workflow", "productivity"]
+connections:
+  - slug: "claude-md-mastery"
+    tool: "claude-code"
+    type: "prerequisite"
+  - slug: "multi-agent-workflow"
+    tool: "claude-code"
+    type: "enhances"
+  - slug: "codex-task-design"
+    tool: "gpt-codex"
+    type: "compare"
+featured: true
+order: 3
+date: "2026-03-21"
+---
+
+> **Official References**: [Claude Code Overview](https://docs.anthropic.com/en/docs/claude-code/overview) · [Claude Code Best Practices](https://docs.anthropic.com/en/docs/claude-code/best-practices) · [Prompt Engineering Guide](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering)
+
+<!-- curriculum:start -->
+## Curriculum path
+
+1. [CLAUDE.md Mastery](/claude-code/claude-md-mastery) — repo memory and rules
+2. **Effective Prompting** — task framing and constraints ← **You are here**
+3. [MCP Power Tools](/claude-code/mcp-power-tools) — connect live tools and docs
+4. [Multi-Agent Workflows](/claude-code/multi-agent-workflow) — delegate and parallelize
+5. [Hooks Automation](/claude-code/hooks-automation) — automate guardrails locally
+6. [GitHub Actions Workflows](/claude-code/github-actions-workflows) — move repeatable work into team automation
+
+### Official docs used in this guide
+- **Prompting patterns and best practices** — [Best practices](https://docs.anthropic.com/en/docs/claude-code/best-practices)
+- **General prompt engineering concepts** — [Prompt engineering](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering)
+- **Claude Code usage model** — [Overview](https://docs.anthropic.com/en/docs/claude-code/overview)
+<!-- curriculum:end -->
+
+## The Key Insight
+
+Claude Code isn't a chatbot — it's a junior engineer with perfect memory and infinite patience. The best prompts are the same instructions you'd give a competent teammate.
+
+## Prompting Levels
+
+### Level 1: Direct Commands
+
+Good for simple, well-defined tasks:
+
+```
+Fix the TypeScript error in src/auth/login.ts
+```
+
+```
+Add input validation to the signup form — email format and password min 8 chars
+```
+
+### Level 2: Context + Intent
+
+Better for tasks that need judgment:
+
+```
+The /api/users endpoint is slow (~2s). Profile it and suggest optimizations.
+Don't change the database schema — we're mid-migration.
+```
+
+The constraint ("don't change schema") prevents Claude from going down the wrong path.
+
+### Level 3: Architectural Delegation
+
+For complex, multi-step work:
+
+```
+Refactor the payment module from callbacks to async/await.
+1. Start with the stripe integration (src/payments/stripe.ts)
+2. Update the order processor that depends on it
+3. Make sure existing tests still pass
+4. Don't touch the PayPal integration — that's next sprint
+```
+
+Numbered steps give Claude a roadmap. Exclusions prevent scope creep.
+
+## Anti-Patterns
+
+### The Vague Request
+
+```
+❌ "Make the code better"
+✅ "Reduce the cyclomatic complexity of processOrder() — it has 12 branches"
+```
+
+### The Kitchen Sink
+
+```
+❌ "Rewrite the entire auth system, add OAuth, implement RBAC, and add 2FA"
+✅ "Add Google OAuth to the existing auth system. Keep the current session management."
+   (Then follow up with RBAC and 2FA as separate tasks)
+```
+
+### Assuming Context
+
+```
+❌ "Fix the bug"
+✅ "Fix the race condition in useCart — adding items rapidly creates duplicate entries"
+```
+
+## The "Plan First" Pattern
+
+For non-trivial tasks, ask Claude to plan before executing:
+
+```
+I want to add real-time notifications using WebSockets.
+Before writing any code, outline your approach:
+- Which library?
+- Where does the WebSocket server live?
+- How does it integrate with our existing auth?
+```
+
+This catches architectural mismatches before Claude writes 500 lines in the wrong direction.
+
+## Codex Comparison
+
+GPT Codex works differently — you write a task description upfront and it executes autonomously. There's no back-and-forth conversation. This means:
+- Codex prompts need to be more complete upfront
+- Claude Code allows iterative refinement
+- Both benefit from explicit constraints and examples

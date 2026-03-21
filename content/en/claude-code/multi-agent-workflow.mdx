@@ -1,0 +1,108 @@
+---
+title: "Multi-Agent Workflows — Orchestrating Complex Tasks"
+description: "How to use Claude Code's subagent system for parallel execution, code review, and large-scale refactoring"
+difficulty: advanced
+tags: ["agents", "parallel", "workflow", "orchestration"]
+connections:
+  - slug: "effective-prompting"
+    tool: "claude-code"
+    type: "prerequisite"
+  - slug: "github-actions-workflows"
+    tool: "claude-code"
+    type: "enhances"
+  - slug: "codex-ci-cd-workflows"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 4
+date: "2026-03-21"
+---
+
+> **Official References**: [Sub-agents](https://docs.anthropic.com/en/docs/claude-code/sub-agents) · [Agent SDK](https://docs.anthropic.com/en/docs/agents-and-tools/agent-sdk) · [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code/cli-usage)
+
+<!-- curriculum:start -->
+## Curriculum path
+
+1. [CLAUDE.md Mastery](/claude-code/claude-md-mastery) — repo memory and rules
+2. [Effective Prompting](/claude-code/effective-prompting) — task framing and constraints
+3. [MCP Power Tools](/claude-code/mcp-power-tools) — connect tools and live context
+4. **Multi-Agent Workflows** — delegation and parallel execution ← **You are here**
+5. [Hooks Automation](/claude-code/hooks-automation) — automate guardrails locally
+6. [GitHub Actions Workflows](/claude-code/github-actions-workflows) — move repeatable work into team automation
+
+### Official docs used in this guide
+- **Subagents and delegation model** — [Sub-agents](https://docs.anthropic.com/en/docs/claude-code/sub-agents)
+- **Programmatic orchestration concepts** — [Agent SDK](https://docs.anthropic.com/en/docs/agents-and-tools/agent-sdk)
+- **CLI execution patterns** — [CLI usage](https://docs.anthropic.com/en/docs/claude-code/cli-usage)
+<!-- curriculum:end -->
+
+## What Are Subagents?
+
+Claude Code can spawn specialized subagents — separate Claude instances that work on focused tasks in parallel. Think of it as Claude delegating work to a team.
+
+## When to Use Subagents
+
+| Scenario | Single Agent | Subagents |
+|----------|-------------|-----------|
+| Fix a typo | ✅ | Overkill |
+| Review 3 files | ✅ | ✅ (faster) |
+| Refactor 20 files | Too slow | ✅ |
+| Research + implement | ✅ | ✅ (parallel) |
+| Cross-module debugging | Loses context | ✅ |
+
+## The Orchestrator Pattern
+
+The main conversation acts as an orchestrator — it plans the work and delegates to specialists:
+
+```
+You: "Review the authentication module for security issues"
+
+Claude (orchestrator):
+  → Spawns Agent 1: Review auth/login.ts for injection risks
+  → Spawns Agent 2: Review auth/session.ts for token handling
+  → Spawns Agent 3: Review auth/middleware.ts for bypass risks
+  → Aggregates findings into a single report
+```
+
+## Practical Example: Large Refactoring
+
+```
+Migrate all API routes from Express middleware pattern to Next.js Route Handlers.
+
+There are 15 routes in src/api/. Use parallel agents —
+one per route group (auth, users, products, orders, analytics).
+
+Don't modify the shared utility functions in src/api/utils/.
+```
+
+Claude will:
+1. Analyze the route groups
+2. Spawn 5 parallel agents
+3. Each agent handles 3 routes
+4. Results are aggregated and conflicts resolved
+
+## Agent Teams (Experimental)
+
+Claude Code's Agent Teams feature enables peer-to-peer communication between agents. Instead of everything going through the orchestrator:
+
+```
+Reviewer Agent ←→ Implementer Agent
+     ↕                    ↕
+   Tester Agent ←→ Documentation Agent
+```
+
+Best for:
+- Code review → fix → re-review cycles
+- Complex debugging across modules
+- Research requiring discussion and synthesis
+
+## Codex Comparison
+
+GPT Codex runs each task as a single sandboxed agent. There's no multi-agent orchestration — but the sandbox model gives full container isolation per task.
+
+| Feature | Claude Code Subagents | Codex Tasks |
+|---------|---------------------|-------------|
+| Parallelism | Up to 4 concurrent | Concurrent tasks possible |
+| Communication | Shared context, messaging | Independent, isolated |
+| State sharing | Via files and task lists | Via committed code |
+| Best for | Complex, interconnected work | Independent, well-defined tasks |

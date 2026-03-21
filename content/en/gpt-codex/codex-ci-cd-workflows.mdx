@@ -1,0 +1,175 @@
+---
+title: "Codex in CI/CD — Repeatable Reviews, Fixes, and Batch Work"
+description: "Where Codex fits in CI pipelines, background task queues, and repeatable engineering automation without turning every workflow into a risky black box"
+difficulty: advanced
+tags: ["ci-cd", "automation", "review", "workflow"]
+connections:
+  - slug: "codex-task-design"
+    tool: "gpt-codex"
+    type: "prerequisite"
+  - slug: "codex-sandbox"
+    tool: "gpt-codex"
+    type: "prerequisite"
+  - slug: "multi-agent-workflow"
+    tool: "claude-code"
+    type: "compare"
+featured: false
+order: 4
+date: "2026-03-21"
+---
+
+> **Official References**: [Code Generation Guide](https://platform.openai.com/docs/guides/code-generation) · [Cloud Environments](https://developers.openai.com/codex/cloud/environments) · [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [How OpenAI uses Codex](https://openai.com/business/guides-and-resources/how-openai-uses-codex/)
+
+<!-- curriculum:start -->
+## Curriculum path
+
+1. [Codex Instructions](/gpt-codex/codex-instructions) — instruction layering and repo rules
+2. [Codex Sandboxing](/gpt-codex/codex-sandbox) — permissions and cloud environments
+3. [Codex Task Design](/gpt-codex/codex-task-design) — scope and issue-shaped prompts
+4. **Codex in CI/CD** — repeatable automation and batch work ← **You are here**
+
+### Official docs used in this guide
+- **Where Codex fits in CI/CD pipelines** — [Code generation](https://developers.openai.com/api/docs/guides/code-generation)
+- **Setup scripts, environment variables, and secrets in cloud execution** — [Cloud environments](https://developers.openai.com/codex/cloud/environments)
+- **Task queue and Best-of-N for repeatable automation** — [How OpenAI uses Codex](https://openai.com/business/guides-and-resources/how-openai-uses-codex/)
+<!-- curriculum:end -->
+
+## Why Codex Works Well in Pipelines
+
+Codex is a good fit for CI/CD because its execution model is naturally bounded:
+
+- tasks are isolated
+- environments can be reproducible
+- setup is explicit
+- output is reviewable as a diff or report
+
+That makes it more pipeline-friendly than a purely conversational coding assistant.
+
+## Good CI/CD Use Cases
+
+Codex is especially strong for jobs like:
+
+- automated code review comments
+- test generation for touched modules
+- docs refresh for changed APIs
+- dependency migration follow-ups
+- repetitive refactors across known file patterns
+- issue-shaped bug fixes with deterministic reproduction
+
+These are all tasks where “bounded, inspectable, repeatable” matters more than live brainstorming.
+
+## Bad CI/CD Use Cases
+
+Avoid pushing Codex into pipeline steps that require:
+
+- product ambiguity
+- live decision making with a human loop every minute
+- broad architectural invention across unrelated systems
+- unsafe production credentials or wide-open internet access
+
+Codex is strongest when the system can validate the result after the change.
+
+## A Simple Pipeline Pattern
+
+A practical Codex workflow often looks like this:
+
+1. Trigger on PR or issue label
+2. Spin up a cloud environment with a deterministic setup script
+3. Pass an issue-shaped task prompt
+4. Let Codex edit, run checks, and produce a summary
+5. Require human review before merge
+
+This keeps the agent autonomous without making the merge path fully trust-based.
+
+## Use Setup Scripts Like Build Contracts
+
+In CI and cloud tasks, setup scripts are part of the contract.
+
+A good setup script should install everything needed for the agent to succeed without improvising:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+npm ci
+npm run codegen
+npm run db:prepare-test
+```
+
+If your pipeline success depends on hidden local state, Codex will feel flaky even when the model is fine.
+
+## Keep Validation Mechanical
+
+The best Codex pipeline stages end with unambiguous checks:
+
+- lint
+- typecheck
+- unit tests
+- snapshot or fixture validation
+- narrow integration tests
+
+Prefer “the task passes when these commands pass” over subjective checks like “the change looks production-ready.”
+
+## CI/CD Is Not Just GitHub Actions
+
+Even if you do not fully automate Codex in CI, the same mindset applies to background task queues and team workflows.
+
+Good uses:
+
+- queue a cleanup task while you work elsewhere
+- batch five similar doc fixes instead of doing them manually
+- send a reproducible bug task to Codex while you stay on the main thread
+
+OpenAI describes this as using the task queue like a lightweight backlog. That is often a better mental model than “one task, one final PR, every time.”
+
+## Human Review Should Stay in the Loop
+
+The right question is not “can Codex merge by itself?” but “where should humans review?”
+
+Good review boundaries:
+
+- API contract changes
+- schema or migration edits
+- auth, billing, or security logic
+- user-facing copy and product behavior
+- anything that changes ops or deployment assumptions
+
+Let Codex do the mechanical work. Keep irreversible judgment with reviewers.
+
+## Parallel Batch Work
+
+Codex also shines when work is embarrassingly parallel.
+
+Examples:
+
+- migrate ten similar handlers
+- update doc frontmatter across many files
+- generate tests for multiple isolated modules
+- apply the same lint-safe refactor to a directory tree
+
+This is where bounded autonomous tasks can save hours.
+
+## A Useful Adoption Ladder
+
+If your team is new to Codex, adopt in stages:
+
+### Stage 1
+Review-only or suggestion-only tasks
+
+### Stage 2
+Small automated fixes behind human review
+
+### Stage 3
+Repetitive migration and maintenance tasks
+
+### Stage 4
+Richer queued workflows with cloud setup and constrained internet
+
+Teams that skip directly to full automation usually end up tightening permissions after avoidable mistakes.
+
+## The Real Win
+
+The biggest gain is not “AI writes all the code.”
+It is that repetitive, bounded engineering work becomes easier to delegate without losing reproducibility.
+
+That is why Codex feels especially natural in CI/CD and structured team workflows.

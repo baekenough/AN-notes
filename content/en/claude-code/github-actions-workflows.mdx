@@ -1,0 +1,163 @@
+---
+title: "GitHub Actions Workflows — Put Claude Code on Repeated Team Jobs"
+description: "Where Claude Code fits in GitHub Actions, review automation, and repo maintenance workflows without over-automating the wrong things"
+difficulty: advanced
+tags: ["github-actions", "automation", "review", "team-workflow"]
+connections:
+  - slug: "multi-agent-workflow"
+    tool: "claude-code"
+    type: "prerequisite"
+  - slug: "hooks-automation"
+    tool: "claude-code"
+    type: "enhances"
+  - slug: "codex-ci-cd-workflows"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 6
+date: "2026-03-21"
+---
+
+> **Official References**: [GitHub Actions](https://docs.anthropic.com/en/docs/claude-code/github-actions) · [Claude Code Overview](https://docs.anthropic.com/en/docs/claude-code/overview) · [Claude Code SDK](https://docs.anthropic.com/en/docs/claude-code/sdk)
+
+<!-- curriculum:start -->
+## Curriculum path
+
+1. [CLAUDE.md Mastery](/claude-code/claude-md-mastery) — repo memory and rules
+2. [Effective Prompting](/claude-code/effective-prompting) — task framing and constraints
+3. [MCP Power Tools](/claude-code/mcp-power-tools) — connect tools and live context
+4. [Multi-Agent Workflows](/claude-code/multi-agent-workflow) — delegation and parallel execution
+5. [Hooks Automation](/claude-code/hooks-automation) — local workflow enforcement
+6. **GitHub Actions Workflows** — repeated team automation ← **You are here**
+
+### Official docs used in this guide
+- **Claude Code in GitHub Actions** — [GitHub Actions](https://docs.anthropic.com/en/docs/claude-code/github-actions)
+- **Automation and orchestration surface** — [SDK](https://docs.anthropic.com/en/docs/claude-code/sdk)
+- **How Claude Code fits into broader workflows** — [Overview](https://docs.anthropic.com/en/docs/claude-code/overview)
+<!-- curriculum:end -->
+
+## Where Claude Code Fits in Team Automation
+
+Claude Code is strongest in day-to-day interactive development, but Anthropic also supports using it in GitHub Actions and automation flows.
+
+That opens up good team use cases such as:
+
+- PR review against a checklist
+- issue triage and summaries
+- maintenance documentation refresh
+- structured fix suggestions on failed workflows
+- repeatable repo tasks triggered by labels or comments
+
+## Good Automation Jobs
+
+Claude Code works well in automation when the work is:
+
+- bounded
+- reviewable
+- attached to a real artifact like a PR or issue
+- still valuable even when a human approves the final outcome
+
+Examples:
+
+- “Review this PR for security and migration risks”
+- “Summarize failing checks and propose likely fixes”
+- “Draft release notes from merged PRs”
+
+## Bad Automation Jobs
+
+Avoid pushing Claude Code automation into workflows that need:
+
+- broad product invention
+- unrestricted secret access
+- high-risk production changes without review
+- vague goals with no validation path
+
+If a job would scare you when run by a shell script, it should also scare you when run by an AI workflow.
+
+## The Practical Pattern
+
+A healthy GitHub Actions workflow usually looks like this:
+
+1. trigger from PR, issue, or label
+2. pass clear repo context
+3. run Claude on a narrow job
+4. capture output as a comment, summary, or artifact
+5. keep a human reviewer in the merge path
+
+That balance matters. The goal is not “remove humans.” It is “reduce repetitive team work.”
+
+## Pair It with Repository Guidance
+
+Automation gets better when the repo already has strong instructions.
+
+Useful guidance sources:
+
+- `CLAUDE.md` for coding rules and architecture
+- issue templates for task shape
+- review checklists for stable policy
+- hooks for local enforcement during interactive work
+
+If your repo guidance is weak, GitHub automation will just scale ambiguity faster.
+
+## Strong Use Cases
+
+### PR review assistant
+
+Claude reviews the diff and comments on:
+
+- risky assumptions
+- missing tests
+- security concerns
+- style violations relative to repo rules
+
+### Failure triage assistant
+
+Claude reads failing workflow logs and summarizes:
+
+- what failed first
+- likely root causes
+- suggested next steps
+
+### Documentation assistant
+
+Claude updates:
+
+- release notes
+- migration checklists
+- onboarding docs
+- PR summaries
+
+These are all good because they are high-frequency and structurally repetitive.
+
+## Claude Code vs Codex in CI
+
+Claude Code and Codex can both help in CI/CD, but they tend to shine in slightly different ways.
+
+| Tool | Stronger when |
+|------|---------------|
+| Claude Code | you want rich review, synthesis, and workflow commentary |
+| Codex | you want bounded execution, code changes, and task isolation |
+
+A useful rule of thumb:
+
+- use Claude when the workflow is heavy on explanation and review
+- use Codex when the workflow is heavy on execution and validation
+
+## Start with Commenting, Not Merging
+
+The safest first step is usually automation that comments, summarizes, or drafts.
+
+Examples:
+
+- review comments on PRs
+- failure summaries on CI jobs
+- generated release notes
+
+Jumping straight to autonomous merge behavior is usually the wrong starting point.
+
+## The Real Value
+
+The real payoff is not flashy autonomy.
+It is making repeated team workflows faster, more consistent, and easier to review.
+
+That is where Claude Code automation becomes genuinely useful.

@@ -1,0 +1,79 @@
+---
+title: "Workflows con GitHub Actions — Usa Claude Code en Tareas Repetidas del Equipo"
+description: "Dónde encaja Claude Code en GitHub Actions, review automation y mantenimiento del repo sin sobreautomatizar lo que todavía necesita juicio humano"
+difficulty: advanced
+tags: ["github-actions", "automatizacion", "review", "equipo"]
+connections:
+  - slug: "multi-agent-workflow"
+    tool: "claude-code"
+    type: "prerequisite"
+  - slug: "hooks-automation"
+    tool: "claude-code"
+    type: "enhances"
+  - slug: "codex-ci-cd-workflows"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 6
+date: "2026-03-21"
+---
+
+> **Referencias Oficiales**: [GitHub Actions](https://docs.anthropic.com/en/docs/claude-code/github-actions) · [Overview](https://docs.anthropic.com/en/docs/claude-code/overview) · [SDK](https://docs.anthropic.com/en/docs/claude-code/sdk)
+
+<!-- curriculum:start -->
+## Ruta del currículo
+
+1. [CLAUDE.md Mastery](/claude-code/claude-md-mastery) — memoria del repo y reglas
+2. [Effective Prompting](/claude-code/effective-prompting) — framing de tareas y restricciones
+3. [MCP Power Tools](/claude-code/mcp-power-tools) — herramientas y contexto vivo
+4. [Multi-Agent Workflows](/claude-code/multi-agent-workflow) — delegación y ejecución en paralelo
+5. [Hooks Automation](/claude-code/hooks-automation) — enforcement local del flujo de trabajo
+6. **GitHub Actions Workflows** — automatización repetida de equipo ← **Estás aquí**
+
+### Documentación oficial usada en esta guía
+- **Claude Code dentro de GitHub Actions** — [GitHub Actions](https://docs.anthropic.com/en/docs/claude-code/github-actions)
+- **Superficie de automatización y SDK** — [SDK](https://docs.anthropic.com/en/docs/claude-code/sdk)
+- **Cómo encaja en workflows más amplios** — [Overview](https://docs.anthropic.com/en/docs/claude-code/overview)
+<!-- curriculum:end -->
+
+## Dónde Encaja Claude Code en Automatización de Equipo
+
+Claude Code brilla en desarrollo interactivo, pero Anthropic también soporta su uso en GitHub Actions y flujos automatizados.
+
+Buenos usos:
+
+- review de PRs con checklist
+- triage de issues
+- resúmenes de checks fallidos
+- borradores de release notes
+- tareas repetidas disparadas por labels o comentarios
+
+## Buenas Tareas para Automatizar
+
+Funciona bien cuando el trabajo es:
+
+- acotado
+- revisable
+- asociado a un PR o issue real
+- útil aunque la decisión final siga siendo humana
+
+## Malas Tareas para Automatizar
+
+No fuerces Claude Code en trabajos que requieren invención amplia, acceso muy sensible o cambios de alto riesgo sin review.
+
+## Patrón Práctico
+
+1. trigger por PR, issue o label
+2. contexto claro del repo
+3. Claude ejecuta un trabajo estrecho
+4. salida como comentario, resumen o artifact
+5. humano sigue en el camino del merge
+
+## Claude vs Codex en CI
+
+- Claude: mejor para review, síntesis y explicación
+- Codex: mejor para ejecución acotada, cambios y validación
+
+## Empieza Comentando, No Mergeando
+
+El mejor primer paso suele ser automatización que comenta, resume o redacta, no que mergea sola.

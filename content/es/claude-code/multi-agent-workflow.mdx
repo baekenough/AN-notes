@@ -1,0 +1,94 @@
+---
+title: "Flujos de Trabajo Multi-Agente — Orquestando Tareas Complejas"
+description: "Cómo usar el sistema de subagentes de Claude Code para ejecución paralela, revisión de código y refactorización a gran escala"
+difficulty: advanced
+tags: ["agentes", "paralelo", "flujo-de-trabajo", "orquestacion"]
+connections:
+  - slug: "effective-prompting"
+    tool: "claude-code"
+    type: "prerequisite"
+  - slug: "github-actions-workflows"
+    tool: "claude-code"
+    type: "enhances"
+  - slug: "codex-ci-cd-workflows"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 4
+date: "2026-03-21"
+---
+
+> **Referencias Oficiales**: [Sub-agents](https://docs.anthropic.com/en/docs/claude-code/sub-agents) · [Agent SDK](https://docs.anthropic.com/en/docs/agents-and-tools/agent-sdk) · [CLI usage](https://docs.anthropic.com/en/docs/claude-code/cli-usage)
+
+<!-- curriculum:start -->
+## Ruta del currículo
+
+1. [CLAUDE.md Mastery](/claude-code/claude-md-mastery) — memoria del repo y reglas
+2. [Effective Prompting](/claude-code/effective-prompting) — framing de tareas y restricciones
+3. [MCP Power Tools](/claude-code/mcp-power-tools) — herramientas y contexto vivo
+4. **Multi-Agent Workflows** — delegación y ejecución en paralelo ← **Estás aquí**
+5. [Hooks Automation](/claude-code/hooks-automation) — guardrails automáticos en local
+6. [GitHub Actions Workflows](/claude-code/github-actions-workflows) — mover trabajo repetible a automatización de equipo
+
+### Documentación oficial usada en esta guía
+- **Subagents y modelo de delegación** — [Sub-agents](https://docs.anthropic.com/en/docs/claude-code/sub-agents)
+- **Conceptos de orquestación programática** — [Agent SDK](https://docs.anthropic.com/en/docs/agents-and-tools/agent-sdk)
+- **Patrones de uso del CLI** — [CLI usage](https://docs.anthropic.com/en/docs/claude-code/cli-usage)
+<!-- curriculum:end -->
+
+## ¿Qué Son los Subagentes?
+
+Claude Code puede generar subagentes especializados — instancias separadas de Claude que trabajan en tareas enfocadas en paralelo. Piénsalo como Claude delegando trabajo a un equipo.
+
+## Cuándo Usar Subagentes
+
+| Escenario | Agente Único | Subagentes |
+|-----------|-------------|-----------|
+| Corregir un typo | ✅ | Excesivo |
+| Revisar 3 archivos | ✅ | ✅ (más rápido) |
+| Refactorizar 20 archivos | Muy lento | ✅ |
+| Investigar + implementar | ✅ | ✅ (paralelo) |
+| Depuración entre módulos | Pierde contexto | ✅ |
+
+## El Patrón Orquestador
+
+La conversación principal actúa como orquestador — planifica el trabajo y delega a especialistas:
+
+```
+Tú: "Revisa el módulo de autenticación por problemas de seguridad"
+
+Claude (orquestador):
+  → Genera Agente 1: Revisar auth/login.ts por riesgos de inyección
+  → Genera Agente 2: Revisar auth/session.ts por manejo de tokens
+  → Genera Agente 3: Revisar auth/middleware.ts por riesgos de bypass
+  → Agrega hallazgos en un único reporte
+```
+
+## Ejemplo Práctico: Refactorización Grande
+
+```
+Migra todas las rutas API del patrón Express middleware a Next.js Route Handlers.
+
+Hay 15 rutas en src/api/. Usa agentes paralelos —
+uno por grupo de rutas (auth, users, products, orders, analytics).
+
+No modifiques las funciones utilitarias compartidas en src/api/utils/.
+```
+
+## Agent Teams (Experimental)
+
+La función Agent Teams de Claude Code habilita comunicación peer-to-peer entre agentes, ideal para:
+- Ciclos de revisión de código → corrección → re-revisión
+- Depuración compleja entre módulos
+- Investigación que requiere discusión y síntesis
+
+## Comparación con Codex
+
+GPT Codex ejecuta cada tarea como un único agente en sandbox. No hay orquestación multi-agente, pero el modelo de sandbox da aislamiento completo de contenedor por tarea.
+
+| Característica | Subagentes Claude Code | Tareas Codex |
+|---------------|----------------------|-------------|
+| Paralelismo | Hasta 4 concurrentes | Tareas concurrentes posibles |
+| Comunicación | Contexto compartido, mensajería | Independiente, aislado |
+| Mejor para | Trabajo complejo e interconectado | Tareas independientes bien definidas |
+

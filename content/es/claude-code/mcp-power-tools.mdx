@@ -1,0 +1,98 @@
+---
+title: "MCP Power Tools — Extendiendo el Alcance de Claude"
+description: "Cómo configurar y usar servidores MCP para darle superpoderes a Claude Code"
+difficulty: intermediate
+tags: ["mcp", "herramientas", "integracion", "servidores"]
+connections:
+  - slug: "claude-md-mastery"
+    tool: "claude-code"
+    type: "prerequisite"
+  - slug: "hooks-automation"
+    tool: "claude-code"
+    type: "enhances"
+  - slug: "codex-sandbox"
+    tool: "gpt-codex"
+    type: "compare"
+featured: true
+order: 2
+date: "2026-03-21"
+---
+
+> **Referencias Oficiales**: [MCP](https://docs.anthropic.com/en/docs/claude-code/mcp) · [MCP Specification](https://modelcontextprotocol.io/) · [Overview](https://docs.anthropic.com/en/docs/claude-code/overview)
+
+<!-- curriculum:start -->
+## Ruta del currículo
+
+1. [CLAUDE.md Mastery](/claude-code/claude-md-mastery) — memoria del repo y reglas
+2. [Effective Prompting](/claude-code/effective-prompting) — framing de tareas y restricciones
+3. **MCP Power Tools** — herramientas y contexto vivo ← **Estás aquí**
+4. [Multi-Agent Workflows](/claude-code/multi-agent-workflow) — delegar y paralelizar
+5. [Hooks Automation](/claude-code/hooks-automation) — guardrails automáticos en local
+6. [GitHub Actions Workflows](/claude-code/github-actions-workflows) — mover trabajo repetible a automatización de equipo
+
+### Documentación oficial usada en esta guía
+- **Cómo Claude Code se conecta a servidores MCP** — [MCP](https://docs.anthropic.com/en/docs/claude-code/mcp)
+- **Configuración project-scope vs user-scope** — [MCP](https://docs.anthropic.com/en/docs/claude-code/mcp)
+- **Por qué MCP encaja tan bien aquí** — [Overview](https://docs.anthropic.com/en/docs/claude-code/overview)
+<!-- curriculum:end -->
+
+## ¿Qué es MCP?
+
+Model Context Protocol (MCP) permite dar a Claude Code acceso a herramientas externas y fuentes de datos. Piénsalo como plugins para tu asistente AI.
+
+Sin MCP, Claude puede leer archivos y ejecutar comandos de shell. Con MCP, Claude puede:
+- Consultar bases de datos directamente
+- Buscar en documentación interna de tu empresa
+- Interactuar con APIs (Jira, Slack, GitHub)
+- Acceder a herramientas especializadas (navegadores, herramientas de diseño)
+
+## Configurando Servidores MCP
+
+Los servidores MCP se configuran en `.mcp.json` en la raíz del proyecto:
+
+```json
+{
+  "mcpServers": {
+    "postgres": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres"],
+      "env": {
+        "DATABASE_URL": "postgresql://user:pass@localhost:5432/mydb"
+      }
+    }
+  }
+}
+```
+
+### Servidores MCP Esenciales
+
+| Servidor | Qué Hace | Cuándo Usar |
+|----------|---------|------------|
+| `server-postgres` | Consultas directas a BD | Cuando Claude necesita entender tu schema |
+| `server-github` | Acceso a API de GitHub | Revisiones de PR, gestión de issues |
+| `context7` | Búsqueda de docs de librerías | Cuando necesitas APIs actualizadas |
+
+### El Patrón context7
+
+Uno de los servidores MCP más útiles. En lugar de que Claude adivine firmas de API:
+
+```
+Tú: "Agrega paginación a esta página de Next.js"
+Claude: *usa context7 para obtener docs actuales de Next.js*
+Claude: *implementa con API actual, no patrones desactualizados*
+```
+
+## MCP vs. Sandbox de Codex
+
+| Aspecto | MCP (Claude Code) | Sandbox (Codex) |
+|---------|-------------------|-----------------|
+| Configuración | Archivo de config por proyecto | Dockerfile/script de setup |
+| Acceso | Permisos herramienta por herramienta | Acceso completo al contenedor |
+| Seguridad | Granular, nivel de protocolo | Aislamiento de contenedor |
+
+## Consejos Pro
+
+No sobre-conectes — cada servidor MCP agrega overhead de contexto. Comienza con 2-3 esenciales.
+
+Combina con CLAUDE.md para decirle a Claude cuándo usar qué herramienta MCP.
+

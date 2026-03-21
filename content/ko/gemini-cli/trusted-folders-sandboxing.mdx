@@ -1,0 +1,162 @@
+---
+title: "Trusted Folders, Sandboxing, 그리고 Restore"
+description: "trusted folders, 샌드박스 실행, checkpoint 복구까지 Gemini CLI를 안전하게 쓰는 방법"
+difficulty: intermediate
+tags: ["보안", "샌드박스", "trusted-folders", "checkpointing"]
+connections:
+  - slug: "codex-sandbox"
+    tool: "gpt-codex"
+    type: "compare"
+  - slug: "gemini-extensions"
+    tool: "gemini-cli"
+    type: "prerequisite"
+  - slug: "headless-automation"
+    tool: "gemini-cli"
+    type: "enhances"
+featured: false
+order: 4
+date: "2026-03-21"
+---
+
+> **공식 레퍼런스**: [Trusted folders](https://geminicli.com/docs/cli/trusted-folders/) · [Sandboxing](https://geminicli.com/docs/cli/sandbox/) · [Checkpointing](https://geminicli.com/docs/cli/checkpointing/) · [Configuration reference](https://geminicli.com/docs/reference/configuration)
+
+## Gemini CLI에도 이제 꽤 분명한 안전 모델이 있다
+
+아직도 Gemini CLI를 "터미널에서 대화만 하는 도구" 정도로 보는 경우가 많습니다. 하지만 현재 공식 문서를 보면 안전 모델이 꽤 분명합니다.
+
+- **trusted folders**: 어떤 워크스페이스에 전체 기능을 열어 줄지 결정
+- **sandboxing**: 위험한 실행을 호스트 밖으로 격리
+- **checkpointing**: AI가 파일을 쓰기 전에 되돌릴 지점을 생성
+
+이 세 가지가 합쳐지면 실제 저장소에서도 훨씬 안심하고 쓸 수 있습니다.
+
+## Trusted folders: 낯선 저장소에서 자신을 보호하기
+
+trusted folders는 **기본값으로 비활성화**되어 있습니다. 켜면 Gemini CLI가 프로젝트별 설정을 읽기 전에 해당 폴더를 신뢰할지 묻습니다.
+
+사용자 설정에 추가:
+
+```json
+{
+  "security": {
+    "folderTrust": {
+      "enabled": true
+    }
+  }
+}
+```
+
+### 신뢰 다이얼로그에서 고를 수 있는 것
+
+- **Trust folder** — 현재 프로젝트만 신뢰
+- **Trust parent folder** — 상위 디렉터리 전체를 신뢰
+- **Don't trust** — 제한된 safe mode로 실행
+
+결정 내용은 다음 파일에 저장됩니다.
+
+```text
+~/.gemini/trustedFolders.json
+```
+
+## 신뢰하지 않은 워크스페이스에서는 무엇이 막히나?
+
+공식 문서는 untrusted 모드에서 아래 기능이 비활성화되거나 제한된다고 설명합니다.
+
+- workspace `.gemini/settings.json`
+- 프로젝트 `.env` 로딩
+- extension 설치 / 업데이트 / 제거
+- tool auto-acceptance
+- local settings 기반 자동 memory 로딩
+- MCP 서버 연결
+- custom commands
+
+즉 외부 저장소, 고객 저장소, 데모 저장소를 자주 다룬다면 trusted folders는 거의 필수에 가깝습니다.
+
+## Sandboxing: 위험한 실행을 격리하기
+
+Gemini CLI는 파일 수정이나 셸 실행을 호스트가 아니라 샌드박스 안에서 돌릴 수 있습니다.
+
+```bash
+gemini --sandbox
+```
+
+또는 `GEMINI_SANDBOX` 같은 환경변수/설정으로 제어할 수 있습니다.
+
+### 프로젝트 전용 샌드박스 이미지
+
+문서는 프로젝트별 추가 의존성이 필요하면 아래 경로의 커스텀 Dockerfile을 지원합니다.
+
+```text
+.gemini/sandbox.Dockerfile
+```
+
+호스트 환경에 이것저것 설치하기보다, 프로젝트마다 필요한 실행 환경을 분리할 수 있다는 점이 큽니다.
+
+## Checkpointing: AI가 파일 쓰기 전에 복구 지점 만들기
+
+checkpointing은 별도 기능이며 **기본값은 꺼짐**입니다.
+
+`settings.json`에 다음처럼 추가합니다.
+
+```json
+{
+  "general": {
+    "checkpointing": {
+      "enabled": true
+    }
+  }
+}
+```
+
+켜 두면 파일 수정 도구가 실행되기 전에 checkpoint가 만들어집니다.
+
+그 안에는 다음이 포함됩니다.
+
+1. shadow Git snapshot
+2. 대화 기록
+3. 실행 직전의 tool call
+
+### `/restore`로 복원
+
+```text
+/restore
+/restore <checkpoint_file>
+```
+
+편집 범위가 큰 세션에서는 이 기능이 체감상 매우 큽니다.
+
+## 실제 사용 패턴 제안
+
+### 내가 관리하는 신뢰 저장소
+
+- 폴더를 trust
+- 일반 interactive mode 사용
+- 대규모 수정이면 checkpointing 켜기
+
+### 익숙하지 않은 고객 저장소
+
+- trusted folders를 전역으로 켜기
+- 바로 trust하지 말고 구조를 먼저 확인
+- 위험한 명령은 sandboxing 우선
+
+### 자동화나 대량 생성 작업
+
+- sandbox 실행
+- checkpointing 켜기
+- 넓은 수정 전에는 diff 검토
+
+## Codex / Claude Code와 비교하면
+
+| 도구 | 안전성 기본 성격 |
+|------|------------------|
+| Claude Code | 로컬 환경 + 확인 프롬프트 + MCP 경계 |
+| GPT Codex | 샌드박스 중심 실행 모델 |
+| Gemini CLI | 로컬 중심이지만 trusted folders / sandbox / restore를 추가 가능 |
+
+Gemini CLI의 로컬 사용감은 좋지만 안전장치가 더 필요하다고 느꼈다면, 바로 이 세 기능이 그 간극을 메워 줍니다.
+
+## 다음에 읽으면 좋은 글
+
+- [Headless Automation](/gemini-cli/headless-automation)
+- [Gemini Extensions & MCP](/gemini-cli/gemini-extensions)
+- [Codex Sandbox](/gpt-codex/codex-sandbox)

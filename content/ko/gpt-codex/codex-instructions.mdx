@@ -1,0 +1,241 @@
+---
+title: "Codex 지시문 — AGENTS.md를 진짜 쓸모 있게 만드는 법"
+description: "레이어드 AGENTS.md, 구조화된 프롬프트, config.toml을 활용해 GPT Codex를 저장소와 작업 전반에서 더 안정적으로 쓰는 방법"
+difficulty: beginner
+tags: ["agents-md", "설정", "워크플로우", "검증"]
+connections:
+  - slug: "codex-sandbox"
+    tool: "gpt-codex"
+    type: "enhances"
+  - slug: "codex-task-design"
+    tool: "gpt-codex"
+    type: "enhances"
+  - slug: "claude-md-mastery"
+    tool: "claude-code"
+    type: "compare"
+featured: true
+order: 1
+date: "2026-03-21"
+---
+
+> **공식 참고 자료**: [AGENTS.md 가이드](https://developers.openai.com/codex/guides/agents-md) · [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [Config Basics](https://developers.openai.com/codex/config-basic)
+
+<!-- curriculum:start -->
+## 커리큘럼 흐름
+
+1. **Codex 지시문** — instruction layering, 저장소 규칙, 기본 config ← **현재 문서**
+2. [Codex 샌드박싱](/gpt-codex/codex-sandbox) — 권한, 승인, cloud environment
+3. [Codex 작업 설계](/gpt-codex/codex-task-design) — scope, 프롬프트, 작업 분해
+4. [Codex와 CI/CD](/gpt-codex/codex-ci-cd-workflows) — 반복 자동화와 배치 작업
+
+### 이 문서에서 참고한 공식 문서
+- **지시문 탐색 순서, 전역 가이드, 로컬 override** — [Custom instructions with AGENTS.md](https://developers.openai.com/codex/guides/agents-md)
+- **레이어드 instruction과 fallback filename 설정** — [Custom instructions with AGENTS.md](https://developers.openai.com/codex/guides/agents-md), [Config basics](https://developers.openai.com/codex/config-basic)
+- **실전적인 `AGENTS.md`에 들어가야 할 내용** — [Best practices](https://developers.openai.com/codex/learn/best-practices)
+<!-- curriculum:end -->
+
+## 왜 중요한가
+
+Codex는 단순한 프롬프트 입력창처럼 다루는 순간 한계가 빨리 드러납니다. 반대로 프로젝트 맥락을 지속적으로 제공하면 훨씬 안정적으로 동작합니다.
+
+현재 OpenAI 문서는 두 레이어를 함께 쓰는 방식을 권장합니다.
+
+1. **지금 작업용 프롬프트**
+2. **저장소의 지속 규칙을 담는 `AGENTS.md`**
+
+쉽게 말해 프롬프트는 **오늘의 일감**이고, `AGENTS.md`는 **이 팀이 일하는 방식**입니다.
+
+## Codex는 지시문을 어떻게 찾나
+
+이제 Codex는 단일 파일 하나만 보는 게 아니라 **instruction chain**을 만듭니다.
+
+1. `~/.codex/AGENTS.md`의 **전역 지침**
+2. 저장소 루트부터 현재 디렉터리까지 내려오며 찾는 **프로젝트 지침**
+3. **가까운 파일이 우선**되며 뒤에서 덮어씀
+
+예를 들면 이렇게 구성할 수 있습니다.
+
+```text
+~/.codex/AGENTS.md               # 개인 기본 규칙
+repo/AGENTS.md                   # 저장소 공통 규칙
+repo/services/payments/AGENTS.md # payments 전용 override
+```
+
+이 구조가 강력한 이유는 역할이 분명하기 때문입니다.
+- 전역 파일 = 개인 작업 습관
+- 루트 파일 = 팀 규칙
+- 하위 파일 = 도메인별 예외
+
+## AGENTS.md vs config.toml vs 프롬프트
+
+셋은 비슷해 보여도 역할이 다릅니다.
+
+| 표면 | 잘 맞는 용도 | 넣지 말아야 할 것 |
+|------|--------------|-------------------|
+| `AGENTS.md` | 코딩 규칙, 아키텍처, 테스트 명령, 금지사항 | 1회성 작업 지시 |
+| `~/.codex/config.toml` 또는 `.codex/config.toml` | sandbox, approval, profile, fallback filename | 비즈니스 로직이나 스타일 규칙 |
+| 프롬프트 | 지금 바꾸려는 정확한 작업 | 영구 저장소 정책 |
+
+흔한 실수는 모든 걸 프롬프트에 몰아넣는 것입니다. 한 번은 되지만 매번 반복해야 합니다.
+
+## 좋은 AGENTS.md에 들어가야 할 것
+
+OpenAI 공식 가이드와 실제 사용 경험을 합치면 거의 같은 구조로 수렴합니다.
+
+### 1. 프로젝트 컨텍스트
+
+Codex가 빠르게 추론하기 어려운 사실을 넣으세요.
+
+```markdown
+## 프로젝트 컨텍스트
+- Next.js 16 App Router 앱
+- PostgreSQL + Drizzle ORM
+- UI 컴포넌트는 `src/components/`
+- 통합 테스트는 `scripts/test-data/` fixture에 의존
+```
+
+### 2. 작업 원칙
+
+여기서 “좋은 결과”의 기준을 정합니다.
+
+```markdown
+## 작업 원칙
+- 새 추상화 추가보다 기존 파일 수정 우선
+- diff는 작고 리뷰 가능하게 유지
+- 승인 없이 의존성 추가 금지
+- 기존 Zod 스키마 재사용
+```
+
+### 3. 검증
+
+자율 에이전트에서는 이 섹션이 가장 큰 차이를 만듭니다.
+
+```markdown
+## 검증
+- `npm run lint` 실행
+- `npm run typecheck` 실행
+- `src/api/` 변경 시 `npm test -- --runInBand` 실행
+- 하나라도 실패하면 완료라고 주장하지 말 것
+```
+
+### 4. 안전 경계
+
+부정 지시문은 비싼 실수를 막습니다.
+
+```markdown
+## 하지 말 것
+- `src/__generated__/` 생성 파일 수정 금지
+- 기능 작업에서 DB migration 수정 금지
+- 공개 API 필드명 변경 시 문서/테스트 동반 없이 변경 금지
+```
+
+## 바로 쓸 수 있는 템플릿
+
+```markdown
+# AGENTS.md
+
+## 프로젝트 컨텍스트
+- apps/web, apps/api, packages/ui 로 구성된 모노레포
+- 패키지 매니저: pnpm
+- 주 데이터베이스: PostgreSQL
+
+## 작업 원칙
+- 새 helper보다 기존 유틸 재사용 우선
+- 가능하면 함수 길이 ~40줄 이하 유지
+- 공유 패키지에서 default export 지양
+
+## 명령어
+- Dev: `pnpm dev`
+- Lint: `pnpm lint`
+- Typecheck: `pnpm typecheck`
+- Test: `pnpm test`
+
+## 검증
+- 모든 코드 변경에 lint + typecheck 실행
+- 영향받은 패키지 테스트 실행
+- 최종 응답에 무엇을 검증했는지 요약
+
+## 하지 말 것
+- 승인 없이 의존성 설치 금지
+- 필요 없는 lockfile 수정 금지
+- 실패한 테스트를 조용히 무시하지 말 것
+```
+
+## 프롬프트는 GitHub 이슈처럼 써라
+
+OpenAI의 Codex best practices는 작업 설명을 실제 이슈나 PR 설명처럼 구조화하라고 권장합니다.
+
+좋은 프롬프트에는 보통 네 가지가 들어갑니다.
+
+- **Goal** — 무엇을 바꿀 것인가
+- **Context** — 어떤 파일, 예시, 에러가 중요한가
+- **Constraints** — 무엇을 깨뜨리면 안 되는가
+- **Done when** — 언제 완료로 볼 것인가
+
+예시:
+
+```text
+cart drawer에 optimistic update를 추가해.
+
+Context:
+- UI는 src/components/cart/ 에 있음
+- server action은 src/app/actions/cart.ts 에 있음
+- loading state 패턴은 src/components/wishlist/ 구현을 따를 것
+
+Constraints:
+- API shape는 바꾸지 말 것
+- 새로운 상태 관리 라이브러리 추가 금지
+
+Done when:
+- 수량 변경이 즉시 반영되어 보일 것
+- 실패 시 rollback 될 것
+- lint, typecheck, cart 테스트가 통과할 것
+```
+
+## 중첩 AGENTS.md는 언제 쓰나
+
+폴더별 규칙이 정말 다를 때만 하위 AGENTS를 추가하세요.
+
+- `apps/web/AGENTS.md` — 렌더링/UI 규칙
+- `apps/api/AGENTS.md` — auth, logging, API 보장
+- `infra/AGENTS.md` — Terraform/배포 제약
+
+루트 파일을 반복하는 용도로 만들면 오히려 혼란만 커집니다. 하위 AGENTS는 로컬 override 용도로만 쓰는 편이 좋습니다.
+
+## 가치가 큰 config 설정
+
+`config.toml`은 세션마다 Codex 동작을 일정하게 맞추고 싶을 때 중요합니다.
+
+예시:
+
+```toml
+model = "gpt-5.3-codex"
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+project_doc_fallback_filenames = ["TEAM_GUIDE.md", ".agents.md"]
+```
+
+정리하면, config는 **Codex가 어떻게 동작할지**를 바꾸고, `AGENTS.md`는 **Codex가 프로젝트를 어떻게 이해할지**를 바꿉니다.
+
+## 흔한 실수
+
+| 실수 | 왜 문제인가 | 더 나은 방법 |
+|------|-------------|--------------|
+| “깨끗한 코드 작성” 같은 모호한 규칙 | 실행 불가 | 구체적 명령과 제약을 적기 |
+| 개인 취향을 저장소 AGENTS에만 넣기 | 팀 지침 오염 | `~/.codex/AGENTS.md`로 이동 |
+| 핵심 명령을 긴 README 속에 숨기기 | Codex가 놓칠 수 있음 | `AGENTS.md`에 드러내기 |
+| 프롬프트를 영구 메모리처럼 사용 | 반복적이고 취약함 | 지속 규칙은 파일에 저장 |
+| 완료 기준이 없음 | 너무 빨리 종료 | “Done when” 명시 |
+
+## Codex와 Claude Code 비교
+
+Claude Code와 Codex 모두 좋은 저장소 지침의 효과가 크지만 운영 모델은 다릅니다.
+
+| 항목 | Claude Code | Codex |
+|------|-------------|-------|
+| 주 지침 파일 | `CLAUDE.md` | `AGENTS.md` |
+| 범위 모델 | 루트 + 중첩 파일 | 전역 + 프로젝트 체인 + override |
+| 동작 튜닝 | 앱 설정 + 워크플로우 | `config.toml` + sandbox/approval |
+| 작업 스타일 | 대화형, 반복형 | 작업 중심, 자율 실행 중심 |
+
+두 도구를 같이 쓴다면 파일을 기계적으로 복사하지 마세요. **의도는 맞추되**, 각 도구의 실제 instruction discovery 및 security model에 맞게 표현을 조정하는 것이 좋습니다.

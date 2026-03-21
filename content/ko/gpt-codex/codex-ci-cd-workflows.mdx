@@ -1,0 +1,173 @@
+---
+title: "Codex와 CI/CD — 반복 가능한 리뷰, 수정, 배치 작업"
+description: "Codex를 파이프라인, 백로그형 task queue, 반복 엔지니어링 자동화에 안전하게 녹이는 방법"
+difficulty: advanced
+tags: ["ci-cd", "자동화", "리뷰", "워크플로우"]
+connections:
+  - slug: "codex-task-design"
+    tool: "gpt-codex"
+    type: "prerequisite"
+  - slug: "codex-sandbox"
+    tool: "gpt-codex"
+    type: "prerequisite"
+  - slug: "multi-agent-workflow"
+    tool: "claude-code"
+    type: "compare"
+featured: false
+order: 4
+date: "2026-03-21"
+---
+
+> **공식 참고 자료**: [Code Generation Guide](https://platform.openai.com/docs/guides/code-generation) · [Cloud Environments](https://developers.openai.com/codex/cloud/environments) · [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [How OpenAI uses Codex](https://openai.com/business/guides-and-resources/how-openai-uses-codex/)
+
+<!-- curriculum:start -->
+## 커리큘럼 흐름
+
+1. [Codex 지시문](/gpt-codex/codex-instructions) — instruction layering과 저장소 규칙
+2. [Codex 샌드박싱](/gpt-codex/codex-sandbox) — 권한과 cloud environment
+3. [Codex 작업 설계](/gpt-codex/codex-task-design) — scope와 issue형 프롬프트
+4. **Codex와 CI/CD** — 반복 자동화와 배치 작업 ← **현재 문서**
+
+### 이 문서에서 참고한 공식 문서
+- **Codex가 CI/CD 파이프라인에 들어가는 방식** — [Code generation](https://developers.openai.com/api/docs/guides/code-generation)
+- **cloud 실행에서 setup script, 환경 변수, secrets** — [Cloud environments](https://developers.openai.com/codex/cloud/environments)
+- **반복 자동화를 위한 task queue와 Best-of-N** — [How OpenAI uses Codex](https://openai.com/business/guides-and-resources/how-openai-uses-codex/)
+<!-- curriculum:end -->
+
+## 왜 Codex는 파이프라인에 잘 맞는가
+
+Codex는 실행 모델 자체가 경계가 분명합니다.
+
+- 작업이 격리됨
+- 환경을 재현 가능하게 만들 수 있음
+- setup이 명시적임
+- 결과가 diff와 리포트로 검토 가능함
+
+그래서 순수 대화형 코딩 도구보다 CI/CD에 녹이기 쉽습니다.
+
+## 잘 맞는 사용 사례
+
+Codex가 특히 강한 작업은 다음과 같습니다.
+
+- 자동 코드 리뷰 코멘트
+- 변경 모듈 기준 테스트 생성
+- 변경된 API의 문서 업데이트
+- 의존성 마이그레이션 후속 작업
+- 반복적인 리팩토링 패턴 적용
+- 재현 가능한 버그 수정
+
+공통점은 모두 “경계가 있고, 검토 가능하며, 반복 가능하다”는 점입니다.
+
+## 잘 안 맞는 사용 사례
+
+다음 같은 작업은 파이프라인에 억지로 넣지 않는 편이 좋습니다.
+
+- 제품 방향 자체가 모호한 일
+- 몇 분마다 인간 판단이 들어가야 하는 일
+- 서로 무관한 시스템을 가로지르는 대규모 설계 발명
+- 민감한 운영 자격 증명이나 과도한 인터넷 권한이 필요한 일
+
+Codex는 시스템이 결과를 기계적으로 검증할 수 있을 때 가장 빛납니다.
+
+## 단순한 파이프라인 패턴
+
+실무적으로는 이런 흐름이 무난합니다.
+
+1. PR 또는 issue label로 트리거
+2. 결정론적 setup script가 있는 cloud environment 준비
+3. issue 형태의 프롬프트 전달
+4. Codex가 수정, 검증, 요약 수행
+5. 머지 전 인간 리뷰
+
+이렇게 하면 자율성은 얻고, merge 경로는 여전히 사람이 통제할 수 있습니다.
+
+## setup script를 빌드 계약처럼 다뤄라
+
+CI나 cloud에서 setup script는 그냥 부가 설정이 아니라 계약입니다.
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+npm ci
+npm run codegen
+npm run db:prepare-test
+```
+
+성공이 로컬 노트북의 숨은 상태에 의존한다면, Codex는 모델 문제가 아니라 환경 문제로 불안정해 보이게 됩니다.
+
+## 검증은 주관식이 아니라 객관식으로
+
+좋은 파이프라인 단계는 끝에 명확한 검증이 있습니다.
+
+- lint
+- typecheck
+- unit test
+- snapshot/fixture 검증
+- 좁은 범위의 integration test
+
+“프로덕션 준비가 된 것 같음”보다 “이 명령들이 통과하면 완료”가 훨씬 좋습니다.
+
+## CI/CD는 GitHub Actions만 뜻하지 않는다
+
+Codex를 완전히 CI에 자동화하지 않더라도 같은 사고방식은 백그라운드 task queue나 팀 워크플로우에도 적용됩니다.
+
+좋은 예:
+
+- 다른 일을 하는 동안 cleanup 작업 큐잉
+- 여러 문서 수정 건을 배치 처리
+- 재현 가능한 버그를 Codex에 넘기고 본인은 메인 흐름 유지
+
+OpenAI는 이를 task queue를 lightweight backlog처럼 쓰는 방식으로 설명합니다.
+
+## 인간 리뷰는 계속 남겨둬야 한다
+
+중요한 질문은 “Codex가 혼자 merge할 수 있나?”가 아니라 “어디서 사람이 판단해야 하나?”입니다.
+
+사람 검토가 특히 필요한 경계:
+
+- API 계약 변경
+- 스키마/마이그레이션 수정
+- auth, billing, security 로직
+- 사용자 노출 카피와 제품 동작
+- 배포/운영 가정이 달라지는 변경
+
+기계적인 일은 Codex에 맡기고, 되돌리기 어려운 판단은 사람 리뷰어가 가져가는 것이 좋습니다.
+
+## 병렬 배치 작업에 특히 강하다
+
+Codex는 작업이 embarrassingly parallel할 때도 강합니다.
+
+예시:
+
+- 비슷한 핸들러 10개 마이그레이션
+- 다수 문서 frontmatter 일괄 수정
+- 분리된 모듈 테스트 생성
+- 동일한 안전한 리팩토링을 디렉터리 트리에 적용
+
+이런 영역에서 자율 태스크는 시간을 크게 절약해 줍니다.
+
+## 도입 단계는 천천히 올려라
+
+팀이 Codex를 처음 도입한다면 단계적으로 가는 편이 좋습니다.
+
+### 1단계
+리뷰 전용 또는 제안 전용
+
+### 2단계
+사람 리뷰 뒤 적용하는 작은 수정
+
+### 3단계
+반복 유지보수와 마이그레이션
+
+### 4단계
+cloud setup과 제한적 인터넷을 동반한 더 풍부한 워크플로우
+
+처음부터 완전 자동화를 노리면, 대개 시행착오 뒤에 더 강한 권한 제한으로 되돌아오게 됩니다.
+
+## 진짜 이득은 무엇인가
+
+가장 큰 이득은 “AI가 모든 코드를 대신 쓴다”가 아닙니다.
+반복적이고 경계가 명확한 엔지니어링 작업을 재현 가능성을 잃지 않고 위임할 수 있다는 점입니다.
+
+그래서 Codex는 특히 CI/CD와 구조화된 팀 워크플로우에 자연스럽게 들어맞습니다.

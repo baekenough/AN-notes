@@ -1,0 +1,119 @@
+import { getTranslations, setRequestLocale } from "next-intl/server";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { getToolConfig } from "@/lib/tools";
+import type { Tool } from "@/lib/content";
+
+const tagStyles: Record<string, string> = {
+  // English
+  "GAME CHANGER": "bg-orange-500/10 text-orange-400 border-orange-500/20",
+  "MIND-BLOWING": "bg-purple-500/10 text-purple-400 border-purple-500/20",
+  "REVOLUTIONARY": "bg-red-500/10 text-red-400 border-red-500/20",
+  "MASSIVE": "bg-amber-500/10 text-amber-400 border-amber-500/20",
+  "POWERFUL": "bg-blue-500/10 text-blue-400 border-blue-500/20",
+  // Korean
+  "혁신": "bg-orange-500/10 text-orange-400 border-orange-500/20",
+  "혁명적": "bg-red-500/10 text-red-400 border-red-500/20",
+  "충격적": "bg-purple-500/10 text-purple-400 border-purple-500/20",
+  "강력": "bg-blue-500/10 text-blue-400 border-blue-500/20",
+  "실용적": "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+  // Spanish
+  "REVOLUCIONARIO": "bg-red-500/10 text-red-400 border-red-500/20",
+  "IMPRESIONANTE": "bg-purple-500/10 text-purple-400 border-purple-500/20",
+  "CAMBIO TOTAL": "bg-orange-500/10 text-orange-400 border-orange-500/20",
+  "PODEROSO": "bg-blue-500/10 text-blue-400 border-blue-500/20",
+};
+
+const toolKeys = ["claudeCode", "gptCodex", "geminiCli"] as const;
+type ToolKey = typeof toolKeys[number];
+
+const toolIdMap: Record<ToolKey, Tool> = {
+  claudeCode: "claude-code",
+  gptCodex: "gpt-codex",
+  geminiCli: "gemini-cli",
+};
+
+const featureIndices = [0, 1, 2] as const;
+
+export default async function WhatsNewPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+
+  const t = await getTranslations("whatsNew");
+
+  return (
+    <div className="container mx-auto max-w-5xl px-4 py-12">
+      <div className="mb-12">
+        <Badge
+          variant="outline"
+          className="mb-4 bg-orange-500/10 text-orange-400 border-orange-500/20"
+        >
+          2026
+        </Badge>
+        <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-3">
+          {t("title")}
+        </h1>
+        <p className="text-lg text-muted-foreground">{t("subtitle")}</p>
+      </div>
+
+      {toolKeys.map((toolKey, idx) => {
+        const toolConfig = getToolConfig(toolIdMap[toolKey]);
+
+        return (
+          <div key={toolKey}>
+            {idx > 0 && <Separator className="my-12" />}
+            <div className="mb-8">
+              <div className="flex items-center gap-3 mb-6">
+                <span
+                  className={`w-10 h-10 rounded-xl bg-gradient-to-br ${toolConfig.gradient} flex items-center justify-center text-lg font-bold ${toolConfig.color}`}
+                  aria-hidden="true"
+                >
+                  {toolConfig.icon}
+                </span>
+                <h2 className="text-2xl font-bold">
+                  {t(`${toolKey}.title`)}
+                </h2>
+              </div>
+
+              <div className="grid gap-4">
+                {featureIndices.map((i) => {
+                  const tag = t(`${toolKey}.features.${i}.tag`);
+                  const tagStyle =
+                    tagStyles[tag] ??
+                    "bg-secondary text-secondary-foreground border-secondary";
+
+                  return (
+                    <Card
+                      key={i}
+                      className="group transition-all hover:border-primary/20"
+                    >
+                      <CardContent className="p-6">
+                        <Badge
+                          variant="outline"
+                          className={`mb-3 text-xs font-bold tracking-wider ${tagStyle}`}
+                        >
+                          {tag}
+                        </Badge>
+                        <h3 className="text-lg font-bold mb-2">
+                          {t(`${toolKey}.features.${i}.title`)}
+                        </h3>
+                        <p className="text-muted-foreground leading-relaxed">
+                          {t(`${toolKey}.features.${i}.description`)}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}

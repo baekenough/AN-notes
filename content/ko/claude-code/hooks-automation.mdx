@@ -1,0 +1,86 @@
+---
+title: "Hooks 자동화 — Claude Code가 워크플로우를 직접 지키게 만들기"
+description: "Claude Code hooks를 사용해 린팅, 파일 보호, 알림, 워크플로우 가드레일을 자동화하는 방법"
+difficulty: intermediate
+tags: ["hooks", "자동화", "워크플로우", "보안"]
+connections:
+  - slug: "mcp-power-tools"
+    tool: "claude-code"
+    type: "prerequisite"
+  - slug: "effective-prompting"
+    tool: "claude-code"
+    type: "combines"
+  - slug: "codex-sandbox"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 5
+date: "2026-03-21"
+---
+
+> **공식 참고 자료**: [Hooks](https://docs.anthropic.com/en/docs/claude-code/hooks) · [Settings](https://docs.anthropic.com/en/docs/claude-code/settings) · [Overview](https://docs.anthropic.com/en/docs/claude-code/overview)
+
+<!-- curriculum:start -->
+## 커리큘럼 흐름
+
+1. [CLAUDE.md Mastery](/claude-code/claude-md-mastery) — 저장소 메모리와 규칙
+2. [Effective Prompting](/claude-code/effective-prompting) — 작업 framing과 제약 설정
+3. [MCP Power Tools](/claude-code/mcp-power-tools) — 도구와 라이브 컨텍스트 연결
+4. [Multi-Agent Workflows](/claude-code/multi-agent-workflow) — 위임과 병렬 실행
+5. **Hooks Automation** — 로컬 워크플로우 enforcement ← **현재 문서**
+6. [GitHub Actions Workflows](/claude-code/github-actions-workflows) — 반복 작업을 팀 자동화로 옮기기
+
+### 이 문서에서 참고한 공식 문서
+- **hook 라이프사이클과 설정 모델** — [Hooks](https://docs.anthropic.com/en/docs/claude-code/hooks)
+- **hook 스크립트의 보안 고려사항** — [Hooks](https://docs.anthropic.com/en/docs/claude-code/hooks)
+- **설정 표면과 로컬 구성** — [Settings](https://docs.anthropic.com/en/docs/claude-code/settings)
+<!-- curriculum:end -->
+
+## 왜 Hooks가 중요한가
+
+Claude Code는 단순한 편집기를 넘어서 팀의 워크플로우를 자동으로 강제할 때 훨씬 유용해집니다.
+
+hooks를 쓰면 도구 사용 전후와 라이프사이클 이벤트에 맞춰 셸 명령을 실행할 수 있습니다. 그래서 다음이 가능해집니다.
+
+- 편집 후 자동 포맷팅
+- 민감한 작업 전 lint/test 실행
+- 긴 작업 완료 알림
+- 민감한 경로 수정 차단
+- compact 전 컨텍스트 보존
+
+## 모델링 방식
+
+hooks는 이벤트 기반 가드레일이라고 생각하면 됩니다.
+
+## 가치가 큰 활용법
+
+- `.env`, migration, generated code 보호
+- 수정 후 lint/tsc 실행
+- compact 전 상태 저장
+- 긴 작업 종료 시 알림 전송
+
+## 보안
+
+Anthropic은 hooks가 로컬 시스템에서 임의 셸 명령을 실행한다고 분명히 말합니다.
+
+중요한 습관:
+
+- 입력 검증
+- 절대 경로 사용
+- 셸 변수 quoting
+- path traversal 차단
+- secrets/민감 파일 회피
+- 안전한 환경에서 먼저 테스트
+
+## Hooks vs CLAUDE.md
+
+| 도구 | 적합한 역할 |
+|------|-------------|
+| `CLAUDE.md` | 규칙, 아키텍처, 코딩 정책 |
+| hooks | 자동 enforcement |
+| 프롬프트 | 오늘의 작업 |
+
+## Claude Code vs Codex
+
+Codex는 sandbox/approval 경계에 더 기대고,
+Claude Code hooks는 로컬 이벤트 기반 자동화에 더 기대는 편입니다.

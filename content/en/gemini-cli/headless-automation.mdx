@@ -1,0 +1,159 @@
+---
+title: "Headless Automation with Gemini CLI"
+description: "Run Gemini CLI in scripts, CI, and tooling pipelines with structured output, stable exit codes, and the right auth mode"
+difficulty: intermediate
+tags: ["automation", "headless", "json", "ci-cd"]
+connections:
+  - slug: "codex-sandbox"
+    tool: "gpt-codex"
+    type: "compare"
+  - slug: "getting-started"
+    tool: "gemini-cli"
+    type: "prerequisite"
+  - slug: "trusted-folders-sandboxing"
+    tool: "gemini-cli"
+    type: "enhances"
+featured: true
+order: 5
+date: "2026-03-21"
+---
+
+> **Official References**: [Headless mode](https://geminicli.com/docs/cli/headless/) · [Authentication](https://geminicli.com/docs/get-started/authentication/) · [Configuration reference](https://geminicli.com/docs/reference/configuration) · [Token caching](https://geminicli.com/docs/cli/token-caching/)
+
+## Why headless mode matters
+
+Interactive chat is only half of Gemini CLI. The other half is **automation**: using the CLI inside shell scripts, CI jobs, content pipelines, and editor tooling.
+
+Official docs define **headless mode** as non-interactive execution that returns structured text or JSON instead of the terminal UI.
+
+## How headless mode starts
+
+Headless mode is triggered when:
+
+- Gemini CLI runs in a **non-TTY** environment, or
+- you provide a direct prompt with `-p` / `--prompt`
+
+Example:
+
+```bash
+gemini -p "Summarize the architecture of this repository"
+```
+
+## Structured output formats
+
+### Plain text
+
+```bash
+gemini -p "Summarize this repo"
+```
+
+### JSON output
+
+```bash
+gemini -p "Summarize this repo" --output-format json
+```
+
+The docs describe a JSON object with:
+
+- `response`
+- `stats`
+- optional `error`
+
+### Streaming JSONL output
+
+```bash
+gemini -p "Review these files" --output-format jsonl
+```
+
+Useful event types include:
+
+- `init`
+- `message`
+- `tool_use`
+- `tool_result`
+- `error`
+- `result`
+
+That makes Gemini CLI much easier to integrate into custom tooling than a plain chat transcript.
+
+## Exit codes you can depend on
+
+Official headless docs list these exit codes:
+
+| Exit code | Meaning |
+|-----------|---------|
+| `0` | success |
+| `1` | general error or API failure |
+| `42` | invalid input or arguments |
+| `53` | turn limit exceeded |
+
+If you are wiring Gemini into CI, these are more useful than parsing prose.
+
+## The auth choice changes automation quality
+
+The authentication guide explicitly says headless mode should use either:
+
+- **Gemini API key**, or
+- **Vertex AI**
+
+That fits automation better than browser-based Google sign-in.
+
+Example:
+
+```bash
+export GEMINI_API_KEY="YOUR_GEMINI_API_KEY"
+gemini -p "@content list missing Gemini CLI topics" --output-format json
+```
+
+## Practical automation patterns
+
+### 1) Content QA in a script
+
+```bash
+gemini -p "@content Compare gemini-cli articles across ko, en, and es and report missing slugs or inconsistent claims" --output-format json
+```
+
+### 2) Pipe the response into another tool
+
+```bash
+gemini -p "Summarize TODO items from @src" --output-format json   | jq -r '.response'
+```
+
+### 3) Machine-readable event stream for custom tooling
+
+```bash
+gemini -p "Review @content/en/gemini-cli" --output-format jsonl
+```
+
+This is useful when you want progress reporting, tool-use traces, or downstream automation.
+
+## Cost and speed note
+
+If you use API key auth or Vertex AI, Gemini CLI can use **token caching**. That matters for repetitive automation because repeated context becomes cheaper over time.
+
+Use `/stats` in interactive sessions to inspect savings before you standardize a workflow.
+
+## When Gemini CLI is a better automation fit than other tools
+
+| Scenario | Best fit | Why |
+|----------|----------|-----|
+| Scriptable repo analysis with JSON output | Gemini CLI | Headless mode + tool access |
+| Locked-down isolated code execution | GPT Codex | Sandbox-first model |
+| High-touch conversational editing | Claude Code | Better interactive loop |
+
+## A good use case in this repo
+
+AN-Con already stores knowledge in localized MDX files. That makes Gemini CLI a good fit for:
+
+- locale parity checks
+- content gap discovery
+- frontmatter audits
+- rewrite suggestions emitted as structured JSON
+
+In other words: use Gemini interactively to discover the workflow, then freeze the useful part into a headless script.
+
+## Recommended next reads
+
+- [Getting Started with Gemini CLI](/gemini-cli/getting-started)
+- [Trusted Folders, Sandboxing, and Restore](/gemini-cli/trusted-folders-sandboxing)
+- [The 1M Token Advantage](/gemini-cli/million-token-context)

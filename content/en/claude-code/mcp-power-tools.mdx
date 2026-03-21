@@ -1,0 +1,126 @@
+---
+title: "MCP Power Tools — Extending Claude's Reach"
+description: "How to set up and use Model Context Protocol servers to give Claude Code superpowers"
+difficulty: intermediate
+tags: ["mcp", "tools", "integration", "servers"]
+connections:
+  - slug: "claude-md-mastery"
+    tool: "claude-code"
+    type: "prerequisite"
+  - slug: "hooks-automation"
+    tool: "claude-code"
+    type: "enhances"
+  - slug: "codex-sandbox"
+    tool: "gpt-codex"
+    type: "compare"
+featured: true
+order: 2
+date: "2026-03-21"
+---
+
+> **Official References**: [MCP Overview](https://docs.anthropic.com/en/docs/claude-code/mcp) · [MCP Specification](https://modelcontextprotocol.io/) · [MCP Servers Directory](https://github.com/modelcontextprotocol/servers)
+
+<!-- curriculum:start -->
+## Curriculum path
+
+1. [CLAUDE.md Mastery](/claude-code/claude-md-mastery) — repo memory and rules
+2. [Effective Prompting](/claude-code/effective-prompting) — task framing and constraints
+3. **MCP Power Tools** — connect tools and live context ← **You are here**
+4. [Multi-Agent Workflows](/claude-code/multi-agent-workflow) — delegate and parallelize
+5. [Hooks Automation](/claude-code/hooks-automation) — automate guardrails locally
+6. [GitHub Actions Workflows](/claude-code/github-actions-workflows) — move repeatable work into team automation
+
+### Official docs used in this guide
+- **How Claude Code connects to MCP servers** — [MCP](https://docs.anthropic.com/en/docs/claude-code/mcp)
+- **Project-scoped vs user-scoped server configuration** — [MCP](https://docs.anthropic.com/en/docs/claude-code/mcp)
+- **Why MCP fits Claude Code’s workflow** — [Overview](https://docs.anthropic.com/en/docs/claude-code/overview)
+<!-- curriculum:end -->
+
+## What is MCP?
+
+Model Context Protocol (MCP) lets you give Claude Code access to external tools and data sources. Think of it as plugins for your AI assistant.
+
+Without MCP, Claude can read files and run shell commands. With MCP, Claude can:
+- Query databases directly
+- Search your company's internal docs
+- Interact with APIs (Jira, Slack, GitHub)
+- Access specialized tools (browsers, design tools)
+
+## Setting Up MCP Servers
+
+### Configuration Location
+
+MCP servers are configured in `.mcp.json` at your project root:
+
+```json
+{
+  "mcpServers": {
+    "postgres": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres"],
+      "env": {
+        "DATABASE_URL": "postgresql://user:pass@localhost:5432/mydb"
+      }
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_TOKEN": "your-token"
+      }
+    }
+  }
+}
+```
+
+### Essential MCP Servers
+
+| Server | What It Does | When to Use |
+|--------|-------------|-------------|
+| `server-postgres` | Direct database queries | When Claude needs to understand your schema or data |
+| `server-github` | GitHub API access | PR reviews, issue management |
+| `server-filesystem` | Extended file access | When working across multiple repos |
+| `server-memory` | Persistent memory | Long-running projects needing cross-session context |
+| `context7` | Library docs lookup | Getting latest API docs for any library |
+
+### The context7 Pattern
+
+One of the most useful MCP servers. Instead of Claude guessing at API signatures from training data:
+
+```
+You: "Add pagination to this Next.js page"
+Claude: *uses context7 to fetch latest Next.js docs*
+Claude: *implements with current API, not outdated patterns*
+```
+
+## MCP vs. Codex Sandbox
+
+GPT Codex takes a different approach — it runs in a sandboxed container where you pre-install tools. MCP is more flexible but requires local setup.
+
+| Aspect | MCP (Claude Code) | Sandbox (Codex) |
+|--------|-------------------|-----------------|
+| Setup | Config file per project | Dockerfile/setup script |
+| Access | Tool-by-tool permissions | Full container access |
+| Security | Granular, protocol-level | Container isolation |
+| Extensibility | Any MCP server | Any CLI tool |
+
+## Pro Tips
+
+### Don't Over-Connect
+
+Each MCP server adds context overhead. Start with 2-3 essential ones, add more as needed.
+
+### Use Project-Level Config
+
+`.mcp.json` is project-scoped. Don't put personal API keys in committed files — use environment variables.
+
+### Combine with CLAUDE.md
+
+Tell Claude when to use which MCP tool:
+
+```markdown
+## Tools
+- Use context7 before implementing any library API
+- Query postgres MCP for schema questions, don't guess
+- Use GitHub MCP for PR descriptions, not manual copy-paste
+```

@@ -1,0 +1,120 @@
+{
+  "site": {
+    "title": "AN-Con",
+    "subtitle": "AI-Native Con",
+    "description": "Domina tus herramientas de programación con IA — Claude Code, GPT Codex y más",
+    "tagline": "Consejos, guías y mejores prácticas para el desarrollo con IA"
+  },
+  "nav": {
+    "home": "Inicio",
+    "claudeCode": "Claude Code",
+    "gptCodex": "GPT Codex",
+    "geminiCli": "Gemini CLI",
+    "allTips": "Todos los Tips",
+    "language": "Idioma",
+    "whatsNew": "Novedades"
+  },
+  "hero": {
+    "title": "Usa herramientas de IA",
+    "titleHighlight": "de la manera correcta",
+    "subtitle": "Consejos prácticos y guías reales para Claude Code, GPT Codex y Gemini CLI. Escrito para todos los que quieran usar la IA correctamente.",
+    "browseTips": "Ver Tips",
+    "getStarted": "Comenzar"
+  },
+  "tools": {
+    "sectionTitle": "Elige tu herramienta",
+    "tips": "{count} tips",
+    "comingSoon": "Próximamente",
+    "viewGuide": "Ver Guía"
+  },
+  "tip": {
+    "readingTime": "{minutes} min de lectura",
+    "difficulty": {
+      "beginner": "Principiante",
+      "intermediate": "Intermedio",
+      "advanced": "Avanzado"
+    },
+    "connections": {
+      "title": "Guías Conectadas",
+      "prerequisite": "Empieza aquí",
+      "enhances": "Funciona bien con",
+      "compare": "Compara enfoques",
+      "combines": "Usar juntos"
+    },
+    "backToList": "Volver a {tool}"
+  },
+  "footer": {
+    "builtWith": "Hecho con Next.js — Inspirado en PyCon",
+    "openSource": "Código abierto en GitHub"
+  },
+  "common": {
+    "featured": "Destacado",
+    "new": "Nuevo",
+    "updated": "Actualizado"
+  },
+  "whatsNew": {
+    "title": "Novedades",
+    "subtitle": "Funciones revolucionarias que debes conocer",
+    "updated": "Actualizado {date}",
+    "claudeCode": {
+      "title": "Claude Code",
+      "features": [
+        {
+          "tag": "CAMBIO TOTAL",
+          "title": "Agent Teams — Colaboración IA entre pares",
+          "description": "Múltiples agentes Claude ahora pueden comunicarse directamente entre sí, compartiendo contexto y coordinando tareas complejas. Ciclos de revisión → corrección → re-revisión, totalmente autónomos."
+        },
+        {
+          "tag": "PODEROSO",
+          "title": "Sistema de Hooks — Automatización basada en eventos",
+          "description": "Los hooks PreToolUse, PostToolUse, PreCompact y PostCompact permiten automatizar linting, verificaciones de seguridad y preservación de contexto. Claude Code se vuelve programable."
+        },
+        {
+          "tag": "PODEROSO",
+          "title": "Agentes en segundo plano + Git Worktrees",
+          "description": "Lanza agentes que trabajan en worktrees de git aislados en segundo plano. Inicia una refactorización y sigue programando — el agente crea una rama con sus cambios al terminar."
+        }
+      ]
+    },
+    "gptCodex": {
+      "title": "GPT Codex",
+      "features": [
+        {
+          "tag": "CAMBIO TOTAL",
+          "title": "AGENTS.md en capas — Contexto desde lo global hasta lo local",
+          "description": "Codex rinde mejor con una cadena de instrucciones: guía personal, reglas del repo y overrides por carpeta. Así puedes mantener convenciones duraderas cerca del código sin repetirlas en cada tarea."
+        },
+        {
+          "tag": "PODEROSO",
+          "title": "Sandbox + Approvals — Automatización local rápida con límites sanos",
+          "description": "Codex local funciona mejor cuando el sandbox mode y la approval policy se ajustan juntos. Workspace-write con on-request permite editar y validar rápido sin entregar toda tu máquina."
+        },
+        {
+          "tag": "REVOLUCIONARIO",
+          "title": "Cloud Environments — Setup scripts, agentes offline e internet opcional",
+          "description": "Codex cloud separa preparación y ejecución: primero instala y bootstrappea, luego ejecuta al agente en un entorno más acotado. El internet viene apagado por defecto y puede limitarse con allowlists."
+        }
+      ]
+    },
+    "geminiCli": {
+      "title": "Gemini CLI",
+      "features": [
+        {
+          "tag": "IMPRESIONANTE",
+          "title": "1 Millón de tokens de contexto — Ve todo",
+          "description": "Lee toda tu base de código en una sola conversación. Sin selección de archivos, sin límites de contexto. Gemini procesa 500+ archivos simultáneamente para refactorizaciones entre módulos."
+        },
+        {
+          "tag": "CAMBIO TOTAL",
+          "title": "Open Source + Tier gratuito",
+          "description": "Licencia Apache 2.0, 60 solicitudes/minuto gratis. Haz fork, extiéndelo, alójalo tú mismo. La primera herramienta mayor de IA para código que es verdaderamente abierta."
+        },
+        {
+          "tag": "PODEROSO",
+          "title": "Entrada multimodal — Capturas de pantalla a código",
+          "description": "Añade una captura de pantalla, un export de Figma o un wireframe dibujado a mano. Gemini ve las imágenes de forma nativa y genera el código correspondiente — sin plugins."
+        }
+      ]
+    }
+  }
+}

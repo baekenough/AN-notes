@@ -1,0 +1,126 @@
+---
+title: "효과적인 프롬프팅 — 테크 리드처럼 대화하기"
+description: "간단한 작업부터 복잡한 리팩토링까지, Claude Code에서 더 나은 결과를 얻는 프롬프팅 전략"
+difficulty: beginner
+tags: ["프롬프팅", "워크플로우", "생산성"]
+connections:
+  - slug: "claude-md-mastery"
+    tool: "claude-code"
+    type: "prerequisite"
+  - slug: "multi-agent-workflow"
+    tool: "claude-code"
+    type: "enhances"
+  - slug: "codex-task-design"
+    tool: "gpt-codex"
+    type: "compare"
+featured: true
+order: 3
+date: "2026-03-21"
+---
+
+> **공식 참고 자료**: [Overview](https://docs.anthropic.com/en/docs/claude-code/overview) · [Best practices](https://docs.anthropic.com/en/docs/claude-code/best-practices) · [Prompt engineering](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering)
+
+<!-- curriculum:start -->
+## 커리큘럼 흐름
+
+1. [CLAUDE.md Mastery](/claude-code/claude-md-mastery) — 저장소 메모리와 규칙
+2. **Effective Prompting** — 작업 framing과 제약 설정 ← **현재 문서**
+3. [MCP Power Tools](/claude-code/mcp-power-tools) — 라이브 도구와 컨텍스트 연결
+4. [Multi-Agent Workflows](/claude-code/multi-agent-workflow) — 위임과 병렬 실행
+5. [Hooks Automation](/claude-code/hooks-automation) — 로컬 가드레일 자동화
+6. [GitHub Actions Workflows](/claude-code/github-actions-workflows) — 반복 작업을 팀 자동화로 옮기기
+
+### 이 문서에서 참고한 공식 문서
+- **프롬프팅 패턴과 모범 사례** — [Best practices](https://docs.anthropic.com/en/docs/claude-code/best-practices)
+- **일반적인 프롬프트 엔지니어링 개념** — [Prompt engineering](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering)
+- **Claude Code 사용 모델** — [Overview](https://docs.anthropic.com/en/docs/claude-code/overview)
+<!-- curriculum:end -->
+
+## 핵심 인사이트
+
+Claude Code는 챗봇이 아닙니다 — 완벽한 기억력과 무한한 인내심을 가진 주니어 엔지니어입니다. 최고의 프롬프트는 유능한 팀원에게 주는 것과 같은 지시입니다.
+
+## 프롬프팅 레벨
+
+### Level 1: 직접 명령
+
+간단하고 잘 정의된 작업에 적합:
+
+```
+src/auth/login.ts의 TypeScript 에러 수정해줘
+```
+
+```
+회원가입 폼에 입력 유효성 검사 추가해줘 — 이메일 형식과 비밀번호 최소 8자
+```
+
+### Level 2: 컨텍스트 + 의도
+
+판단이 필요한 작업에 더 적합:
+
+```
+/api/users 엔드포인트가 느려 (~2초). 프로파일링하고 최적화 방안 제안해줘.
+데이터베이스 스키마는 변경하지 마 — 마이그레이션 중이야.
+```
+
+제약 조건("스키마 변경 금지")이 Claude가 잘못된 길로 가는 것을 방지합니다.
+
+### Level 3: 아키텍처 위임
+
+복잡한 다단계 작업에 적합:
+
+```
+결제 모듈을 콜백에서 async/await으로 리팩토링해줘.
+1. stripe 연동부터 시작 (src/payments/stripe.ts)
+2. 의존하는 주문 처리기 업데이트
+3. 기존 테스트가 여전히 통과하는지 확인
+4. PayPal 연동은 건드리지 마 — 다음 스프린트
+```
+
+번호가 매겨진 단계가 Claude에게 로드맵을 제공합니다. 제외 사항이 범위 확장을 방지합니다.
+
+## 안티 패턴
+
+### 모호한 요청
+
+```
+❌ "코드 좋게 만들어줘"
+✅ "processOrder()의 순환 복잡도를 줄여줘 — 12개 분기가 있어"
+```
+
+### 한꺼번에 너무 많은 요청
+
+```
+❌ "전체 인증 시스템을 재작성하고, OAuth 추가하고, RBAC 구현하고, 2FA 추가해줘"
+✅ "기존 인증 시스템에 Google OAuth 추가해줘. 현재 세션 관리는 유지해."
+   (그 다음 RBAC와 2FA를 별도 작업으로)
+```
+
+### 컨텍스트 가정
+
+```
+❌ "버그 고쳐줘"
+✅ "useCart의 경쟁 조건 수정해줘 — 아이템을 빠르게 추가하면 중복 항목이 생겨"
+```
+
+## "계획 먼저" 패턴
+
+비정형 작업에는 Claude에게 먼저 계획을 세우게 하세요:
+
+```
+WebSocket으로 실시간 알림 추가하고 싶어.
+코드 작성 전에 접근 방식을 정리해줘:
+- 어떤 라이브러리 사용?
+- WebSocket 서버는 어디에?
+- 기존 인증과 어떻게 통합?
+```
+
+이렇게 하면 Claude가 잘못된 방향으로 500줄을 쓰기 전에 아키텍처 불일치를 잡을 수 있습니다.
+
+## Codex 비교
+
+GPT Codex는 다르게 작동합니다 — 작업 설명을 미리 작성하면 자율적으로 실행합니다. 대화형 반복이 없습니다. 즉:
+- Codex 프롬프트는 처음부터 더 완전해야 함
+- Claude Code는 반복적 개선이 가능
+- 둘 다 명시적 제약과 예시가 효과적
+
