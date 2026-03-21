@@ -121,6 +121,94 @@ CLAUDE.md debe commitearse. Es un recurso compartido del equipo.
 | Muy largo (500+ líneas) | Dilución de contexto | Priorizar, enlazar a docs |
 | Sin actualizar | Reglas obsoletas confunden a Claude | Revisar mensualmente |
 
+## Patrones de Colaboración en Equipo
+
+CLAUDE.md no es solo una herramienta de productividad personal — es infraestructura de equipo. Un CLAUDE.md bien mantenido alinea cómo todo el equipo usa la IA, de forma consistente.
+
+**Onboarding automatizado**
+Cuando un nuevo compañero abre Claude Code el primer día, CLAUDE.md ya lleva el contexto del proyecto. Pasan menos tiempo preguntando "¿cómo está estructurado esto?" y más tiempo contribuyendo.
+
+**Salida de IA consistente en todo el equipo**
+Sin CLAUDE.md, cada desarrollador obtiene código ligeramente diferente de Claude — uno usa tipos `any`, otro no. CLAUDE.md elimina esa divergencia haciendo las convenciones explícitas y compartidas.
+
+**Menos fricciones de "¿por qué Claude hizo esto?" en code review**
+Si esa pregunta sigue apareciendo en revisiones de código, es una señal de que la convención relevante falta en CLAUDE.md. Agrégala cuando encuentres el hueco y la fricción en revisiones disminuirá con el tiempo.
+
+## Plantilla de Inicio
+
+Si estás escribiendo tu primer CLAUDE.md, copia esto y adáptalo a tu proyecto:
+
+```markdown
+# [Nombre del Proyecto]
+
+[Descripción en una línea: qué hace, qué tecnologías usa]
+
+## Convenciones
+- [Regla de nombres de archivo, ej: kebab-case]
+- [Estilo de código, ej: máx 20 líneas por función]
+- [Regla de tests, ej: co-ubicar archivos de test con el fuente]
+
+## Arquitectura
+- [Decisión técnica clave y por qué]
+- [Alternativas consideradas y rechazadas]
+
+## No Hacer
+- [Patrón prohibido 1]
+- [Patrón prohibido 2]
+
+## Comandos Frecuentes
+- Test: `npm test`
+- Build: `npm run build`
+- Lint: `npm run lint`
+```
+
+## Patrones Avanzados
+
+### Instrucciones Condicionales
+
+Puedes aplicar reglas diferentes según el tipo de archivo que se está editando:
+
+```markdown
+## Reglas por Contexto
+- Al editar archivos de frontend: solo clases Tailwind CSS, sin estilos inline
+- Al editar rutas de API: siempre incluir manejo de errores, retornar respuestas tipadas
+- Al editar archivos de test: usar patrón describe/it, nombres de test descriptivos
+```
+
+Claude conoce la ruta del archivo en el que está trabajando, así que instrucciones condicionales como estas funcionan de forma natural.
+
+### Patrón de Referencia a Documentos Externos
+
+No intentes poner todo en CLAUDE.md. Mantenlo liviano referenciando archivos separados para los detalles:
+
+```markdown
+## Documentos de Referencia
+- Principios de diseño de API: ver `docs/api-style.md`
+- Esquema de base de datos: ver `docs/schema.md`
+- Procedimiento de despliegue: ver `docs/deploy.md`
+```
+
+Claude lee esos archivos solo cuando son relevantes. Esto mantiene CLAUDE.md corto mientras el contexto detallado siempre es accesible.
+
+## Cómo Evolucionar tu CLAUDE.md con el Tiempo
+
+No necesita ser perfecto desde el principio. Empezar pequeño es el enfoque correcto:
+
+1. **Empeza mínimo**: Comienza con 5–10 líneas — una descripción de una frase y 2–3 convenciones clave
+2. **Agrega reglas cuando Claude se equivoca**: Cuando Claude genera algo inesperado, agrega la convención que falta en ese momento
+3. **Revisión mensual**: Una vez al mes, revisa reglas que ya son obvias o ya no son válidas — elimínalas
+4. **El test "¿por qué hizo Claude esto?"**: Si no puedes explicar el razonamiento de Claude, ese razonamiento pertenece a CLAUDE.md
+
+## El Directorio .claude/ (Para Ir Más Lejos)
+
+Más allá de CLAUDE.md, todo el directorio `.claude/` es el espacio de configuración de IA de tu proyecto:
+
+- **`.claude/settings.json`** — configuración compartida del proyecto, commiteada en control de versiones
+- **`.claude/settings.local.json`** — configuración personal y claves API (agregar a .gitignore)
+- **`.claude/commands/`** — define comandos slash personalizados para tu equipo
+
+Por ejemplo, crea `.claude/commands/review.md` y cada miembro del equipo puede ejecutar `/review` para activar el mismo flujo de revisión de código. Si CLAUDE.md define "qué debe saber Claude", `.claude/` define "cómo debe comportarse Claude".
+
 ## Comparación con GPT Codex
 
 GPT Codex usa `AGENTS.md` y `codex.md` para propósitos similares, con diferencias clave:

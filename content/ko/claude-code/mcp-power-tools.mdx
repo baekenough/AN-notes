@@ -104,24 +104,157 @@ GPT Codex는 다른 접근 방식을 취합니다 — 도구를 미리 설치하
 | 보안 | 세밀한 프로토콜 수준 | 컨테이너 격리 |
 | 확장성 | 모든 MCP 서버 | 모든 CLI 도구 |
 
+## 프로젝트 vs 사용자 스코프 MCP 설정
+
+MCP 설정에는 두 가지 스코프가 있어요. 어느 것을 쓸지 결정하는 방법:
+
+### 프로젝트 스코프 — `.mcp.json`
+
+팀 전체가 동일한 MCP 서버를 써야 한다면 프로젝트 스코프를 사용해요. 이 파일은 git에 커밋할 수 있어서 팀원 모두가 같은 설정을 공유할 수 있어요.
+
+```json
+// 프로젝트 루트/.mcp.json (팀 공유, git 커밋 가능)
+{
+  "mcpServers": {
+    "postgres": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres"],
+      "env": {
+        "DATABASE_URL": "${DATABASE_URL}"
+      }
+    }
+  }
+}
+```
+
+단, API 키나 비밀번호는 `.mcp.json`에 직접 넣지 마세요. 환경 변수를 참조하도록 하고, 실제 값은 각자의 `.env` 파일에 보관하세요.
+
+### 사용자 스코프 — `~/.claude/settings.json`
+
+본인만 쓰는 도구, 예를 들어 개인 API 키가 필요한 서버는 사용자 스코프에 넣어요. 모든 프로젝트에서 자동으로 사용할 수 있어요.
+
+```json
+// ~/.claude/settings.json (개인용, 모든 프로젝트에서 사용 가능)
+{
+  "mcpServers": {
+    "memory": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"]
+    },
+    "brave-search": {
+      "command": "npx",
+      "args": ["-y", "@anthropic/server-brave-search"],
+      "env": {
+        "BRAVE_API_KEY": "your-personal-key"
+      }
+    }
+  }
+}
+```
+
+| 스코프 | 파일 위치 | 공유 여부 | 언제 사용 |
+|--------|-----------|-----------|-----------|
+| 프로젝트 | `.mcp.json` | 팀 전체 공유, git 커밋 | DB, 프로젝트 전용 도구 |
+| 사용자 | `~/.claude/settings.json` | 개인 전용 | 개인 API 키, 범용 도구 |
+
+## 더 많은 유용한 MCP 서버
+
+기본 서버 외에도 실제 업무에 도움이 되는 서버들이 많아요:
+
+| 서버 | 기능 | 설치 명령 |
+|------|------|-----------|
+| `server-brave-search` | 웹 검색 (최신 정보 조회) | `npx @anthropic/server-brave-search` |
+| `server-puppeteer` | 브라우저 자동화, 스크린샷 | `npx @anthropic/server-puppeteer` |
+| `server-slack` | Slack 메시지 및 채널 접근 | `npx @anthropic/server-slack` |
+| `server-sqlite` | SQLite DB 쿼리 | `npx @anthropic/server-sqlite` |
+| `server-filesystem` | 확장된 파일 접근 | `npx @modelcontextprotocol/server-filesystem` |
+
+예를 들어 Brave Search를 추가하면 Claude가 최신 라이브러리 이슈나 보안 패치를 직접 찾아볼 수 있어요. Puppeteer를 연결하면 웹 UI 테스트 자동화도 가능해지고요.
+
+## MCP 서버 직접 만들기
+
+반드시 남이 만든 MCP 서버만 써야 하는 건 아니에요. 회사 내부 도구를 Claude와 연결하고 싶다면 직접 만들 수 있어요.
+
+TypeScript SDK(`@modelcontextprotocol/sdk`)를 사용하면 생각보다 빠르게 만들 수 있어요:
+
+```typescript
+// 예시: 내부 위키를 검색하는 MCP 서버 개념
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+
+const server = new Server({ name: "internal-wiki", version: "1.0.0" });
+
+// 도구 등록: Claude가 이 함수를 호출할 수 있게 됩니다
+server.setRequestHandler("tools/call", async (request) => {
+  if (request.params.name === "search_wiki") {
+    const query = request.params.arguments.query;
+    // 내부 위키 API 호출
+    const results = await internalWikiApi.search(query);
+    return { content: [{ type: "text", text: JSON.stringify(results) }] };
+  }
+});
+```
+
+이렇게 만들면 "내부 위키에서 배포 절차 찾아줘"라고 하면 Claude가 실제로 검색해서 가져올 수 있어요. 내부 API, 사내 문서 시스템, 사내 모니터링 대시보드 등 뭐든 연결할 수 있어요.
+
+## MCP 디버깅과 문제 해결
+
+연결이 잘 안 될 때 확인할 것들이에요.
+
+### 연결된 서버 확인
+
+```bash
+claude mcp list
+```
+
+이 명령으로 현재 활성화된 MCP 서버 목록과 상태를 확인할 수 있어요.
+
+### 자주 발생하는 문제
+
+**서버가 시작되지 않을 때:**
+- `npx` 경로가 올바른지 확인하세요 (`which npx`)
+- Node.js 버전이 맞는지 확인하세요 (대부분 v18+ 필요)
+- 필요한 환경 변수가 설정되어 있는지 확인하세요
+
+**서버가 느리거나 타임아웃이 날 때:**
+
+```json
+{
+  "mcpServers": {
+    "slow-server": {
+      "command": "npx",
+      "args": ["-y", "some-mcp-server"],
+      "timeout": 30000
+    }
+  }
+}
+```
+
+**로그 확인 방법:**
+
+Claude Code를 실행할 때 `--mcp-debug` 플래그를 사용하면 MCP 통신 로그를 볼 수 있어요:
+
+```bash
+claude --mcp-debug
+```
+
 ## 프로 팁
 
 ### 과도하게 연결하지 마세요
 
 각 MCP 서버는 컨텍스트 오버헤드를 추가합니다. 필수적인 2-3개로 시작하고 필요에 따라 추가하세요.
 
-### 프로젝트 레벨 설정 사용
+### CLAUDE.md와 적극적으로 결합하세요
 
-`.mcp.json`은 프로젝트 범위입니다. 커밋된 파일에 개인 API 키를 넣지 마세요 — 환경 변수를 사용하세요.
-
-### CLAUDE.md와 결합하세요
-
-Claude에게 어떤 MCP 도구를 언제 사용할지 알려주세요:
+MCP 서버를 설정만 해두면 Claude가 언제 어떤 도구를 써야 할지 판단이 애매할 수 있어요. CLAUDE.md에 명확한 규칙을 적어두면 훨씬 일관성 있게 동작해요:
 
 ```markdown
-## 도구
-- 라이브러리 API 구현 전에 context7 사용
-- 스키마 질문에는 postgres MCP 쿼리, 추측 금지
-- PR 설명에는 GitHub MCP 사용, 수동 복사-붙여넣기 금지
+## MCP 도구 사용 규칙
+- DB 스키마 질문 → postgres MCP 먼저, 추측 금지
+- 외부 라이브러리 → context7로 최신 문서 확인 후 구현
+- 이슈 생성/업데이트 → GitHub MCP 사용, 수동 API 호출 금지
+- 웹 검색이 필요하면 → brave-search MCP 사용
+- 내부 문서 참조 → internal-wiki MCP로 검색
 ```
+
+이렇게 해두면 Claude가 "DB 테이블 구조가 어때?"라는 질문을 받았을 때 추측하지 않고 실제로 쿼리해서 확인해요.
 

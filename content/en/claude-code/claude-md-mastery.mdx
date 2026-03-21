@@ -129,6 +129,94 @@ CLAUDE.md should be committed. It's a shared team resource — when one engineer
 | Not updated | Stale rules confuse Claude | Review monthly |
 | Duplicating package.json | Wastes context tokens | Only add what's not obvious |
 
+## Team Collaboration Patterns
+
+CLAUDE.md isn't just a personal productivity tool — it's team infrastructure. A well-maintained CLAUDE.md aligns how the entire team uses AI, consistently.
+
+**Onboarding automation**
+When a new teammate opens Claude Code on day one, CLAUDE.md already carries the project context. They spend less time asking "how is this project structured?" and more time contributing.
+
+**Consistent AI output across the team**
+Without CLAUDE.md, each developer gets slightly different code from Claude — one uses `any` types, another doesn't. CLAUDE.md eliminates that drift by making conventions explicit and shared.
+
+**Fewer "why did Claude do this?" moments in PR review**
+If that question keeps coming up in code review, it's a signal that the relevant convention is missing from CLAUDE.md. Add it when you find the gap, and review friction drops over time.
+
+## Starter Template
+
+If you're writing your first CLAUDE.md, copy this and adapt it to your project:
+
+```markdown
+# [Project Name]
+
+[One-line description: what it does, what technologies it uses]
+
+## Conventions
+- [File naming rule, e.g. kebab-case]
+- [Code style, e.g. max 20 lines per function]
+- [Testing rule, e.g. co-locate test files with source]
+
+## Architecture
+- [Key technical decision and why]
+- [Alternatives you considered and rejected]
+
+## Don't
+- [Forbidden pattern 1]
+- [Forbidden pattern 2]
+
+## Common Commands
+- Test: `npm test`
+- Build: `npm run build`
+- Lint: `npm run lint`
+```
+
+## Advanced Patterns
+
+### Conditional Instructions
+
+You can apply different rules depending on what kind of file is being edited:
+
+```markdown
+## Context-Specific Rules
+- When editing frontend files: Tailwind CSS classes only, no inline styles
+- When editing API routes: always include error handling, return typed responses
+- When editing test files: use describe/it pattern, descriptive test names
+```
+
+Claude knows the path of the file it's working on, so conditional instructions like these work naturally.
+
+### External Document Reference Pattern
+
+Don't try to put everything into CLAUDE.md. Keep it lean by referencing separate files for details:
+
+```markdown
+## Reference Docs
+- API design principles: see `docs/api-style.md`
+- Database schema: see `docs/schema.md`
+- Deployment procedure: see `docs/deploy.md`
+```
+
+Claude reads those files only when relevant. This keeps CLAUDE.md short while making detailed context always accessible.
+
+## How to Evolve Your CLAUDE.md Over Time
+
+It doesn't need to be perfect from the start. Starting small is actually the right approach:
+
+1. **Start minimal**: Begin with 5–10 lines — a one-sentence project description and 2–3 core conventions
+2. **Add rules when Claude gets it wrong**: When Claude generates something unexpected, add the missing convention right then
+3. **Monthly review**: Once a month, scan for rules that are now obvious or no longer relevant — remove them
+4. **The "why did Claude do that?" test**: If you can't explain Claude's reasoning, that reasoning belongs in CLAUDE.md
+
+## The .claude/ Directory (Going Deeper)
+
+Beyond CLAUDE.md, the entire `.claude/` directory is your project's AI configuration space:
+
+- **`.claude/settings.json`** — project-wide settings, committed to version control
+- **`.claude/settings.local.json`** — personal settings and API keys (add to .gitignore)
+- **`.claude/commands/`** — define custom slash commands for your team
+
+For example, create `.claude/commands/review.md` and every team member can run `/review` to trigger the same code review workflow. If CLAUDE.md defines "what Claude should know," `.claude/` defines "how Claude should behave."
+
 ## Connection: GPT Codex Comparison
 
 GPT Codex uses `AGENTS.md` and `codex.md` for similar purposes, but with key differences:

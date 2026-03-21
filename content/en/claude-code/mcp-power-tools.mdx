@@ -104,23 +104,153 @@ GPT Codex takes a different approach — it runs in a sandboxed container where 
 | Security | Granular, protocol-level | Container isolation |
 | Extensibility | Any MCP server | Any CLI tool |
 
+## Project vs User Scope
+
+MCP configuration has two scopes. Choosing the right one prevents secrets from leaking into your repo and makes onboarding easier for teammates.
+
+### Project Scope — `.mcp.json`
+
+Use this when the whole team needs the same MCP servers. The file can be committed to git so everyone shares the same setup automatically.
+
+```json
+// .mcp.json at project root — shared via git
+{
+  "mcpServers": {
+    "postgres": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres"],
+      "env": {
+        "DATABASE_URL": "${DATABASE_URL}"
+      }
+    }
+  }
+}
+```
+
+Reference environment variables with `${VAR_NAME}` rather than hardcoding values. Each developer keeps actual secrets in their own `.env` file.
+
+### User Scope — `~/.claude/settings.json`
+
+Use this for personal tools or servers that need your private API keys. They're available across all your projects without any per-repo setup.
+
+```json
+// ~/.claude/settings.json — personal, available in every project
+{
+  "mcpServers": {
+    "memory": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"]
+    },
+    "brave-search": {
+      "command": "npx",
+      "args": ["-y", "@anthropic/server-brave-search"],
+      "env": {
+        "BRAVE_API_KEY": "your-personal-key"
+      }
+    }
+  }
+}
+```
+
+| Scope | File | Shared | When to Use |
+|-------|------|--------|-------------|
+| Project | `.mcp.json` | Team-wide, committed to git | DB, project-specific tools |
+| User | `~/.claude/settings.json` | Personal only | Private API keys, general-purpose tools |
+
+## More Useful MCP Servers
+
+Beyond the basics, these servers are worth adding for day-to-day development:
+
+| Server | What It Does | Install Command |
+|--------|-------------|-----------------|
+| `server-brave-search` | Web search — fetch current info | `npx @anthropic/server-brave-search` |
+| `server-puppeteer` | Browser automation, screenshots | `npx @anthropic/server-puppeteer` |
+| `server-slack` | Read and post Slack messages | `npx @anthropic/server-slack` |
+| `server-sqlite` | Query SQLite databases | `npx @anthropic/server-sqlite` |
+| `server-filesystem` | Extended file access across repos | `npx @modelcontextprotocol/server-filesystem` |
+
+For example, adding Brave Search means Claude can look up the latest library issues or security patches directly instead of relying on training data. Add Puppeteer and you can automate web UI testing from inside a Claude conversation.
+
+## Building Your Own MCP Server
+
+You're not limited to community servers. If your company has internal tools — a wiki, a monitoring dashboard, a proprietary API — you can wrap them in a custom MCP server.
+
+The TypeScript SDK (`@modelcontextprotocol/sdk`) makes this straightforward:
+
+```typescript
+// Concept: an MCP server that searches your internal wiki
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+
+const server = new Server({ name: "internal-wiki", version: "1.0.0" });
+
+server.setRequestHandler("tools/call", async (request) => {
+  if (request.params.name === "search_wiki") {
+    const query = request.params.arguments.query;
+    // Call your internal wiki API
+    const results = await internalWikiApi.search(query);
+    return { content: [{ type: "text", text: JSON.stringify(results) }] };
+  }
+});
+```
+
+Once connected, "find our deployment runbook" becomes a real search — not a guess. Every internal system you connect multiplies Claude's usefulness for your specific context.
+
+## Debugging and Troubleshooting
+
+### Check connected servers
+
+```bash
+claude mcp list
+```
+
+This shows all active MCP servers and their status.
+
+### Common problems
+
+**Server won't start:**
+- Check that `npx` is on your PATH (`which npx`)
+- Confirm your Node.js version — most MCP servers require v18 or later
+- Verify required environment variables are set
+
+**Server is slow or timing out:**
+
+```json
+{
+  "mcpServers": {
+    "slow-server": {
+      "command": "npx",
+      "args": ["-y", "some-mcp-server"],
+      "timeout": 30000
+    }
+  }
+}
+```
+
+**Viewing MCP communication logs:**
+
+```bash
+claude --mcp-debug
+```
+
+This outputs the full request/response log between Claude and each MCP server, which is the fastest way to diagnose connection issues.
+
 ## Pro Tips
 
 ### Don't Over-Connect
 
 Each MCP server adds context overhead. Start with 2-3 essential ones, add more as needed.
 
-### Use Project-Level Config
+### Combine with CLAUDE.md — the complete picture
 
-`.mcp.json` is project-scoped. Don't put personal API keys in committed files — use environment variables.
-
-### Combine with CLAUDE.md
-
-Tell Claude when to use which MCP tool:
+Installing MCP servers is only half the job. Without explicit instructions, Claude has to guess when to reach for each tool. A clear policy in CLAUDE.md makes behavior consistent:
 
 ```markdown
-## Tools
-- Use context7 before implementing any library API
-- Query postgres MCP for schema questions, don't guess
-- Use GitHub MCP for PR descriptions, not manual copy-paste
+## MCP Tool Rules
+- DB schema questions → query postgres MCP first, never guess
+- External libraries → check context7 for current docs before implementing
+- Issue creation/updates → use GitHub MCP, no manual API calls
+- Need web info → use brave-search MCP
+- Internal docs → search internal-wiki MCP
 ```
+
+With rules like these, Claude queries the database when asked about table structure instead of hallucinating a schema.

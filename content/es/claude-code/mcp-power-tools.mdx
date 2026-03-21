@@ -90,9 +90,154 @@ Claude: *implementa con API actual, no patrones desactualizados*
 | Acceso | Permisos herramienta por herramienta | Acceso completo al contenedor |
 | Seguridad | Granular, nivel de protocolo | Aislamiento de contenedor |
 
+## Alcance de Proyecto vs Alcance de Usuario
+
+La configuración MCP tiene dos alcances. Elegir el correcto evita que los secretos acaben en el repositorio y facilita la incorporación de nuevos miembros al equipo.
+
+### Alcance de Proyecto — `.mcp.json`
+
+Úsalo cuando todo el equipo necesita los mismos servidores MCP. Este archivo se puede incluir en git para que todos compartan la misma configuración automáticamente.
+
+```json
+// .mcp.json en la raíz del proyecto — compartido via git
+{
+  "mcpServers": {
+    "postgres": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres"],
+      "env": {
+        "DATABASE_URL": "${DATABASE_URL}"
+      }
+    }
+  }
+}
+```
+
+Referencia variables de entorno con `${VAR_NAME}` en lugar de hardcodear valores. Cada desarrollador guarda sus secretos reales en su propio archivo `.env`.
+
+### Alcance de Usuario — `~/.claude/settings.json`
+
+Úsalo para herramientas personales o servidores que necesitan tus claves API privadas. Están disponibles en todos tus proyectos sin configuración adicional por repositorio.
+
+```json
+// ~/.claude/settings.json — personal, disponible en todos tus proyectos
+{
+  "mcpServers": {
+    "memory": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"]
+    },
+    "brave-search": {
+      "command": "npx",
+      "args": ["-y", "@anthropic/server-brave-search"],
+      "env": {
+        "BRAVE_API_KEY": "tu-clave-personal"
+      }
+    }
+  }
+}
+```
+
+| Alcance | Archivo | Compartido | Cuándo Usar |
+|---------|---------|-----------|-------------|
+| Proyecto | `.mcp.json` | Todo el equipo, en git | BD, herramientas del proyecto |
+| Usuario | `~/.claude/settings.json` | Solo personal | Claves API privadas, herramientas generales |
+
+## Más Servidores MCP Útiles
+
+Más allá de los básicos, estos servidores valen la pena para el trabajo diario:
+
+| Servidor | Qué Hace | Comando de Instalación |
+|----------|---------|----------------------|
+| `server-brave-search` | Búsqueda web — información actualizada | `npx @anthropic/server-brave-search` |
+| `server-puppeteer` | Automatización de navegador, capturas de pantalla | `npx @anthropic/server-puppeteer` |
+| `server-slack` | Leer y enviar mensajes de Slack | `npx @anthropic/server-slack` |
+| `server-sqlite` | Consultas a bases de datos SQLite | `npx @anthropic/server-sqlite` |
+| `server-filesystem` | Acceso extendido a archivos entre repos | `npx @modelcontextprotocol/server-filesystem` |
+
+Por ejemplo, con Brave Search Claude puede buscar los últimos issues de una librería o parches de seguridad en lugar de depender de sus datos de entrenamiento. Con Puppeteer puedes automatizar pruebas de UI web directamente desde una conversación con Claude.
+
+## Crear Tu Propio Servidor MCP
+
+No estás limitado a servidores de la comunidad. Si tu empresa tiene herramientas internas — una wiki, un dashboard de monitoreo, una API propia — puedes envolverlas en un servidor MCP personalizado.
+
+El SDK de TypeScript (`@modelcontextprotocol/sdk`) hace esto muy accesible:
+
+```typescript
+// Concepto: un servidor MCP que busca en tu wiki interna
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+
+const server = new Server({ name: "wiki-interna", version: "1.0.0" });
+
+server.setRequestHandler("tools/call", async (request) => {
+  if (request.params.name === "buscar_wiki") {
+    const query = request.params.arguments.query;
+    // Llamar a tu API interna
+    const resultados = await wikiInternaApi.buscar(query);
+    return { content: [{ type: "text", text: JSON.stringify(resultados) }] };
+  }
+});
+```
+
+Una vez conectado, "encuentra nuestro runbook de despliegue" se convierte en una búsqueda real — no en una suposición. Cada sistema interno que conectas multiplica la utilidad de Claude para tu contexto específico.
+
+## Depuración y Solución de Problemas
+
+### Verificar servidores conectados
+
+```bash
+claude mcp list
+```
+
+Muestra todos los servidores MCP activos y su estado.
+
+### Problemas comunes
+
+**El servidor no arranca:**
+- Verifica que `npx` esté en tu PATH (`which npx`)
+- Confirma tu versión de Node.js — la mayoría de servidores MCP requieren v18 o posterior
+- Verifica que las variables de entorno necesarias estén configuradas
+
+**El servidor es lento o hay timeouts:**
+
+```json
+{
+  "mcpServers": {
+    "servidor-lento": {
+      "command": "npx",
+      "args": ["-y", "algun-servidor-mcp"],
+      "timeout": 30000
+    }
+  }
+}
+```
+
+**Ver los logs de comunicación MCP:**
+
+```bash
+claude --mcp-debug
+```
+
+Esto muestra el log completo de solicitudes y respuestas entre Claude y cada servidor MCP — la forma más rápida de diagnosticar problemas de conexión.
+
 ## Consejos Pro
 
-No sobre-conectes — cada servidor MCP agrega overhead de contexto. Comienza con 2-3 esenciales.
+### No sobre-conectes
 
-Combina con CLAUDE.md para decirle a Claude cuándo usar qué herramienta MCP.
+Cada servidor MCP agrega overhead de contexto. Comienza con 2-3 esenciales y añade más según sea necesario.
+
+### Combina con CLAUDE.md — el panorama completo
+
+Instalar servidores MCP es solo la mitad del trabajo. Sin instrucciones explícitas, Claude tiene que adivinar cuándo usar cada herramienta. Una política clara en CLAUDE.md hace que el comportamiento sea consistente:
+
+```markdown
+## Reglas de Uso de Herramientas MCP
+- Preguntas sobre esquemas de BD → consulta postgres MCP primero, nunca adivines
+- Librerías externas → revisa context7 para docs actuales antes de implementar
+- Crear/actualizar issues → usa GitHub MCP, sin llamadas manuales a la API
+- Necesitas info de la web → usa brave-search MCP
+- Documentación interna → busca en internal-wiki MCP
+```
+
+Con estas reglas, Claude consulta la base de datos cuando se le pregunta sobre la estructura de una tabla, en lugar de inventarse un esquema.
 
