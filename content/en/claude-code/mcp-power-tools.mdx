@@ -234,6 +234,134 @@ claude --mcp-debug
 
 This outputs the full request/response log between Claude and each MCP server, which is the fastest way to diagnose connection issues.
 
+## MCP's Three Primitives: Tools, Resources, Prompts
+
+If you think MCP is just "functions Claude can call," you're only using a third of it. MCP has three core primitives:
+
+1. **Tools** — Functions Claude can call (e.g., query database, create issue)
+2. **Resources** — Data sources Claude can read (e.g., database schemas, config files, documentation)
+3. **Prompts** — Pre-built prompt templates the server provides (e.g., "analyze-schema", "review-code")
+
+Most people only use Tools. Resources and Prompts unlock much deeper integration.
+
+**Resources example:** A Postgres MCP server can expose table schemas as resources, so Claude always has up-to-date schema info without running a query every time.
+
+**Prompts example:** A code review MCP server can provide a "security-review" prompt template that includes all the right security checks automatically.
+
+## Popular Community MCP Servers
+
+Beyond the servers listed earlier, these community servers are widely used in real workflows:
+
+| Server | Purpose | Install |
+|--------|---------|---------|
+| `@anthropic/mcp-server-linear` | Linear issue tracking | `npx @anthropic/mcp-server-linear` |
+| `@anthropic/mcp-server-notion` | Notion workspace access | `npx @anthropic/mcp-server-notion` |
+| `@anthropic/mcp-server-sentry` | Error monitoring | `npx @anthropic/mcp-server-sentry` |
+| `@anthropic/mcp-server-everart` | Image generation | `npx @anthropic/mcp-server-everart` |
+| `mcp-server-docker` | Docker container management | `npx mcp-server-docker` |
+
+Check https://github.com/modelcontextprotocol/servers for the full community catalog.
+
+When choosing servers, prefer official ones (`@modelcontextprotocol` or `@anthropic`) for security.
+
+## Building MCP Servers with Python
+
+The Python SDK is an alternative to TypeScript — and often simpler for data-heavy workflows.
+
+```bash
+pip install mcp
+```
+
+Example: wrapping an internal API.
+
+```python
+from mcp.server import Server
+from mcp.types import Tool, TextContent
+import mcp.server.stdio
+
+app = Server("internal-api")
+
+@app.list_tools()
+async def list_tools():
+    return [
+        Tool(
+            name="search_docs",
+            description="Search internal documentation",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "Search query"}
+                },
+                "required": ["query"]
+            }
+        )
+    ]
+
+@app.call_tool()
+async def call_tool(name: str, arguments: dict):
+    if name == "search_docs":
+        results = await internal_api.search(arguments["query"])
+        return [TextContent(type="text", text=str(results))]
+
+async def main():
+    async with mcp.server.stdio.stdio_server() as (read, write):
+        await app.run(read, write, app.create_initialization_options())
+```
+
+Register it in `.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "internal-api": {
+      "command": "python",
+      "args": ["-m", "my_mcp_server"]
+    }
+  }
+}
+```
+
+If you're comfortable with Python, you can wrap an internal API in about 30 minutes.
+
+## MCP Server Composition Strategy
+
+Don't add every server you find — each one adds context overhead. Pick a stack that fits your workflow.
+
+**Full-Stack Development:**
+```json
+{
+  "mcpServers": {
+    "postgres": { "...": "DB queries and schema" },
+    "github": { "...": "PR and issue management" },
+    "context7": { "...": "Live library docs" }
+  }
+}
+```
+
+**Data Engineering:**
+```json
+{
+  "mcpServers": {
+    "postgres": { "...": "Data warehouse queries" },
+    "filesystem": { "...": "Multi-repo access" },
+    "memory": { "...": "Cross-session context" }
+  }
+}
+```
+
+**DevOps/SRE:**
+```json
+{
+  "mcpServers": {
+    "sentry": { "...": "Error monitoring" },
+    "docker": { "...": "Container management" },
+    "github": { "...": "Deployment workflows" }
+  }
+}
+```
+
+Rule of thumb: 2-4 servers is ideal. More than 5 can slow startup and consume context.
+
 ## Pro Tips
 
 ### Don't Over-Connect

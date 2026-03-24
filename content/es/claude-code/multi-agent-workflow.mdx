@@ -169,6 +169,120 @@ Más agentes no siempre es mejor. Ten en cuenta estos puntos:
 - **El coste se multiplica** — número de agentes × llamadas a la API = mayor gasto. Úsalos cuando el paralelismo realmente lo justifique.
 - **Más de 4 agentes puede perder eficiencia** — Claude Code recomienda un máximo de 4 agentes simultáneos. Por encima de eso, la sobrecarga de coordinación crece.
 
+## Claude Code SDK para Orquestación Programática
+
+Claude Code se puede usar como paquete npm (`@anthropic-ai/claude-code`), lo que permite construir flujos de orquestación personalizados en TypeScript/JavaScript.
+
+Uso básico:
+
+```typescript
+import { claude } from "@anthropic-ai/claude-code";
+
+// Ejecución simple de prompt
+const result = await claude({
+  prompt: "Analyze src/auth/ for security vulnerabilities",
+  options: {
+    maxTurns: 10,
+    allowedTools: ["Read", "Glob", "Grep"],
+  }
+});
+
+console.log(result.text);
+```
+
+Ejemplo de orquestación multi-agente:
+
+```typescript
+// Revisión de código en paralelo por módulos
+const modules = ["src/auth/", "src/api/", "src/database/"];
+
+const reviews = await Promise.all(
+  modules.map(mod =>
+    claude({
+      prompt: `Review ${mod} for security issues. Focus on injection risks and auth bypasses.`,
+      options: { allowedTools: ["Read", "Glob", "Grep"] }
+    })
+  )
+);
+
+// Agregar resultados
+const summary = await claude({
+  prompt: `Synthesize these security reviews into a single report:\n${reviews.map(r => r.text).join("\n---\n")}`,
+});
+```
+
+Casos de uso: pipelines de CI personalizados, auditorías de código automatizadas, procesamiento por lotes en bases de código grandes.
+
+## Modo Headless para Automatización
+
+`claude -p "prompt"` se ejecuta sin conversación interactiva. Combinado con scripts de shell, permite una automatización potente:
+
+```bash
+#!/bin/bash
+# Auditoría de seguridad en paralelo por servicio
+
+services=("auth-service" "payment-service" "user-service")
+
+for service in "${services[@]}"; do
+  claude -p "Audit $service/ for OWASP Top 10 vulnerabilities. Output as markdown." \
+    --model haiku \
+    --output-format text \
+    > "reports/${service}-audit.md" &
+done
+
+wait
+echo "All audits complete"
+```
+
+Opciones útiles:
+- `--output-format json` para salida parseable por máquinas
+- Piping por stdin: `git diff HEAD~5 | claude -p "Summarize the changes in these commits"`
+- Variable de entorno `ANTHROPIC_API_KEY` para sistemas CI/CD
+
+El modo headless es especialmente útil para integrar Claude Code como herramienta de automatización en GitHub Actions, Jenkins y otros sistemas de CI.
+
+## Estrategias de Optimización de Costos
+
+Cada subagente crea un nuevo contexto de Claude, lo que implica costos adicionales de API. Estas son las estrategias para minimizar el gasto:
+
+| Estrategia | Cómo | Ahorro |
+|------------|------|--------|
+| Mezcla de modelos | haiku para búsqueda/lectura, sonnet para implementación | ~60% en tareas de lectura intensiva |
+| Alcance limitado | Alcance reducido = menos turnos = menos costo | ~40% por agente |
+| Caché de resultados | Almacenar salidas, reutilizar entre ejecuciones | Variable |
+| Agrupación en lotes | Agrupar archivos relacionados en menos agentes | ~30% vs un agente por archivo |
+
+Anti-patrón: crear un agente por archivo para 50 archivos. En su lugar, crea agentes por módulo.
+
+Punto óptimo: 2-4 agentes para la mayoría de tareas, cada uno manejando un grupo lógico de archivos relacionados.
+
+## Escenario Real: Sprint de Funcionalidad Full-Stack
+
+Recorramos un escenario multi-agente realista:
+
+```
+Tarea: Añadir funcionalidad de "notificaciones de usuario" a una app full-stack
+
+Plan de orquestación de agentes:
+├── Agente 1 (Backend): Diseñar esquema de notificaciones, crear endpoints API
+│   Alcance: src/api/notifications/, prisma/schema.prisma
+│
+├── Agente 2 (Frontend): Construir componente NotificationBell, página de lista de notificaciones
+│   Alcance: src/components/notifications/, src/pages/notifications/
+│
+├── Agente 3 (Infraestructura): Configurar servidor WebSocket, Redis pub/sub
+│   Alcance: src/services/websocket/, docker-compose.yml
+│
+└── Agente 4 (Testing): Escribir tests de integración para el flujo de notificaciones
+    Alcance: tests/notifications/
+    Dependencias: Espera a que los Agentes 1-3 completen
+
+Ejecución: Agentes 1-3 en paralelo → Agente 4 después
+Tiempo total: ~5 min (vs ~15 min secuencial)
+```
+
+Punto clave: define las interfaces compartidas (`types/notification.ts`) antes de generar los agentes. Cada agente tiene acceso de lectura a los tipos compartidos pero solo escribe en su propio alcance.
+
 ## Comparación con Codex
 
 GPT Codex ejecuta cada tarea como un único agente en sandbox. No hay orquestación multi-agente, pero el modelo de sandbox da aislamiento completo de contenedor por tarea.

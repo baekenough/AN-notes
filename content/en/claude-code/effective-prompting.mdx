@@ -218,6 +218,95 @@ Asking for an explanation and asking for action produce very different results:
 
 Claude Code is an engineer, not an analyst. Ask for action.
 
+## File References for Precise Context
+
+You can mention files directly in your prompt and Claude will read them. Instead of expecting Claude to search the entire codebase, point it to the relevant files:
+
+```
+Read src/types/user.ts first, then add a new field for avatar_url
+```
+
+```
+Look at src/auth/login.ts — the token refresh logic seems off
+```
+
+Full paths or relative paths both work. You can also drag and drop files into the prompt for quick context.
+
+**Best practice**: Point Claude to relevant files rather than expecting it to search the entire codebase. Faster input, more accurate output.
+
+## Non-Interactive Mode
+
+`claude --print` (or `claude -p`) runs a single prompt with no conversation — perfect for scripts and pipelines:
+
+```bash
+# Summarize error logs
+cat error.log | claude -p "summarize these errors"
+
+# Save output to a file
+claude -p "generate test for src/utils.ts" > tests/utils.test.ts
+
+# Get structured JSON output
+claude -p --output-format json "list all exported functions in src/api/"
+```
+
+### Practical Examples
+
+**Git commit message generation:**
+```bash
+git diff --staged | claude -p "write a conventional commit message"
+```
+
+**Code review in CI:**
+```bash
+claude -p "review this diff for security issues" < pr.diff
+```
+
+**Documentation generation:**
+```bash
+claude -p "generate JSDoc for all exported functions in src/api/"
+```
+
+Works anywhere: Makefiles, shell scripts, git hooks.
+
+## Model Selection Strategy
+
+Use `/model` to switch models mid-conversation. Match the model to your task's complexity for optimal cost and performance:
+
+| Task | Recommended Model |
+|------|------------------|
+| Architecture review, complex debugging | opus |
+| Feature implementation, code review | sonnet (default) |
+| Quick questions, file search, formatting | haiku |
+
+For non-interactive mode, use the `--model` flag:
+```bash
+claude -p --model haiku "explain this error"
+```
+
+**Cost awareness**: haiku is roughly 10x cheaper than opus per token. Start with sonnet, escalate to opus for complex reasoning, and use haiku for bulk or batch tasks.
+
+## Permission Modes
+
+Use `--allowedTools` to pre-approve specific tools and reduce permission prompts:
+
+```bash
+claude --allowedTools "Edit,Write,Bash(git *)"
+```
+
+For persistent configuration, set allowed tools in `.claude/settings.json`:
+
+```json
+{
+  "permissions": {
+    "allow": ["Edit", "Write", "Bash(npm test)", "Bash(npm run lint)"]
+  }
+}
+```
+
+For fully automated scripts (CI only, never interactive), `--dangerouslySkipPermissions` bypasses all permission checks.
+
+**Best practice**: Start restrictive, gradually allow tools you trust.
+
 ## Codex Comparison
 
 GPT Codex works differently — you write a task description upfront and it executes autonomously. There's no back-and-forth conversation. This means:

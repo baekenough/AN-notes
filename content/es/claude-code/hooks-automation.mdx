@@ -264,6 +264,175 @@ Buenas prácticas:
 - evitar secretos y archivos sensibles
 - probar primero en un entorno seguro
 
+## Referencia Completa de Eventos Hook
+
+Aquí tienes una tabla con todos los tipos de eventos hook que soporta Claude Code.
+
+| Evento | Momento | Caso de uso |
+|--------|---------|------------|
+| `PreToolUse` | Antes de ejecutar la herramienta | Bloquear operaciones peligrosas, validar entradas |
+| `PostToolUse` | Después de ejecutar la herramienta | Auto-formatear, lint, enviar notificaciones |
+| `PreCompact` | Antes de comprimir el contexto | Guardar estado importante, crear snapshots |
+| `PostCompact` | Después de comprimir el contexto | Restaurar contexto, re-inyectar reglas críticas |
+| `Notification` | Cuando Claude envía una notificación | Alertas de escritorio, mensajes de Slack, efectos de sonido |
+| `Stop` | Cuando Claude termina de responder | Limpieza de sesión, validación final, auto-guardado |
+
+Puntos clave:
+
+- Cada evento recibe diferentes variables de entorno
+- Solo `PreToolUse` puede BLOQUEAR la ejecución (exit 1). El resto son solo advisory
+- Los patrones de matcher soportan regex: `"Edit|Write"`, `"Bash"`, `".*"` para todas las herramientas
+
+## Referencia de Variables de Entorno
+
+Estas son las variables de entorno disponibles dentro de los scripts hook.
+
+| Variable | Disponible en | Contenido |
+|----------|--------------|-----------|
+| `CLAUDE_TOOL_NAME` | Todos los hooks | Nombre de la herramienta en uso (Edit, Write, Bash, etc.) |
+| `CLAUDE_TOOL_INPUT` | Todos los hooks | JSON con los parámetros de la herramienta (file_path, command, etc.) |
+| `CLAUDE_TOOL_OUTPUT` | Solo PostToolUse | JSON con el resultado de la ejecución |
+| `CLAUDE_SESSION_ID` | Todos los hooks | Identificador de la sesión actual |
+| `CLAUDE_PROJECT_DIR` | Todos los hooks | Ruta del directorio raíz del proyecto |
+| `CLAUDE_MODEL` | Todos los hooks | Modelo actual (claude-sonnet-4-6, etc.) |
+
+- Parsea las entradas JSON con `jq`: `echo "$CLAUDE_TOOL_INPUT" | jq -r '.file_path'`
+- Siempre maneja variables faltantes con valores por defecto
+
+## Patrón PostCompact Hook
+
+La compresión de contexto elimina el historial de conversación antiguo para liberar tokens. El problema es que las reglas o el contexto importante también pueden desaparecer.
+
+El hook `PostCompact` se ejecuta después de la compresión y puede re-inyectar contexto crítico de vuelta a la conversación.
+
+```bash
+#!/bin/bash
+# .claude/hooks/post-compact.sh
+# Re-inyectar contexto crítico después de la compresión
+
+cat << 'CONTEXT'
+[Post-Compact Context Restoration]
+- Current task: Review authentication module
+- Important constraint: Do NOT modify database schema
+- Active branch: feature/auth-refactor
+- Files modified so far: src/auth/login.ts, src/auth/session.ts
+CONTEXT
+```
+
+Regístralo en settings:
+
+```json
+{
+  "hooks": {
+    "PostCompact": [
+      {
+        "matcher": ".*",
+        "command": ".claude/hooks/post-compact.sh"
+      }
+    ]
+  }
+}
+```
+
+- La salida de los hooks PostCompact se alimenta de vuelta a la conversación como contexto
+- Mantenlo corto — una salida larga anula el propósito de la compactación
+
+## Flujo Multi-Hook: Pipeline CI Local
+
+Combina múltiples hooks para construir un pipeline CI local completo. Cada vez que se edita un archivo, se ejecutan automáticamente la verificación de tipos, el linting y los tests.
+
+```bash
+#!/bin/bash
+# .claude/hooks/local-ci.sh — Hook PostToolUse para Edit|Write
+
+FILE=$(echo "$CLAUDE_TOOL_INPUT" | jq -r '.file_path // empty')
+[[ -z "$FILE" ]] && exit 0
+
+ERRORS=""
+
+# Paso 1: Verificación de tipos TypeScript (solo para archivos .ts/.tsx)
+if [[ "$FILE" == *.ts || "$FILE" == *.tsx ]]; then
+  if ! npx tsc --noEmit --pretty 2>/tmp/tsc-output.txt; then
+    ERRORS+="TypeScript errors found:\n$(cat /tmp/tsc-output.txt)\n\n"
+  fi
+fi
+
+# Paso 2: Verificación ESLint
+if [[ "$FILE" == *.ts || "$FILE" == *.tsx || "$FILE" == *.js ]]; then
+  if ! npx eslint "$FILE" --quiet 2>/tmp/eslint-output.txt; then
+    ERRORS+="ESLint issues:\n$(cat /tmp/eslint-output.txt)\n\n"
+  fi
+fi
+
+# Paso 3: Ejecutar tests relacionados
+TEST_FILE="${FILE%.ts}.test.ts"
+if [[ -f "$TEST_FILE" ]]; then
+  if ! npx jest "$TEST_FILE" --silent 2>/tmp/test-output.txt; then
+    ERRORS+="Test failures:\n$(cat /tmp/test-output.txt)\n\n"
+  fi
+fi
+
+# Reportar resultados
+if [[ -n "$ERRORS" ]]; then
+  echo "⚠ Local CI found issues:" >&2
+  echo -e "$ERRORS" >&2
+else
+  echo "✓ Local CI passed: types, lint, tests" >&2
+fi
+
+exit 0  # No bloquear — solo reportar
+```
+
+Puntos clave:
+
+- Se ejecuta automáticamente después de cada edición de archivo
+- Reporta via stderr para que Claude vea el feedback
+- exit 0 significa advisory — Claude ve las advertencias pero no se bloquea
+- Cambia a exit 1 en PreToolUse si quieres hacerlo obligatorio
+
+Configuración completa de settings.json para el pipeline:
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "command": ".claude/hooks/protect-files.sh"
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "command": ".claude/hooks/auto-format.sh"
+      },
+      {
+        "matcher": "Edit|Write",
+        "command": ".claude/hooks/local-ci.sh"
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": ".*",
+        "command": ".claude/hooks/save-context.sh"
+      }
+    ],
+    "PostCompact": [
+      {
+        "matcher": ".*",
+        "command": ".claude/hooks/post-compact.sh"
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": ".*",
+        "command": ".claude/hooks/notify-done.sh"
+      }
+    ]
+  }
+}
+```
+
 ## Hooks vs CLAUDE.md
 
 | Herramienta | Mejor para |

@@ -183,6 +183,120 @@ More agents isn't always better. Keep these tradeoffs in mind:
 - **Cost multiplies** — agent count × API calls = increased spend. Use agents when the parallelism is genuinely worth it.
 - **4+ concurrent agents can lose efficiency** — Claude Code recommends up to 4 concurrent agents. Beyond that, coordination overhead grows.
 
+## Claude Code SDK for Programmatic Orchestration
+
+Claude Code can be used as an npm package (`@anthropic-ai/claude-code`), letting you build custom orchestration workflows in TypeScript/JavaScript.
+
+Basic usage:
+
+```typescript
+import { claude } from "@anthropic-ai/claude-code";
+
+// Simple prompt execution
+const result = await claude({
+  prompt: "Analyze src/auth/ for security vulnerabilities",
+  options: {
+    maxTurns: 10,
+    allowedTools: ["Read", "Glob", "Grep"],
+  }
+});
+
+console.log(result.text);
+```
+
+Multi-agent orchestration example:
+
+```typescript
+// Parallel code review across modules
+const modules = ["src/auth/", "src/api/", "src/database/"];
+
+const reviews = await Promise.all(
+  modules.map(mod =>
+    claude({
+      prompt: `Review ${mod} for security issues. Focus on injection risks and auth bypasses.`,
+      options: { allowedTools: ["Read", "Glob", "Grep"] }
+    })
+  )
+);
+
+// Aggregate results
+const summary = await claude({
+  prompt: `Synthesize these security reviews into a single report:\n${reviews.map(r => r.text).join("\n---\n")}`,
+});
+```
+
+Use cases: custom CI pipelines, automated code audits, batch processing across large codebases.
+
+## Headless Mode for Automation
+
+`claude -p "prompt"` runs without an interactive conversation. Combine it with shell scripting for powerful automation:
+
+```bash
+#!/bin/bash
+# Parallel security audit across services
+
+services=("auth-service" "payment-service" "user-service")
+
+for service in "${services[@]}"; do
+  claude -p "Audit $service/ for OWASP Top 10 vulnerabilities. Output as markdown." \
+    --model haiku \
+    --output-format text \
+    > "reports/${service}-audit.md" &
+done
+
+wait
+echo "All audits complete"
+```
+
+Useful options:
+- `--output-format json` for machine-parseable output
+- stdin piping: `git diff HEAD~5 | claude -p "Summarize the changes in these commits"`
+- Set `ANTHROPIC_API_KEY` environment variable for CI/CD systems
+
+Headless mode is especially useful for integrating Claude Code as an automation tool in GitHub Actions, Jenkins, and other CI systems.
+
+## Cost Optimization Strategies
+
+Each subagent creates a new Claude context, which means additional API costs. Here are strategies to minimize spend:
+
+| Strategy | How | Savings |
+|----------|-----|---------|
+| Model mixing | haiku for search/read, sonnet for implementation | ~60% for read-heavy tasks |
+| Task scoping | Narrow scope = fewer turns = less cost | ~40% per agent |
+| Result caching | Store outputs, reuse across runs | Variable |
+| Parallel batching | Group related files into fewer agents | ~30% vs per-file agents |
+
+Anti-pattern: creating an agent per file for 50 files. Instead, create agents per module.
+
+Sweet spot: 2-4 agents for most tasks, each handling a logical group of related files.
+
+## Real-World Scenario: Full-Stack Feature Sprint
+
+Walk through a realistic multi-agent scenario:
+
+```
+Task: Add "user notifications" feature to a full-stack app
+
+Agent orchestration plan:
+├── Agent 1 (Backend): Design notification schema, create API endpoints
+│   Scope: src/api/notifications/, prisma/schema.prisma
+│
+├── Agent 2 (Frontend): Build NotificationBell component, notification list page
+│   Scope: src/components/notifications/, src/pages/notifications/
+│
+├── Agent 3 (Infrastructure): Set up WebSocket server, Redis pub/sub
+│   Scope: src/services/websocket/, docker-compose.yml
+│
+└── Agent 4 (Testing): Write integration tests for the notification flow
+    Scope: tests/notifications/
+    Dependencies: Waits for Agents 1-3 to complete
+
+Execution: Agents 1-3 run in parallel → Agent 4 runs after
+Total time: ~5 min (vs ~15 min sequential)
+```
+
+Key insight: define shared interfaces (`types/notification.ts`) before spawning agents. Each agent gets read access to shared types but only writes to its own scope.
+
 ## Codex Comparison
 
 GPT Codex runs each task as a single sandboxed agent. There's no multi-agent orchestration — but the sandbox model gives full container isolation per task.

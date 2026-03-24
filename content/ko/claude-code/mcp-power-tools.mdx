@@ -237,6 +237,134 @@ Claude Code를 실행할 때 `--mcp-debug` 플래그를 사용하면 MCP 통신 
 claude --mcp-debug
 ```
 
+## MCP 3요소 심화: Tools, Resources, Prompts
+
+MCP를 "Claude가 호출하는 함수"로만 생각하고 계신다면, 아직 1/3만 쓰고 있는 거예요. MCP에는 세 가지 핵심 요소가 있어요:
+
+1. **Tools** — Claude가 호출할 수 있는 함수 (예: 데이터베이스 쿼리, 이슈 생성)
+2. **Resources** — Claude가 읽을 수 있는 데이터 소스 (예: DB 스키마, 설정 파일, 문서)
+3. **Prompts** — 서버가 제공하는 사전 정의 프롬프트 템플릿 (예: "analyze-schema", "review-code")
+
+대부분 Tools만 사용하지만, Resources와 Prompts를 활용하면 훨씬 깊은 통합이 가능해요.
+
+**Resources 예시:** Postgres MCP 서버가 테이블 스키마를 리소스로 노출하면, Claude가 매번 쿼리하지 않아도 항상 최신 스키마 정보를 갖고 있을 수 있어요.
+
+**Prompts 예시:** 코드 리뷰 MCP 서버가 "security-review" 프롬프트 템플릿을 제공하면, 보안 점검에 필요한 모든 체크 항목이 자동으로 포함돼요.
+
+## 인기 커뮤니티 MCP 서버
+
+앞서 소개한 서버 외에도 실무에서 자주 쓰이는 커뮤니티 서버들이 있어요:
+
+| 서버 | 기능 | 설치 명령 |
+|------|------|-----------|
+| `@anthropic/mcp-server-linear` | Linear 이슈 트래킹 | `npx @anthropic/mcp-server-linear` |
+| `@anthropic/mcp-server-notion` | Notion 워크스페이스 접근 | `npx @anthropic/mcp-server-notion` |
+| `@anthropic/mcp-server-sentry` | 에러 모니터링 | `npx @anthropic/mcp-server-sentry` |
+| `@anthropic/mcp-server-everart` | 이미지 생성 | `npx @anthropic/mcp-server-everart` |
+| `mcp-server-docker` | Docker 컨테이너 관리 | `npx mcp-server-docker` |
+
+전체 커뮤니티 카탈로그는 https://github.com/modelcontextprotocol/servers 에서 확인할 수 있어요.
+
+서버를 선택할 때는 보안을 위해 공식 서버(`@modelcontextprotocol` 또는 `@anthropic`)를 우선적으로 사용하는 게 좋아요.
+
+## Python으로 MCP 서버 만들기
+
+TypeScript 외에 Python SDK도 있어요. 데이터 중심 워크플로우에서는 TypeScript보다 더 간단하게 만들 수 있어요.
+
+```bash
+pip install mcp
+```
+
+내부 API를 래핑하는 예시:
+
+```python
+from mcp.server import Server
+from mcp.types import Tool, TextContent
+import mcp.server.stdio
+
+app = Server("internal-api")
+
+@app.list_tools()
+async def list_tools():
+    return [
+        Tool(
+            name="search_docs",
+            description="Search internal documentation",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "Search query"}
+                },
+                "required": ["query"]
+            }
+        )
+    ]
+
+@app.call_tool()
+async def call_tool(name: str, arguments: dict):
+    if name == "search_docs":
+        results = await internal_api.search(arguments["query"])
+        return [TextContent(type="text", text=str(results))]
+
+async def main():
+    async with mcp.server.stdio.stdio_server() as (read, write):
+        await app.run(read, write, app.create_initialization_options())
+```
+
+`.mcp.json`에 등록할 때는 이렇게 하면 돼요:
+
+```json
+{
+  "mcpServers": {
+    "internal-api": {
+      "command": "python",
+      "args": ["-m", "my_mcp_server"]
+    }
+  }
+}
+```
+
+Python이 익숙하다면 내부 API 래핑 서버를 만드는 데 30분이면 충분해요.
+
+## MCP 서버 조합 전략
+
+MCP 서버를 무작정 다 추가하면 안 돼요. 각 서버마다 컨텍스트 오버헤드가 생기거든요. 워크플로우에 맞는 조합을 선택하는 게 중요해요.
+
+**풀스택 개발:**
+```json
+{
+  "mcpServers": {
+    "postgres": { "...": "DB 쿼리와 스키마" },
+    "github": { "...": "PR과 이슈 관리" },
+    "context7": { "...": "라이브러리 최신 문서" }
+  }
+}
+```
+
+**데이터 엔지니어링:**
+```json
+{
+  "mcpServers": {
+    "postgres": { "...": "데이터 웨어하우스 쿼리" },
+    "filesystem": { "...": "여러 레포 접근" },
+    "memory": { "...": "세션 간 컨텍스트" }
+  }
+}
+```
+
+**DevOps/SRE:**
+```json
+{
+  "mcpServers": {
+    "sentry": { "...": "에러 모니터링" },
+    "docker": { "...": "컨테이너 관리" },
+    "github": { "...": "배포 워크플로우" }
+  }
+}
+```
+
+경험적으로 2-4개가 이상적이에요. 5개 이상은 시작 속도가 느려지고 컨텍스트를 많이 소비할 수 있어요.
+
 ## 프로 팁
 
 ### 과도하게 연결하지 마세요

@@ -304,6 +304,181 @@ jobs:
 
 ---
 
+## SDK 기반 고급 자동화
+
+공식 액션 외에도 Claude Code CLI를 직접 CI에서 사용할 수 있어요. 더 세밀한 제어가 필요할 때 유용합니다.
+
+```yaml
+name: Claude Code CI Tasks
+on:
+  push:
+    branches: [main]
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Security Audit
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          claude -p "Audit the files changed in this push for security vulnerabilities. \
+            Focus on: SQL injection, XSS, auth bypasses. \
+            Output a markdown summary." \
+            --output-format text > security-report.md
+
+      - name: Upload Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-report
+          path: security-report.md
+```
+
+- CLI를 직접 사용하면 공식 액션보다 더 세밀한 제어가 가능합니다. 커스텀 출력 형식, 파이프, 체이닝을 자유롭게 쓸 수 있어요.
+- `--model haiku`를 사용하면 대량 분석 시 비용을 크게 줄일 수 있습니다.
+- `--allowedTools "Read,Glob,Grep"`을 사용하면 읽기 전용 작업으로 제한할 수 있어요.
+
+---
+
+## 릴리즈 노트 자동 생성
+
+릴리즈가 생성되면 Claude가 커밋 히스토리를 분석해서 릴리즈 노트를 자동으로 작성합니다.
+
+```yaml
+name: Release Notes
+on:
+  release:
+    types: [created]
+
+jobs:
+  generate-notes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for commit analysis
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Generate release notes for tag ${{ github.event.release.tag_name }}.
+
+            Analyze all commits since the previous tag:
+            1. Group changes by category (Features, Bug Fixes, Performance, Documentation)
+            2. Write user-facing descriptions (not commit hashes)
+            3. Highlight breaking changes with ⚠️ prefix
+            4. Include migration steps if needed
+
+            Format as GitHub-flavored markdown.
+            Update the release body with the generated notes.
+```
+
+- `fetch-depth: 0`은 필수입니다. Claude가 태그 간 커밋을 비교하려면 전체 git 히스토리가 필요해요.
+- Conventional Commits(`feat:`, `fix:`, `breaking:`)를 사용하는 저장소에서 가장 잘 동작합니다.
+- `CLAUDE.md`에 변경 로그 형식 규칙을 작성해 두면 더 일관된 결과를 얻을 수 있어요.
+
+---
+
+## 매트릭스 전략으로 병렬 리뷰
+
+여러 관점의 전문 리뷰를 동시에 실행할 수 있어요. GitHub Actions의 매트릭스 전략을 활용합니다.
+
+```yaml
+name: Multi-Aspect Review
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        aspect:
+          - name: security
+            prompt: "Review for OWASP Top 10 vulnerabilities, injection risks, and auth issues"
+          - name: performance
+            prompt: "Review for N+1 queries, memory leaks, unnecessary re-renders, and heavy computations"
+          - name: maintainability
+            prompt: "Review for code duplication, complex functions (>20 lines), missing error handling, and unclear naming"
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            You are a ${{ matrix.aspect.name }} specialist.
+            ${{ matrix.aspect.prompt }}
+
+            Be specific: reference file names and line numbers.
+            If no issues found, say "✅ No ${{ matrix.aspect.name }} issues found."
+```
+
+- 각 관점(aspect)이 별도 잡으로 실행되기 때문에 진짜 병렬 처리입니다. 순차 실행이 아니에요.
+- 각 리뷰가 한 가지 차원에만 집중하기 때문에, 넓고 얕은 리뷰보다 훨씬 깊이 있는 피드백을 받을 수 있습니다.
+- 비용은 단일 리뷰의 약 3배이지만, 그만큼 훨씬 꼼꼼합니다.
+- `if: contains(github.event.pull_request.labels.*.name, 'deep-review')`를 추가하면 특정 라벨이 붙은 PR에서만 실행되도록 제한할 수 있어요.
+
+---
+
+## 의존성 업데이트 자동화
+
+매주 정해진 시간에 의존성을 점검하고, 보안 패치가 필요하면 자동으로 PR을 생성합니다.
+
+```yaml
+name: Weekly Dependency Check
+on:
+  schedule:
+    - cron: "0 9 * * 1"  # Every Monday at 9 AM
+  workflow_dispatch:  # Manual trigger
+
+jobs:
+  check-deps:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Check for outdated dependencies in this project:
+
+            1. Run `npm outdated` (or equivalent for the package manager used)
+            2. For each outdated package, check:
+               - Is it a major version bump? (potential breaking changes)
+               - Does the changelog mention security fixes?
+               - Are there known vulnerabilities? (check `npm audit`)
+            3. Create a summary categorized by:
+               - 🔴 Security patches (update immediately)
+               - 🟡 Minor updates (safe to update)
+               - 🟠 Major updates (needs review)
+            4. If there are security patches, create a PR with those updates
+
+            Be conservative — only auto-update for security patches.
+            Major version bumps should only be recommended, not applied.
+```
+
+- `schedule`로 cron을 설정하면 정기적인 유지보수가 자동화됩니다.
+- `workflow_dispatch`를 같이 설정하면 필요할 때 수동으로도 실행할 수 있어요.
+- 보수적인 접근 방식입니다. 보안 패치만 자동 PR을 만들고, 나머지는 권장 사항으로 보고해요.
+- `CLAUDE.md`에 의존성 관리 정책을 작성해 두면 Claude가 더 일관된 판단을 할 수 있습니다.
+
+---
+
 ## Claude와 Codex의 차이
 
 - Claude: 리뷰, 설명, 요약에 강함

@@ -317,6 +317,181 @@ Fuentes de guía útiles:
 
 Si las guías de tu repo son débiles, la automatización de GitHub solo escalará la ambigüedad más rápido.
 
+## Automatización Avanzada con el SDK
+
+Además de la acción oficial, puedes usar el CLI de Claude Code directamente en CI para tener un control más preciso.
+
+```yaml
+name: Claude Code CI Tasks
+on:
+  push:
+    branches: [main]
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Security Audit
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          claude -p "Audit the files changed in this push for security vulnerabilities. \
+            Focus on: SQL injection, XSS, auth bypasses. \
+            Output a markdown summary." \
+            --output-format text > security-report.md
+
+      - name: Upload Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-report
+          path: security-report.md
+```
+
+- El CLI te da más control que la acción: formatos de salida personalizados, piping y encadenamiento.
+- Usa `--model haiku` para análisis masivos con coste reducido.
+- Combínalo con `--allowedTools "Read,Glob,Grep"` para restringir a operaciones de solo lectura.
+
+---
+
+## Generación Automática de Release Notes
+
+Cuando se crea un release, Claude analiza el historial de commits y genera las notas de lanzamiento automáticamente.
+
+```yaml
+name: Release Notes
+on:
+  release:
+    types: [created]
+
+jobs:
+  generate-notes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for commit analysis
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Generate release notes for tag ${{ github.event.release.tag_name }}.
+
+            Analyze all commits since the previous tag:
+            1. Group changes by category (Features, Bug Fixes, Performance, Documentation)
+            2. Write user-facing descriptions (not commit hashes)
+            3. Highlight breaking changes with ⚠️ prefix
+            4. Include migration steps if needed
+
+            Format as GitHub-flavored markdown.
+            Update the release body with the generated notes.
+```
+
+- `fetch-depth: 0` es imprescindible: Claude necesita el historial completo de git para comparar tags.
+- Funciona mejor con Conventional Commits (`feat:`, `fix:`, `breaking:`).
+- Combínalo con reglas en `CLAUDE.md` sobre el formato de tu changelog para obtener resultados más consistentes.
+
+---
+
+## Estrategia Matrix para Reviews en Paralelo
+
+Ejecuta múltiples revisiones especializadas en paralelo usando la estrategia matrix de GitHub Actions.
+
+```yaml
+name: Multi-Aspect Review
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        aspect:
+          - name: security
+            prompt: "Review for OWASP Top 10 vulnerabilities, injection risks, and auth issues"
+          - name: performance
+            prompt: "Review for N+1 queries, memory leaks, unnecessary re-renders, and heavy computations"
+          - name: maintainability
+            prompt: "Review for code duplication, complex functions (>20 lines), missing error handling, and unclear naming"
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            You are a ${{ matrix.aspect.name }} specialist.
+            ${{ matrix.aspect.prompt }}
+
+            Be specific: reference file names and line numbers.
+            If no issues found, say "✅ No ${{ matrix.aspect.name }} issues found."
+```
+
+- Cada aspecto se ejecuta en un job separado, es decir, verdadero paralelismo, no ejecución secuencial.
+- Cada revisión se enfoca en una sola dimensión, evitando revisiones amplias pero superficiales.
+- Coste: aproximadamente 3x el de una revisión única, pero mucho más exhaustivo.
+- Agrega `if: contains(github.event.pull_request.labels.*.name, 'deep-review')` para activarlo solo cuando sea necesario.
+
+---
+
+## Automatización de Actualización de Dependencias
+
+Ejecuta una revisión semanal de dependencias y crea PRs automáticamente para parches de seguridad.
+
+```yaml
+name: Weekly Dependency Check
+on:
+  schedule:
+    - cron: "0 9 * * 1"  # Every Monday at 9 AM
+  workflow_dispatch:  # Manual trigger
+
+jobs:
+  check-deps:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Check for outdated dependencies in this project:
+
+            1. Run `npm outdated` (or equivalent for the package manager used)
+            2. For each outdated package, check:
+               - Is it a major version bump? (potential breaking changes)
+               - Does the changelog mention security fixes?
+               - Are there known vulnerabilities? (check `npm audit`)
+            3. Create a summary categorized by:
+               - 🔴 Security patches (update immediately)
+               - 🟡 Minor updates (safe to update)
+               - 🟠 Major updates (needs review)
+            4. If there are security patches, create a PR with those updates
+
+            Be conservative — only auto-update for security patches.
+            Major version bumps should only be recommended, not applied.
+```
+
+- Programa con cron para mantenimiento regular.
+- `workflow_dispatch` permite ejecuciones manuales cuando sea necesario.
+- Enfoque conservador: PR automático solo para seguridad, recomendaciones para todo lo demás.
+- Combínalo con reglas en `CLAUDE.md` sobre políticas de gestión de dependencias.
+
+---
+
 ## Claude vs Codex en CI
 
 - Claude: mejor para review, síntesis y explicación

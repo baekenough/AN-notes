@@ -334,6 +334,181 @@ Useful guidance sources:
 
 If your repo guidance is weak, GitHub automation will just scale ambiguity faster.
 
+## SDK-Based CI Automation
+
+Beyond the official action, you can use the Claude Code CLI directly in CI for more fine-grained control.
+
+```yaml
+name: Claude Code CI Tasks
+on:
+  push:
+    branches: [main]
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Security Audit
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          claude -p "Audit the files changed in this push for security vulnerabilities. \
+            Focus on: SQL injection, XSS, auth bypasses. \
+            Output a markdown summary." \
+            --output-format text > security-report.md
+
+      - name: Upload Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-report
+          path: security-report.md
+```
+
+- The CLI gives you more control than the action: custom output formats, piping, and chaining.
+- Use `--model haiku` for cost-efficient bulk analysis.
+- Combine with `--allowedTools "Read,Glob,Grep"` to restrict to read-only operations.
+
+---
+
+## Automated Release Notes
+
+When a release is created, Claude analyzes the commit history and generates release notes automatically.
+
+```yaml
+name: Release Notes
+on:
+  release:
+    types: [created]
+
+jobs:
+  generate-notes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for commit analysis
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Generate release notes for tag ${{ github.event.release.tag_name }}.
+
+            Analyze all commits since the previous tag:
+            1. Group changes by category (Features, Bug Fixes, Performance, Documentation)
+            2. Write user-facing descriptions (not commit hashes)
+            3. Highlight breaking changes with ⚠️ prefix
+            4. Include migration steps if needed
+
+            Format as GitHub-flavored markdown.
+            Update the release body with the generated notes.
+```
+
+- `fetch-depth: 0` is critical — Claude needs full git history to compare tags.
+- Works best with Conventional Commits (`feat:`, `fix:`, `breaking:`).
+- Pair with `CLAUDE.md` rules about your changelog format for more consistent output.
+
+---
+
+## Matrix Strategy for Parallel Reviews
+
+Run multiple specialized reviews in parallel using GitHub Actions matrix strategy.
+
+```yaml
+name: Multi-Aspect Review
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        aspect:
+          - name: security
+            prompt: "Review for OWASP Top 10 vulnerabilities, injection risks, and auth issues"
+          - name: performance
+            prompt: "Review for N+1 queries, memory leaks, unnecessary re-renders, and heavy computations"
+          - name: maintainability
+            prompt: "Review for code duplication, complex functions (>20 lines), missing error handling, and unclear naming"
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            You are a ${{ matrix.aspect.name }} specialist.
+            ${{ matrix.aspect.prompt }}
+
+            Be specific: reference file names and line numbers.
+            If no issues found, say "✅ No ${{ matrix.aspect.name }} issues found."
+```
+
+- Each aspect runs in a separate job — truly parallel, not sequential.
+- Each review focuses on one dimension, preventing overly broad superficial reviews.
+- Cost: roughly 3x a single review, but much more thorough.
+- Add `if: contains(github.event.pull_request.labels.*.name, 'deep-review')` to trigger only when needed.
+
+---
+
+## Dependency Update Automation
+
+Run a weekly dependency check and automatically create PRs for security patches.
+
+```yaml
+name: Weekly Dependency Check
+on:
+  schedule:
+    - cron: "0 9 * * 1"  # Every Monday at 9 AM
+  workflow_dispatch:  # Manual trigger
+
+jobs:
+  check-deps:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Check for outdated dependencies in this project:
+
+            1. Run `npm outdated` (or equivalent for the package manager used)
+            2. For each outdated package, check:
+               - Is it a major version bump? (potential breaking changes)
+               - Does the changelog mention security fixes?
+               - Are there known vulnerabilities? (check `npm audit`)
+            3. Create a summary categorized by:
+               - 🔴 Security patches (update immediately)
+               - 🟡 Minor updates (safe to update)
+               - 🟠 Major updates (needs review)
+            4. If there are security patches, create a PR with those updates
+
+            Be conservative — only auto-update for security patches.
+            Major version bumps should only be recommended, not applied.
+```
+
+- Schedule with cron for regular maintenance.
+- `workflow_dispatch` allows manual runs when needed.
+- Conservative approach: auto-PR for security only, recommend for everything else.
+- Pair with `CLAUDE.md` rules about dependency management policies.
+
+---
+
 ## Claude Code vs Codex in CI
 
 Claude Code and Codex can both help in CI/CD, but they tend to shine in slightly different ways.

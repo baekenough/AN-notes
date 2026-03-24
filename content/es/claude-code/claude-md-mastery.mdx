@@ -209,6 +209,209 @@ Más allá de CLAUDE.md, todo el directorio `.claude/` es el espacio de configur
 
 Por ejemplo, crea `.claude/commands/review.md` y cada miembro del equipo puede ejecutar `/review` para activar el mismo flujo de revisión de código. Si CLAUDE.md define "qué debe saber Claude", `.claude/` define "cómo debe comportarse Claude".
 
+## Jerarquía de Configuración (Settings Hierarchy)
+
+Claude Code tiene un sistema de prioridad de configuración de cuatro niveles. Los niveles superiores sobrescriben a los inferiores:
+
+| Prioridad | Nivel | Ubicación | Gestionado por |
+|-----------|-------|-----------|----------------|
+| 1 (máxima) | Enterprise Policy | Panel de administración de la org | Equipo de IT/Seguridad |
+| 2 | User Settings | `~/.claude/settings.json` | Individual |
+| 3 | Project Settings | `.claude/settings.json` | Equipo (commiteado en git) |
+| 4 (mínima) | Local Settings | `.claude/settings.local.json` | Individual (gitignored) |
+
+**Así es como un equipo real podría usar cada nivel:**
+
+```jsonc
+// Enterprise Policy — configurado por admins, no se puede sobrescribir
+{
+  "disallowedTools": ["Bash"],        // Bloquear ejecución de Bash por seguridad
+  "blockedCommands": ["rm -rf"]       // Bloquear comandos peligrosos
+}
+
+// User Settings (~/.claude/settings.json) — preferencias personales globales
+{
+  "preferredModel": "sonnet",         // Modelo preferido por defecto
+  "mcpServers": {
+    "my-notes": { "command": "notes-mcp" }  // Servidor MCP personal
+  }
+}
+
+// Project Settings (.claude/settings.json) — compartido, rastreado en git
+{
+  "allowedTools": ["Read", "Write", "Edit", "Bash"],
+  "hooks": {
+    "PreToolUse": [{ "matcher": "Write", "command": "lint-check.sh" }]
+  }
+}
+
+// Local Settings (.claude/settings.local.json) — personal, gitignored
+{
+  "env": {
+    "API_KEY": "sk-local-dev-key-..."   // Clave API personal
+  }
+}
+```
+
+La conclusión clave: **pon las reglas de equipo en Project Settings y el entorno personal en Local Settings.** Si tu organización tiene Enterprise Policy, las configuraciones de seguridad no pueden ser eludidas por individuos.
+
+## Comandos Slash Personalizados (Deep Dive)
+
+El directorio `.claude/commands/` te permite crear comandos slash específicos para tu equipo. El proceso es directo:
+
+1. Crea un archivo markdown en `.claude/commands/`
+2. El nombre del archivo se convierte en el nombre del comando (ej: `review.md` → `/project:review`)
+3. El contenido del archivo se convierte en la plantilla de prompt enviada a Claude
+4. Usa el placeholder `$ARGUMENTS` para aceptar entrada del usuario
+
+### Ejemplo 1: Code Review
+
+```markdown
+<!-- .claude/commands/review.md -->
+Review the following file against our team code standards: $ARGUMENTS
+
+Checklist:
+- Type safety: check for `any` usage
+- Error handling: all async functions have try/catch
+- Tests: new functions have corresponding tests
+- Naming: kebab-case filenames, PascalCase components
+
+Suggest fix code for each issue found.
+```
+
+Uso: `/project:review src/api/users.ts`
+
+### Ejemplo 2: Checklist de Migración de Base de Datos
+
+```markdown
+<!-- .claude/commands/migrate.md -->
+Review the following database migration: $ARGUMENTS
+
+Verify:
+- Is the migration reversible?
+- Are lock times minimized for large tables?
+- Are index additions using CONCURRENTLY?
+- Is backward compatibility with existing data maintained?
+```
+
+### Ejemplo 3: Verificación Pre-Despliegue
+
+```markdown
+<!-- .claude/commands/deploy-check.md -->
+Run pre-deployment verification:
+
+1. Verify build succeeds (`npm run build`)
+2. Verify tests pass (`npm test`)
+3. Check for missing env vars against `.env.example`
+4. Check for pending migrations
+5. Verify CHANGELOG.md is updated
+```
+
+Uso: `/project:deploy-check`
+
+Commitea tus comandos personalizados en git. Todo el equipo tendrá acceso a los mismos flujos de trabajo.
+
+## Tips de Rendimiento para CLAUDE.md
+
+Cada línea en CLAUDE.md consume tokens de contexto en cada conversación. Aquí te explicamos cómo gestionarlo eficientemente:
+
+### Ocultar Metadatos con Comentarios HTML
+
+Los comentarios HTML (`<!-- -->`) se ocultan de la inyección automática de Claude Code pero siguen siendo visibles con la herramienta Read:
+
+```markdown
+# MyProject
+
+<!-- version: 2.1.0 -->
+<!-- last-review: 2026-03-15 -->
+<!-- agent-count: 12 -->
+
+Dashboard de analíticas en tiempo real con Next.js 16.
+```
+
+Usa comentarios HTML para metadatos, checksums y tags de validación para ahorrar tokens.
+
+### Separar Documentos de Referencia
+
+No pongas todo en CLAUDE.md. Mueve el contenido detallado a archivos separados y referéncialos:
+
+```markdown
+## API Design
+Follow our API style guide: see `docs/api-style.md`
+```
+
+Claude lee los archivos referenciados cuando se vuelven relevantes. Esto mantiene CLAUDE.md liviano mientras el contexto detallado sigue siendo accesible.
+
+### Conciencia del Presupuesto de Tokens
+
+Reglas prácticas:
+- **Apunta a menos de 200 líneas** — más allá de esto, empieza la dilución de contexto
+- No repitas lo que ya está en `package.json` o `tsconfig.json`
+- Revisa CLAUDE.md regularmente y elimina reglas que ya no sean necesarias
+- Mantén solo instrucciones accionables — mueve las explicaciones de fondo a documentos separados
+
+## Estrategia CLAUDE.md para Monorepos
+
+En un monorepo, una jerarquía de CLAUDE.md de tres niveles funciona de manera poderosa:
+
+```
+monorepo/
+├── CLAUDE.md                    # Nivel 1: Convenciones de toda la org
+├── apps/
+│   ├── web/
+│   │   └── CLAUDE.md            # Nivel 2: Reglas de frontend
+│   ├── api/
+│   │   └── CLAUDE.md            # Nivel 2: Reglas de backend
+│   └── mobile/
+│       └── CLAUDE.md            # Nivel 2: Reglas de móvil
+└── packages/
+    ├── shared/
+    │   └── CLAUDE.md            # Nivel 3: Reglas del paquete compartido
+    └── ui/
+        └── CLAUDE.md            # Nivel 3: Reglas del paquete UI
+```
+
+### Nivel 1: CLAUDE.md Raíz (Toda la Org)
+
+```markdown
+# MyCompany Monorepo
+
+Turborepo monorepo. All packages use TypeScript strict mode.
+
+## Shared Conventions
+- Conventional Commits required
+- PRs must include tests
+- Shared types defined in `packages/shared/types/`
+```
+
+### Nivel 2: CLAUDE.md de Aplicación
+
+```markdown
+# apps/web
+
+Next.js 16 frontend. Uses App Router.
+
+## Rules
+- Server Components by default, 'use client' only for interactivity
+- Styles: Tailwind CSS only
+- Deployment: Vercel (preview branches auto-deploy)
+```
+
+### Nivel 3: CLAUDE.md de Paquete
+
+```markdown
+# packages/shared
+
+Shared utilities and types used across multiple apps.
+
+## API Contract
+- All exports must have JSDoc documentation
+- Breaking changes require major version bump
+- Apps consuming this package: web, api, mobile
+```
+
+**Tip clave**: Los archivos CLAUDE.md de subdirectorios solo se cargan cuando Claude trabaja en ese directorio. Pon reglas específicas del dominio en los niveles 2 y 3, y mantén las convenciones compartidas en la raíz.
+
 ## Comparación con GPT Codex
 
 GPT Codex usa `AGENTS.md` y `codex.md` para propósitos similares, con diferencias clave:

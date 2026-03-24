@@ -220,6 +220,134 @@ claude --mcp-debug
 
 Esto muestra el log completo de solicitudes y respuestas entre Claude y cada servidor MCP — la forma más rápida de diagnosticar problemas de conexión.
 
+## Las Tres Primitivas de MCP: Tools, Resources, Prompts
+
+Si piensas que MCP es solo "funciones que Claude puede llamar," solo estás usando un tercio de su potencial. MCP tiene tres primitivas fundamentales:
+
+1. **Tools** — Funciones que Claude puede ejecutar (ej: consultar base de datos, crear issue)
+2. **Resources** — Fuentes de datos que Claude puede leer (ej: esquemas de BD, archivos de configuración, documentación)
+3. **Prompts** — Plantillas de prompts predefinidas que el servidor ofrece (ej: "analyze-schema", "review-code")
+
+La mayoría solo usa Tools. Resources y Prompts permiten una integración mucho más profunda.
+
+**Ejemplo de Resources:** Un servidor MCP de Postgres puede exponer los esquemas de tablas como recursos, para que Claude siempre tenga información actualizada del esquema sin necesidad de ejecutar una consulta cada vez.
+
+**Ejemplo de Prompts:** Un servidor MCP de revisión de código puede ofrecer una plantilla "security-review" que incluye automáticamente todas las verificaciones de seguridad necesarias.
+
+## Servidores MCP Populares de la Comunidad
+
+Más allá de los servidores listados anteriormente, estos servidores de la comunidad son ampliamente usados en flujos de trabajo reales:
+
+| Servidor | Propósito | Instalación |
+|----------|-----------|-------------|
+| `@anthropic/mcp-server-linear` | Seguimiento de issues en Linear | `npx @anthropic/mcp-server-linear` |
+| `@anthropic/mcp-server-notion` | Acceso al workspace de Notion | `npx @anthropic/mcp-server-notion` |
+| `@anthropic/mcp-server-sentry` | Monitoreo de errores | `npx @anthropic/mcp-server-sentry` |
+| `@anthropic/mcp-server-everart` | Generación de imágenes | `npx @anthropic/mcp-server-everart` |
+| `mcp-server-docker` | Gestión de contenedores Docker | `npx mcp-server-docker` |
+
+Consulta https://github.com/modelcontextprotocol/servers para ver el catálogo completo de la comunidad.
+
+Al elegir servidores, prefiere los oficiales (`@modelcontextprotocol` o `@anthropic`) por seguridad.
+
+## Crear Servidores MCP con Python
+
+El SDK de Python es una alternativa a TypeScript — y a menudo más simple para flujos de trabajo con muchos datos.
+
+```bash
+pip install mcp
+```
+
+Ejemplo: envolver una API interna.
+
+```python
+from mcp.server import Server
+from mcp.types import Tool, TextContent
+import mcp.server.stdio
+
+app = Server("internal-api")
+
+@app.list_tools()
+async def list_tools():
+    return [
+        Tool(
+            name="search_docs",
+            description="Search internal documentation",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "Search query"}
+                },
+                "required": ["query"]
+            }
+        )
+    ]
+
+@app.call_tool()
+async def call_tool(name: str, arguments: dict):
+    if name == "search_docs":
+        results = await internal_api.search(arguments["query"])
+        return [TextContent(type="text", text=str(results))]
+
+async def main():
+    async with mcp.server.stdio.stdio_server() as (read, write):
+        await app.run(read, write, app.create_initialization_options())
+```
+
+Regístralo en `.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "internal-api": {
+      "command": "python",
+      "args": ["-m", "my_mcp_server"]
+    }
+  }
+}
+```
+
+Si te sientes cómodo con Python, puedes envolver una API interna en unos 30 minutos.
+
+## Estrategia de Composición de Servidores MCP
+
+No agregues todos los servidores que encuentres — cada uno añade overhead de contexto. Elige una combinación que se ajuste a tu flujo de trabajo.
+
+**Desarrollo Full-Stack:**
+```json
+{
+  "mcpServers": {
+    "postgres": { "...": "DB queries and schema" },
+    "github": { "...": "PR and issue management" },
+    "context7": { "...": "Live library docs" }
+  }
+}
+```
+
+**Ingeniería de Datos:**
+```json
+{
+  "mcpServers": {
+    "postgres": { "...": "Data warehouse queries" },
+    "filesystem": { "...": "Multi-repo access" },
+    "memory": { "...": "Cross-session context" }
+  }
+}
+```
+
+**DevOps/SRE:**
+```json
+{
+  "mcpServers": {
+    "sentry": { "...": "Error monitoring" },
+    "docker": { "...": "Container management" },
+    "github": { "...": "Deployment workflows" }
+  }
+}
+```
+
+Regla general: 2-4 servidores es lo ideal. Más de 5 puede ralentizar el inicio y consumir contexto.
+
 ## Consejos Pro
 
 ### No sobre-conectes

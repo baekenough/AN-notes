@@ -195,6 +195,95 @@ Pedir una explicación y pedir una acción produce resultados muy distintos:
 
 Claude Code es un ingeniero, no un analista. Pide acción.
 
+## Referencias de Archivos para Contexto Preciso
+
+Puedes mencionar archivos directamente en tu prompt y Claude los leerá. En lugar de esperar que Claude busque en todo el codebase, señálale los archivos relevantes:
+
+```
+Lee src/types/user.ts primero, luego agrega un nuevo campo para avatar_url
+```
+
+```
+Mira src/auth/login.ts — la lógica de renovación de tokens parece rara
+```
+
+Funcionan tanto rutas completas como relativas. También puedes arrastrar y soltar archivos en el prompt para dar contexto rápidamente.
+
+**Buena práctica**: Señala a Claude los archivos relevantes en lugar de esperar que busque en todo el codebase. Entrada más rápida, resultado más preciso.
+
+## Modo No Interactivo
+
+`claude --print` (o `claude -p`) ejecuta un solo prompt sin conversación — perfecto para scripts y pipelines:
+
+```bash
+# Resumir logs de errores
+cat error.log | claude -p "summarize these errors"
+
+# Guardar la salida en un archivo
+claude -p "generate test for src/utils.ts" > tests/utils.test.ts
+
+# Obtener salida JSON estructurada
+claude -p --output-format json "list all exported functions in src/api/"
+```
+
+### Ejemplos Prácticos
+
+**Generación automática de mensajes de commit:**
+```bash
+git diff --staged | claude -p "write a conventional commit message"
+```
+
+**Code review en CI:**
+```bash
+claude -p "review this diff for security issues" < pr.diff
+```
+
+**Generación de documentación:**
+```bash
+claude -p "generate JSDoc for all exported functions in src/api/"
+```
+
+Funciona en cualquier lugar: Makefiles, scripts de shell, git hooks.
+
+## Estrategia de Selección de Modelo
+
+Usa `/model` para cambiar de modelo a mitad de conversación. Elige el modelo adecuado según la complejidad de la tarea para optimizar costo y rendimiento:
+
+| Tarea | Modelo Recomendado |
+|-------|-------------------|
+| Revisión de arquitectura, debugging complejo | opus |
+| Implementación de funcionalidades, code review | sonnet (por defecto) |
+| Preguntas rápidas, búsqueda de archivos, formateo | haiku |
+
+Para el modo no interactivo, usa el flag `--model`:
+```bash
+claude -p --model haiku "explain this error"
+```
+
+**Conciencia de costos**: haiku es aproximadamente 10 veces más barato que opus por token. Empieza con sonnet, escala a opus para razonamiento complejo, y usa haiku para tareas masivas o en lote.
+
+## Modos de Permisos
+
+Usa `--allowedTools` para pre-aprobar herramientas específicas y reducir los prompts de permisos:
+
+```bash
+claude --allowedTools "Edit,Write,Bash(git *)"
+```
+
+Para configuración persistente, establece las herramientas permitidas en `.claude/settings.json`:
+
+```json
+{
+  "permissions": {
+    "allow": ["Edit", "Write", "Bash(npm test)", "Bash(npm run lint)"]
+  }
+}
+```
+
+Para scripts completamente automatizados (solo CI, nunca interactivo), `--dangerouslySkipPermissions` omite todas las verificaciones de permisos.
+
+**Buena práctica**: Empieza restrictivo, ve permitiendo gradualmente las herramientas en las que confías.
+
 ## Comparación con Codex
 
 GPT Codex funciona diferente — escribes una descripción de tarea por adelantado y se ejecuta de forma autónoma. No hay conversación back-and-forth. Esto significa:
