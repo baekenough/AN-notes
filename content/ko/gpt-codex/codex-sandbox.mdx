@@ -1,231 +1,192 @@
 ---
-title: "Codex 샌드박싱 — 권한, 승인, 클라우드 환경 이해하기"
-description: "Codex의 로컬 sandbox mode, approval policy, cloud setup script, 인터넷 제어 방식을 이해해 자율 실행을 빠르면서도 안전하게 운영하는 방법"
+title: Codex 샌드박싱 — 권한, 승인, 클라우드 환경 이해하기
+description: Codex의 로컬 sandbox mode, approval policy, writable roots, cloud setup
+  script를 이해해 자율 실행을 빠르면서도 안전하게 운영하는 방법
 difficulty: intermediate
-tags: ["샌드박스", "보안", "환경", "승인"]
+tags:
+- 샌드박스
+- 보안
+- 환경
+- 승인
 connections:
-  - slug: "codex-instructions"
-    tool: "gpt-codex"
-    type: "prerequisite"
-  - slug: "codex-ci-cd-workflows"
-    tool: "gpt-codex"
-    type: "enhances"
-  - slug: "mcp-power-tools"
-    tool: "claude-code"
-    type: "compare"
+- slug: codex-instructions
+  tool: gpt-codex
+  type: prerequisite
+- slug: codex-ci-cd-workflows
+  tool: gpt-codex
+  type: enhances
+- slug: mcp-power-tools
+  tool: claude-code
+  type: compare
 featured: true
-order: 2
-date: "2026-03-21"
+order: 3
+date: '2026-03-24'
 ---
 
-> **공식 참고 자료**: [Sandboxing](https://developers.openai.com/codex/concepts/sandboxing) · [Agent Approvals & Security](https://developers.openai.com/codex/agent-approvals-security) · [Cloud Environments](https://developers.openai.com/codex/cloud/environments) · [Agent Internet Access](https://developers.openai.com/codex/cloud/internet-access)
+> **공식 참고 자료**: [Sandboxing](https://developers.openai.com/codex/concepts/sandboxing) · [Config Basics](https://developers.openai.com/codex/config-basic) · [Cloud Environments](https://developers.openai.com/codex/cloud/environments) · [Review](https://developers.openai.com/codex/app/review)
 
 <!-- curriculum:start -->
 ## 커리큘럼 흐름
 
-1. [Codex 지시문](/gpt-codex/codex-instructions) — instruction layering과 저장소 규칙
-2. **Codex 샌드박싱** — 권한, 승인, cloud environment ← **현재 문서**
-3. [Codex 작업 설계](/gpt-codex/codex-task-design) — scope, 프롬프트, 작업 분해
-4. [Codex와 CI/CD](/gpt-codex/codex-ci-cd-workflows) — 반복 자동화와 배치 작업
+1. [Codex 시작하기](./codex-getting-started) — 기본 진입 흐름
+2. [Codex 지시문](./codex-instructions) — `AGENTS.md`와 config
+3. **Codex 샌드박싱** — 권한, 승인, writable roots, cloud 환경 ← **현재 문서**
+4. [Codex 작업 설계](./codex-task-design) — task scope와 완료 조건
+5. [Codex Skills](./codex-skills) — 반복 작업 패키징
+6. [Codex MCP](./codex-mcp) — 외부 시스템 연결
+7. [Codex 리뷰와 자동화](./codex-ci-cd-workflows) — unattended 흐름 운영
 
 ### 이 문서에서 참고한 공식 문서
-- **로컬 sandbox mode와 approval preset** — [Sandboxing](https://developers.openai.com/codex/concepts/sandboxing), [Agent approvals & security](https://developers.openai.com/codex/agent-approvals-security)
-- **setup script, 환경 변수, secrets** — [Cloud environments](https://developers.openai.com/codex/cloud/environments)
-- **위험 모델, allowlist, 환경별 인터넷 정책** — [Agent internet access](https://developers.openai.com/codex/cloud/internet-access)
+- **`read-only`, `workspace-write`, `danger-full-access`의 차이** — [Sandboxing](https://developers.openai.com/codex/concepts/sandboxing)
+- **기본 config 조합 예시** — [Config basics](https://developers.openai.com/codex/config-basic)
+- **cloud task의 setup script와 인터넷 적용 순서** — [Cloud environments](https://developers.openai.com/codex/cloud/environments)
 <!-- curriculum:end -->
 
-## Codex에는 두 가지 실행 모델이 있다
+## 샌드박스는 “보안 옵션”이면서 “UX 옵션”이다
 
-Codex에서 “샌드박스”는 상황에 따라 의미가 조금 다릅니다.
+샌드박스는 단순히 막는 장치가 아닙니다.
+너무 빡빡하면 승인 요청이 과도하게 뜨고, 너무 넓으면 위험이 커집니다.
 
-### 로컬 Codex (CLI / IDE)
+결국 목적은 하나입니다.
+**Codex가 대부분의 정상 작업을 멈추지 않고 처리하게 하면서, 진짜 위험한 경계만 사람에게 넘기는 것**입니다.
 
-Codex가 **내 머신에서 실행**되지만, 사용자가 정한 권한 경계 안에서 동작합니다.
+## 로컬과 cloud는 분리해서 생각하자
 
-### Codex Cloud
+### 로컬 Codex
+내 머신에서 작업하지만, sandbox mode와 approval policy로 경계를 정합니다.
 
-Codex가 **OpenAI가 관리하는 컨테이너** 안에서 실행됩니다. 내 호스트 머신은 직접 노출되지 않고, 환경은 클라우드 설정과 setup script로 준비합니다.
+### Cloud Codex
+OpenAI가 관리하는 컨테이너 안에서 실행됩니다.
+setup script, environment variables, 인터넷 정책이 핵심입니다.
 
-이 둘을 구분하지 않으면 설정이 금방 헷갈리기 시작합니다.
+이 둘을 섞어 생각하면 왜 막히는지 파악하기 어려워집니다.
 
-## 로컬 Sandbox Mode
+## 로컬 sandbox mode 세 가지
 
-OpenAI 문서는 로컬에서 세 가지 주요 sandbox mode를 설명합니다.
+Sandboxing 문서 기준 요약은 이렇습니다.
 
-| 모드 | Codex가 할 수 있는 일 | 적합한 용도 |
-|------|-----------------------|-------------|
-| `read-only` | 파일 조회만 가능, 수정/명령 실행은 승인 필요 | 감사, 코드 리뷰, 안전한 탐색 |
-| `workspace-write` | 워크스페이스 내부 수정과 일반 명령 실행 가능 | 일상적인 개발 작업 |
-| `danger-full-access` | 샌드박스 제한 없음 | 매우 신뢰된 자동화에만 제한적으로 사용 |
+| 모드 | 의미 | 적합한 용도 |
+|------|------|-------------|
+| `read-only` | 파일 읽기 중심, 수정/실행은 승인 필요 | 감사, 탐색, 안전한 코드 리뷰 |
+| `workspace-write` | 워크스페이스 안 수정 + 일반 명령 실행 | 대부분의 일상 개발 |
+| `danger-full-access` | 샌드박스 제한 제거 | 신뢰도 높은 자동화에서만 제한적으로 |
 
-대부분의 개발자에게는 `workspace-write`가 가장 현실적인 기본값입니다. 승인 피로를 줄이면서도 머신 전체를 넘겨주지는 않습니다.
+공식 문서도 `workspace-write`를 로컬 작업의 **low-friction 기본값**으로 설명합니다.
 
-## Approval Policy
+## approval policy는 멈추는 타이밍
 
-sandbox mode는 **기술적으로 무엇이 가능한지**를 정합니다.
-approval policy는 **언제 멈추고 사용자에게 물어야 하는지**를 정합니다.
+config 문서에서 자주 보이는 조합은 아래입니다.
 
-대표 정책은 다음과 같습니다.
-
-- `untrusted` — 신뢰 목록 밖 명령 전 승인 요청
-- `on-request` — 샌드박스 안에서는 진행하고, 경계를 넘을 때 요청
-- `never` — 승인 프롬프트 없이 진행
-
-OpenAI가 강조하는 비교적 안전한 로컬 자동화 조합은 사실상 다음과 같습니다.
-
-```text
-sandbox_mode = "workspace-write"
+```toml
 approval_policy = "on-request"
+sandbox_mode = "workspace-write"
 ```
 
-반대로 `danger-full-access`와 `never`를 같이 쓰는 것은 훨씬 더 위험합니다.
+이 조합이 좋은 이유는 단순합니다.
 
-## 핵심 목적은 “무한 권한”이 아니라 “승인 피로 감소”다
+- 저장소 안의 일반 작업은 계속 진행하고
+- 경계를 넘는 순간만 물어봄
 
-샌드박스는 보안 장치이기도 하지만, 동시에 작업 흐름을 부드럽게 만드는 장치이기도 합니다.
+입문자와 대부분의 팀에게 가장 현실적인 기본값입니다.
 
-적절한 경계를 주면 Codex는:
-- 저장소를 읽고
-- 수정해야 할 파일을 바꾸고
-- lint, typecheck, test를 돌리고
-- 정말 더 큰 권한이 필요할 때만 멈춥니다
+## writable roots는 좁을수록 좋다
 
-이 상태가 되어야 자율 코딩이 실제로 쓸 만해집니다.
+많은 사용자가 sandbox mode만 보고 끝내지만, 실제 사고는 **너무 넓은 writable roots**에서 자주 납니다.
 
-## 클라우드 태스크의 실행 흐름
+좋은 기본값:
 
-OpenAI 문서 기준으로 Codex cloud task는 대체로 다음 순서로 실행됩니다.
+- 현재 저장소
+- 필요하다면 임시 디렉터리 하나
 
-1. 컨테이너를 만들고 저장소를 checkout
-2. **setup script** 실행
-3. 인터넷 접근 설정 적용
-4. 에이전트가 코드 수정 및 검증 수행
-5. diff와 최종 결과 반환
+피하고 싶은 기본값:
 
-여기서 특히 중요한 두 가지는:
+- 홈 디렉터리 전체
+- 여러 unrelated 프로젝트 루트
 
-- **setup script는 인터넷이 켜진 상태에서 실행됨**
-- **agent internet access는 기본적으로 꺼져 있음**
+Codex에 일을 맡길 때 중요한 건 “쓸 수 있느냐”보다 **어디까지 쓸 수 있느냐**입니다.
 
-즉, 다운로드나 도구 설치, 서비스 부트스트랩이 필요하면 setup 단계에서 끝내야 합니다.
+## cloud task는 setup이 계약이다
 
-## setup script에 넣어야 할 것
+Cloud environments 문서의 흐름은 대체로 이렇습니다.
 
-좋은 setup script는 에이전트가 중간에 헤매지 않도록 선행 작업을 몰아넣습니다.
+1. 컨테이너 생성 + 저장소 checkout
+2. setup script 실행
+3. 인터넷 접근 정책 적용
+4. agent phase에서 수정과 검증
 
-```bash
-#!/usr/bin/env bash
-set -euo pipefail
+여기서 중요한 사실 두 가지:
 
-npm ci
-npm run build:types
-python -m pip install -r requirements-dev.txt
-./scripts/bootstrap-test-db.sh
-```
+- **setup script는 인터넷이 켜진 상태에서 실행될 수 있음**
+- **agent phase 인터넷은 기본적으로 꺼져 있음**
 
-setup에 넣을 가치가 큰 작업:
+그래서 설치, codegen, test DB bootstrap 같은 선행 작업은 setup 단계로 몰아넣는 편이 안정적입니다.
+
+## setup script에 넣을 것과 넣지 말 것
+
+넣을 가치가 큰 것:
+
 - 의존성 설치
-- 런타임 버전 고정
-- 네이티브 모듈 사전 컴파일
-- 테스트 데이터 시드
-- linter, formatter, codegen 도구 설치
+- 런타임/툴 버전 고정
+- 테스트 데이터 준비
+- codegen
+- 네이티브 빌드 선행 작업
 
-반대로 setup script가 feature 전체를 대신 구현하려고 들면 좋지 않습니다.
+넣지 않는 편이 좋은 것:
 
-## AGENTS.md가 샌드박스를 더 똑똑하게 만든다
+- feature 자체 구현
+- 장시간 인간 판단이 필요한 단계
 
-Cloud Codex는 `AGENTS.md`를 보고 프로젝트 전용 명령과 규칙을 찾습니다.
+setup은 **환경을 재현 가능하게 만드는 곳**이지, 기능을 대신 만드는 곳이 아닙니다.
 
-따라서 좋은 `AGENTS.md`는 에이전트에게 다음을 알려줄 수 있습니다.
+## 리뷰와 샌드박스는 같이 움직인다
 
-- 어떤 테스트 명령이 진짜 중요한지
-- 어떤 lint target이 기준인지
-- 어떤 생성 폴더는 건드리면 안 되는지
-- 어디가 실제 source of truth인지
+Review 문서에 따르면 review pane은 기본적으로 **uncommitted changes**를 기준으로 보고, 필요하면 base branch diff나 last turn changes로 범위를 바꿀 수 있습니다.
 
-결국 핵심은 **샌드박스 + 지시문** 조합입니다. 환경은 **능력 경계**를 만들고, `AGENTS.md`는 **판단 경계**를 만듭니다.
+이게 중요한 이유는 샌드박스와 연결되기 때문입니다.
+권한을 넓힐수록, 작업 후 review를 더 자주 해야 합니다.
 
-## 인터넷 접근은 메스처럼 써라
+즉,
 
-OpenAI는 agent internet access를 켜면 위험이 커진다고 명시합니다.
+- 좁은 권한 = 승인 많음, 위험 낮음
+- 넓은 권한 = 승인 적음, review 책임 큼
 
-- 신뢰되지 않은 페이지에서의 prompt injection
-- 코드나 시크릿 유출
-- 위험한 의존성 다운로드
-- 라이선스 오염
-
-꼭 켜야 한다면 가장 좁게 여세요.
-
-- **domain allowlist** 사용
-- 가능하면 **`GET`, `HEAD`, `OPTIONS`** 정도로 제한
-- 글로벌이 아니라 **환경별**로 설정
-
-GitHub와 패키지 레지스트리만 필요하다면 인터넷 전체를 열 이유가 없습니다.
-
-## 시크릿과 환경 변수
-
-클라우드 환경에서 시크릿은 사소한 설정이 아닙니다.
-
-실무적으로는 이렇게 생각하면 좋습니다.
-- setup에 꼭 필요한 빌드용 시크릿만 사용
-- agent phase에는 장기 시크릿 노출 최소화
-- 검증 작업은 mock 또는 테스트 자격 증명 선호
-
-OpenAI 문서는 클라우드 환경 시크릿이 setup 단계에서만 제공되고, 기본 offline agent phase 시작 전 제거된다고 설명합니다.
-
-## 자주 터지는 문제
-
-### “로컬에서 계속 승인 요청이 뜬다”
-
-대개 sandbox나 approval 설정이 너무 빡빡합니다.
-
-**해결:** `read-only` 대신 `workspace-write`로 올리거나, `workspace-write` + `on-request` 조합을 사용하세요.
-
-### “클라우드 에이전트가 필요한 도구를 설치하지 못한다”
-
-대개 setup에서 설치하지 않았기 때문입니다.
-
-**해결:** 나중에 설치하게 두지 말고 setup script에 포함하세요.
-
-### “내 컴퓨터에서는 되는데 cloud에서는 실패한다”
-
-숨겨진 상태가 있었을 가능성이 큽니다. 캐시, 로컬 서비스, 추적되지 않은 env var가 대표적입니다.
-
-**해결:** setup을 명시적이고 재현 가능하게 만드세요.
-
-### “웹에서 가져온 위험한 지시를 agent가 따라갔다”
-
-보통 인터넷 허용 범위가 너무 넓었습니다.
-
-**해결:** 도메인과 HTTP 메서드를 줄이고, 신뢰 가능한 리소스만 대상으로 삼으세요.
+둘은 항상 세트입니다.
 
 ## 현실적인 시작점
 
-### 로컬
+### 로컬 기본값
 
-- sandbox mode: `workspace-write`
-- approval policy: `on-request`
-- writable roots: 저장소와 임시 디렉터리 정도만 허용
+```toml
+model = "gpt-5.4"
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+```
 
-### 클라우드
+그리고 writable roots는 저장소 중심으로 최소화하세요.
 
-- 결정론적인 setup script
-- 정말 필요할 때만 인터넷 허용
-- 인터넷이 필요하면 최소 allowlist 사용
-- `AGENTS.md`에 lint, typecheck, test 명령 명시
+### cloud 기본값
 
-이렇게 해야 자율성은 확보하면서도 위험을 과장 없이 관리할 수 있습니다.
+- setup script를 결정론적으로 만들기
+- 인터넷은 필요한 경우만 허용하기
+- 시크릿은 setup에 필요한 최소치만 노출하기
+- `AGENTS.md`에 진짜 검증 명령 명시하기
 
-## Codex vs Claude Code MCP
+## 흔한 실패 패턴
 
-Claude Code는 종종 MCP를 통해 실시간 도구 연결로 능력 부족을 메웁니다.
-Codex는 보통 런타임 계약을 더 엄격하게 만들어 문제를 풉니다.
+### “계속 승인만 뜬다”
+대개 `read-only`가 과도하거나 roots가 잘못 잡혀 있습니다.
 
-| 문제 | Claude Code 패턴 | Codex 패턴 |
-|------|------------------|------------|
-| 외부 문서 조회 | MCP 서버 | allowlist 또는 사전 준비된 문서 |
-| DB 접근 | 라이브 도구 연결 | setup, mock, 제한된 서비스 접근 |
-| 로컬 안전성 | 도구별 권한 | sandbox mode + approval policy |
-| 재현성 | 로컬 머신 의존성 큼 | cloud container에서 강점 |
+### “로컬에서는 되는데 cloud에서 실패한다”
+숨은 상태를 setup에 명시하지 않았을 가능성이 큽니다.
 
-어느 쪽이 무조건 더 낫다고 보긴 어렵습니다. Codex는 **반복 가능하고 경계가 명확한 실행**에 강하고, Claude는 **라이브 도구를 연결한 탐색형 작업**에 강합니다.
+### “너무 빨라졌는데 불안하다”
+권한만 넓히고 `/review`나 Git checkpoint 습관이 없을 때 자주 생깁니다.
+
+## 안전한 운영 원칙
+
+- 먼저 **좁은 권한**으로 시작하고
+- 승인 피로가 실제 병목일 때만 단계적으로 넓히고
+- 권한을 넓힌 만큼 review와 checkpoint를 강화하세요.
+
+Codex에서 좋은 샌드박스 설정은 “제일 센 설정”이 아니라,
+**팀이 안심하고 반복해서 쓸 수 있는 설정**입니다.

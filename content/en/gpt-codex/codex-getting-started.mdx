@@ -1,0 +1,173 @@
+---
+title: Codex Getting Started — Install, First Task, and Git Checkpoints
+description: A practical onboarding guide for starting with the Codex app, CLI, or
+  IDE, writing your first task, and using checkpoints before you scale up.
+difficulty: beginner
+tags:
+- getting-started
+- onboarding
+- workflow
+- basics
+connections:
+- slug: codex-instructions
+  tool: gpt-codex
+  type: enhances
+- slug: codex-task-design
+  tool: gpt-codex
+  type: enhances
+- slug: getting-started
+  tool: gemini-cli
+  type: compare
+featured: true
+order: 1
+date: '2026-03-24'
+---
+
+> **Official References**: [Quickstart](https://developers.openai.com/codex/quickstart) · [CLI Slash Commands](https://developers.openai.com/codex/cli/slash-commands) · [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [Review](https://developers.openai.com/codex/app/review)
+
+<!-- curriculum:start -->
+## Curriculum path
+
+1. **Codex Getting Started** — install, sign in, first task, Git checkpoints ← **You are here**
+2. [Codex Instructions](./codex-instructions) — `AGENTS.md`, `/init`, and config basics
+3. [Codex Sandboxing](./codex-sandbox) — permissions, approvals, and cloud environments
+4. [Codex Task Design](./codex-task-design) — issue-shaped prompts and task sizing
+5. [Codex Skills](./codex-skills) — turn repeated prompts into reusable workflows
+6. [Codex MCP](./codex-mcp) — connect external context instead of pasting it
+7. [Codex Reviews and Automations](./codex-ci-cd-workflows) — `/review`, worktrees, and repeatable engineering loops
+
+### Official docs used in this guide
+- **App / CLI / IDE starting flow** — [Quickstart](https://developers.openai.com/codex/quickstart)
+- **Core commands like `/init`, `/review`, `/mcp`, and `/status`** — [CLI Slash Commands](https://developers.openai.com/codex/cli/slash-commands)
+- **Why Git checkpoints matter early** — [Quickstart](https://developers.openai.com/codex/quickstart)
+<!-- curriculum:end -->
+
+## Start with a success loop, not with every feature
+
+The fastest way to get comfortable with Codex is not to memorize every setting.
+It is to complete one small, safe task end to end.
+
+Early on, you only need to answer four questions:
+
+- Which client will you use?
+- Which repository will you open?
+- How small is your first task?
+- How will you roll back if you dislike the result?
+
+## Where should you start?
+
+Codex can be used through the app, CLI, IDE extension, and cloud flows.
+
+### Codex app
+Best for most people at the start.
+Review, automations, and worktrees are visible in one place.
+
+### CLI
+Great if you live in the terminal.
+It is the clearest way to see prompts, commands, diff generation, and verification loops.
+
+### IDE extension
+Useful if you prefer to stay inside your editor.
+Still, for your first few sessions, the app or CLI usually makes the behavior easier to understand.
+
+### Cloud
+Do not start here unless you already know what your local workflow should look like.
+Local success first, cloud later, is much less confusing.
+
+## Your first 10 minutes
+
+The Quickstart flow is straightforward:
+
+1. Install the Codex app or CLI
+2. **Sign in with your ChatGPT account or an OpenAI API key**
+3. Select the project folder
+4. Send your first task
+
+The docs note that signing in with an API key can limit some features, such as certain cloud capabilities. For most new users, **local project + normal account sign-in** is the simplest path.
+
+## Start local before you start ambitious
+
+If you try to learn cloud environments, automations, wide permissions, and prompt design at the same time, it becomes hard to tell what actually failed.
+
+Better first tasks:
+
+- “Explain this repo in five bullets.”
+- “Find the files most relevant to this error message.”
+- “Identify dead-code candidates in this folder.”
+- “Make a tiny refactor without changing behavior.”
+
+That means: choose work that is easy to inspect and easy to revert.
+
+## Use Git checkpoints early
+
+Quickstart explicitly recommends Git checkpoints.
+That is a good habit because Codex can change a lot quickly.
+
+A beginner-friendly loop looks like this:
+
+```bash
+git status
+git add -A && git commit -m "checkpoint: before codex task"
+```
+
+If the result looks good, make another checkpoint after the task.
+This removes a lot of “I think this is better, but I can’t see what happened” anxiety.
+
+## Four commands to learn first
+
+The slash command docs expose many commands, but early on you mostly need these:
+
+### `/init`
+Generate an `AGENTS.md` scaffold in the current directory.
+Learn this as soon as you get tired of re-explaining repo rules.
+
+### `/review`
+Ask Codex to review your working tree.
+It is the easiest second pass after implementation.
+
+### `/mcp`
+See the MCP tools currently available in the session.
+Useful when you need external docs, trackers, or internal systems.
+
+### `/status`
+Check your current model, approval policy, writable roots, and session state.
+When Codex behaves differently than you expected, start here.
+
+## Your first prompt should feel like work, not like a wish
+
+Avoid “make the whole app better.”
+Try something shaped like this instead:
+
+```text
+Goal:
+Find unused utility candidates under src/lib/.
+
+Constraints:
+- Investigation only; do not modify files
+- Show import or usage evidence for each candidate
+
+Done when:
+- You list the top three candidates with reasons
+```
+
+This gives Codex a target and a finish line.
+
+## A good first-week checklist
+
+In week one, this progression works well:
+
+1. Small read-only local tasks
+2. Small code changes plus lint/test runs
+3. Use `/review` to inspect the diff again
+4. Use `/init` to draft an `AGENTS.md` for the repo
+5. Promote repeated work into skills or automations only after the workflow feels stable
+
+The healthy order is **task → review → rule-making**, not “turn on everything.”
+
+## Fast summary
+
+- Start with the **app or CLI on a local repo**.
+- Pick a first task that is small and reversible.
+- Use Git checkpoints from day one.
+- Learn `/init`, `/review`, `/mcp`, and `/status` early.
+- Go deeper with instructions, sandboxing, and task design only after your first loop feels solid.

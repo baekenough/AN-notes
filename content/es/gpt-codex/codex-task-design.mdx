@@ -1,203 +1,190 @@
 ---
-title: "Diseño de Tareas en Codex — Escribe Prompts Como Issues, No Como Deseos"
-description: "Aprende a delimitar tareas para Codex, dividir el trabajo sin caos y redactar prompts con forma de issue para obtener mejores diffs"
+title: Diseño de Tareas en Codex — Escribe Prompts Como Issues, No Como Deseos
+description: Dimensiona bien las tareas de Codex, reduce retrabajo y consigue mejores
+  diffs usando prompts con forma de issue, restricciones claras y criterios de cierre.
 difficulty: intermediate
-tags: ["prompting", "planificacion", "descomposicion", "workflow"]
+tags:
+- prompting
+- planificacion
+- descomposicion
+- workflow
 connections:
-  - slug: "codex-instructions"
-    tool: "gpt-codex"
-    type: "prerequisite"
-  - slug: "codex-sandbox"
-    tool: "gpt-codex"
-    type: "combines"
-  - slug: "codex-ci-cd-workflows"
-    tool: "gpt-codex"
-    type: "enhances"
+- slug: codex-instructions
+  tool: gpt-codex
+  type: prerequisite
+- slug: codex-sandbox
+  tool: gpt-codex
+  type: combines
+- slug: codex-skills
+  tool: gpt-codex
+  type: enhances
 featured: false
-order: 3
-date: "2026-03-21"
+order: 4
+date: '2026-03-24'
 ---
 
-> **Referencias Oficiales**: [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [How OpenAI uses Codex](https://openai.com/business/guides-and-resources/how-openai-uses-codex/) · [Guía de AGENTS.md](https://developers.openai.com/codex/guides/agents-md)
+> **Referencias Oficiales**: [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [How OpenAI uses Codex](https://openai.com/business/guides-and-resources/how-openai-uses-codex/) · [Subagents](https://developers.openai.com/codex/subagents)
 
 <!-- curriculum:start -->
 ## Ruta del currículo
 
-1. [Instrucciones de Codex](/gpt-codex/codex-instructions) — capas de instrucciones y reglas del repo
-2. [Sandboxing en Codex](/gpt-codex/codex-sandbox) — permisos y límites de ejecución
-3. **Diseño de Tareas en Codex** — scope, prompts y descomposición ← **Estás aquí**
-4. [Codex en CI/CD](/gpt-codex/codex-ci-cd-workflows) — automatización repetible y trabajo por lotes
+1. [Primeros Pasos con Codex](./codex-getting-started) — primer loop sano
+2. [Instrucciones de Codex](./codex-instructions) — reglas persistentes del repo
+3. [Sandboxing en Codex](./codex-sandbox) — límites de ejecución
+4. **Diseño de Tareas en Codex** — scope, prompts y done conditions ← **Estás aquí**
+5. [Skills de Codex](./codex-skills) — encapsular workflows repetidos
+6. [MCP en Codex](./codex-mcp) — contexto externo y herramientas
+7. [Reviews y Automatizaciones con Codex](./codex-ci-cd-workflows) — loops de ingeniería repetibles
 
 ### Documentación oficial usada en esta guía
-- **Goal / Context / Constraints / Done when** — [Best practices](https://developers.openai.com/codex/learn/best-practices)
-- **Plan primero en tareas difíciles** — [Best practices](https://developers.openai.com/codex/learn/best-practices)
-- **Best-of-N y task queue como backlog ligero** — [How OpenAI uses Codex](https://openai.com/business/guides-and-resources/how-openai-uses-codex/)
+- **Goal / Context / Constraints / Done when** — [Best Practices](https://developers.openai.com/codex/learn/best-practices)
+- **Best-of-N y backlog ligero** — [How OpenAI uses Codex](https://openai.com/business/guides-and-resources/how-openai-uses-codex/)
+- **Cuándo ayuda la delegación en paralelo** — [Subagents](https://developers.openai.com/codex/subagents)
 <!-- curriculum:end -->
 
-## La Idea Central
+## La regla central: quitar adivinanza
 
-Codex funciona mejor cuando la tarea parece un ticket real de ingeniería.
+Codex es fuerte ejecutando.
+Se vuelve más débil cuando lo obligas a inferir qué significa éxito.
 
-OpenAI recomienda explícitamente estructurar los prompts como si fueran issues de GitHub o descripciones de PR. En la práctica, eso significa incluir:
+Un buen prompt no tiene que ser elegante; tiene que ser lo bastante específico para que el modelo invente menos.
 
-- un objetivo claro
-- contexto concreto de archivos o módulos
-- restricciones que limiten malas soluciones
-- criterios de cierre explícitos
+## La estructura mínima útil
 
-Si solo dices “mejora esto” o “hazlo más limpio”, le estás obligando al modelo a inventarse el trabajo.
-
-## Plantilla de Prompt con Forma de Issue
-
-Para tareas medianas o grandes, usa una estructura como esta:
+Las best practices de Codex recomiendan prompts con forma de issue.
 
 ```text
-Objetivo:
-Agregar optimistic updates al cart drawer.
+Goal:
+¿Qué debe cambiar?
 
-Contexto:
-- La UI está en src/components/cart/
-- Las server actions están en src/app/actions/cart.ts
-- Sigue el patrón de src/components/wishlist/
+Context:
+¿Qué archivos, errores o patrones importan?
 
-Restricciones:
-- no cambies el shape del API
-- no agregues una nueva librería de estado
-- mantén el diff pequeño y localizado
+Constraints:
+¿Qué no debe romperse o cambiar?
 
 Done when:
-- los cambios se sienten instantáneos
-- hay rollback si falla
-- pasan lint, typecheck y los tests del carrito
+¿Qué demuestra que la tarea terminó?
 ```
 
-Este formato facilita la revisión tanto para humanos como para Codex.
+Parece simple, pero funciona.
+Sin Goal no hay blanco. Sin Done when no hay línea de llegada.
 
-## El Scope Lo Es Todo
+## Prompt malo vs prompt mejor
 
-Codex es fuerte en ejecución acotada. Por eso, muchas veces tu trabajo no es “escribir el prompt perfecto”, sino **cortar la tarea al tamaño correcto**.
-
-Buenas formas de tarea:
-
-- una feature en un subsistema
-- un refactor en un área limitada
-- un bug con fallo reproducible
-- un patrón de migración repetido en muchos archivos
-
-Formas malas de tarea:
-
-- “moderniza toda la app”
-- “arregla toda la deuda técnica”
-- “rehaz auth, onboarding y billing juntos”
-
-Si a un ingeniero humano le pedirías antes un documento de diseño, la tarea para Codex probablemente es demasiado amplia.
-
-## Cuándo Dividir una Tarea
-
-Divide en varias tareas cuando:
-
-- los archivos viven en dominios distintos
-- los pasos de validación cambian
-- una parte es exploratoria y otra determinista
-- quieres revisar una parte antes de aprobar la siguiente
-
-Ejemplo:
-
-1. Agregar campo y wiring de esquema
-2. Actualizar handlers del API
-3. Actualizar UI y tests
-
-Es menos “mágico” que una sola tarea gigante, pero mucho más confiable.
-
-## Da Ejemplos Locales, No Consejos Abstractos
-
-Codex responde mejor a anclas concretas dentro del repo.
-
-Mejor:
+Demasiado vago:
 
 ```text
-Implementa esto igual que en src/features/profile/actions.ts.
+mejora el flujo del carrito
 ```
 
-Peor:
+Mucho mejor:
 
 ```text
-Usa nuestra arquitectura habitual.
+Goal:
+Agregar optimistic updates al control de cantidad del cart drawer.
+
+Context:
+- La UI vive en src/components/cart/
+- La server action vive en src/app/actions/cart.ts
+- Sigue el patrón de loading ya usado en wishlist
+
+Constraints:
+- no cambies el shape del API público
+- no agregues una nueva librería de estado
+
+Done when:
+- los cambios de cantidad se sienten inmediatos
+- hay rollback limpio si falla
+- pasan lint, build y los tests relevantes
 ```
 
-Cuanto más puedas señalar un patrón existente, menos tendrá que adivinar Codex.
+## Dimensiona la tarea alrededor de un loop de verificación
 
-## Reglas en AGENTS.md, Intención en el Prompt
+Una regla práctica no es “una feature”, sino **un loop de verificación revisable**.
 
-Un antipatrón común es repetir reglas permanentes en cada tarea.
+Buenas tareas:
 
-Mejor:
+- un refactor acotado en una carpeta
+- un bug reproducible
+- updates de docs ligados a un cambio puntual de API
 
-- reglas duraderas en `AGENTS.md`
-- intención del día en el prompt
+Malas tareas:
 
-Ejemplo:
+- rediseñar auth, onboarding y billing juntos
+- modernizar toda la app
+- limpiar toda la deuda técnica
 
-- `AGENTS.md`: ejecutar lint + typecheck; no tocar archivos generados
-- prompt: agregar soporte para draft invoices en billing export
+Si un solo loop de lint/build/test no puede decirte si la tarea está sana, probablemente es demasiado grande.
 
-## Las Restricciones Mejoran el Resultado
+## Algunos trabajos deben empezar solo con plan
+
+Conviene pedir plan primero cuando:
+
+- el cambio cruza varios dominios
+- pesan más las decisiones de arquitectura que la velocidad de coding
+- el rollback sería costoso
+- hay varias implementaciones razonables
+
+Un buen arranque es:
+
+```text
+No implementes todavía. Propón primero un plan.
+Incluye riesgos, archivos tocados y pasos de verificación.
+```
+
+## Los ejemplos locales ganan a los consejos abstractos
+
+Codex responde mejor a “sigue este archivo” que a “usa nuestra arquitectura habitual”.
+
+Mejores anclas:
+
+- “sigue el patrón de src/features/profile/actions.ts”
+- “usa el formato ya presente en docs/releases/”
+- “reutiliza el patrón de nombres de variantes del Button”
+
+Cuanto más concreto sea el punto de referencia, menos tendrá que adivinar Codex.
+
+## Las restricciones son una herramienta de calidad
 
 Las restricciones no son fricción. Son dirección.
 
-Restricciones útiles:
+Restricciones de alto valor:
 
 - no agregar dependencias
-- no cambiar el shape del API público
-- mantener cambios dentro de una carpeta
-- preservar tests actuales
-- reutilizar una utilidad existente
+- preservar el shape del API público
+- quedarse dentro de un directorio
+- no tocar archivos generados
+- mantener el diff pequeño
 
-Sin restricciones, Codex puede resolver el problema, pero no necesariamente como tu equipo quiere.
+## Cuándo ir más allá de un prompt simple
 
-## Define el “Done” con Precisión
+Si el mismo tipo de tarea se repite, quizá exista una superficie mejor:
 
-Una de las mejoras más fáciles es definir el final en términos observables.
+- workflow repetido → [Skills](./codex-skills)
+- hace falta contexto externo → [MCP](./codex-mcp)
+- la exploración o implementación paralela ayuda → pedir subagents explícitamente
 
-Buenos ejemplos:
+La documentación de Subagents aclara que Codex solo los lanza cuando lo pides, y que heredan la sandbox policy actual. El paralelismo ayuda, pero no es gratis.
 
-- `pnpm lint` pasa
-- se arregla el test que falla en `auth.spec.ts`
-- el empty state usa el mismo estilo que las cards del dashboard
-- no hay cambios fuera de `src/payments/`
+## Usa Best-of-N cuando haya incertidumbre
 
-“Se ve bien” no es un criterio suficientemente fuerte.
+OpenAI destaca Best-of-N para trabajos más difíciles.
+Sirve cuando:
 
-## Best-of-N para Tareas Inciertas
+- el naming o la estructura importan mucho
+- varias soluciones parecen razonables
+- quieres comparar opciones antes de mergear
 
-OpenAI destaca **Best-of-N** como patrón útil para trabajo más difícil.
+## Checklist rápido antes de lanzar la tarea
 
-Úsalo cuando:
-
-- hay varias implementaciones razonables
-- importan mucho los nombres y la arquitectura
-- quieres comparar tradeoffs antes de mergear
-
-## La Cola de Tareas Como Backlog Ligero
-
-OpenAI también recomienda usar la task queue de Codex como backlog ligero.
-
-Sirve para:
-
-- capturar fixes laterales sin perder foco
-- dejar una limpieza preparada para revisar después
-- encadenar follow-ups tras un cambio mayor
-
-No toda tarea de Codex tiene que convertirse en PR final inmediatamente.
-
-## Checklist Rápido
-
-Antes de lanzar una tarea no trivial, revisa:
+Antes de mandar una tarea no trivial, revisa esto:
 
 - ¿el objetivo es singular?
-- ¿nombré archivos o carpetas relevantes?
-- ¿listé restricciones importantes?
-- ¿definí cómo se valida el éxito?
-- ¿se leería como un issue sensato para otro ingeniero?
+- ¿nombraste archivos o carpetas relevantes?
+- ¿listaste restricciones importantes?
+- ¿definiste éxito en términos observables?
+- ¿el cambio cabe en un loop de review?
 
-Si la respuesta es sí, la tarea probablemente ya tiene la forma correcta.
+El gran task design en Codex no es un truco oculto de prompting.
+Es la disciplina de dejar la tarea clara incluso para otro ingeniero.

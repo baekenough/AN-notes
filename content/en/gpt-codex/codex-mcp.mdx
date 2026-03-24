@@ -1,0 +1,140 @@
+---
+title: Codex MCP — Connect External Context Instead of Copy-Pasting It
+description: Use MCP to connect docs, issue trackers, and internal systems so Codex
+  can reason with real context beyond the repository.
+difficulty: intermediate
+tags:
+- mcp
+- context
+- integration
+- tooling
+connections:
+- slug: codex-skills
+  tool: gpt-codex
+  type: combines
+- slug: codex-sandbox
+  tool: gpt-codex
+  type: enhances
+- slug: mcp-power-tools
+  tool: claude-code
+  type: compare
+featured: false
+order: 6
+date: '2026-03-24'
+---
+
+> **Official References**: [MCP](https://developers.openai.com/codex/mcp) · [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [Sandboxing](https://developers.openai.com/codex/concepts/sandboxing)
+
+<!-- curriculum:start -->
+## Curriculum path
+
+1. [Codex Getting Started](./codex-getting-started) — first stable loop
+2. [Codex Instructions](./codex-instructions) — repo rules and defaults
+3. [Codex Sandboxing](./codex-sandbox) — permission boundaries first
+4. [Codex Task Design](./codex-task-design) — shape tasks well
+5. [Codex Skills](./codex-skills) — package repeatable procedure
+6. **Codex MCP** — connect outside systems safely ← **You are here**
+7. [Codex Reviews and Automations](./codex-ci-cd-workflows) — review and unattended workflows
+
+### Official docs used in this guide
+- **How CLI and IDE share MCP configuration** — [MCP](https://developers.openai.com/codex/mcp)
+- **`codex mcp add` and `/mcp`** — [MCP](https://developers.openai.com/codex/mcp), [CLI Slash Commands](https://developers.openai.com/codex/cli/slash-commands)
+- **Why sandbox boundaries still matter** — [Sandboxing](https://developers.openai.com/codex/concepts/sandboxing)
+<!-- curriculum:end -->
+
+## Why MCP changes the game
+
+Many people still paste external docs, issue summaries, or runbook notes into the prompt.
+That works once or twice, but it breaks down quickly:
+
+- the context gets stale
+- prompts get too long
+- provenance gets fuzzy
+- repeated work becomes painful
+
+MCP matters because it lets Codex **connect to external context structurally instead of carrying it around manually**.
+
+## Where MCP pays off most
+
+- internal documentation portals
+- Jira, Linear, or GitHub issue access
+- design systems and spec repositories
+- runbooks and operational playbooks
+- restricted read access to internal tools or data sources
+
+If code alone is not enough context, MCP is often the next surface to reach for.
+
+## Basic setup flow
+
+The MCP docs explain that Codex stores MCP configuration alongside other config, usually in `~/.codex/config.toml`.
+The CLI and IDE extension share that configuration. In trusted projects, you can also scope MCP setup inside `.codex/config.toml`.
+
+A basic CLI example looks like this:
+
+```bash
+codex mcp add context7 -- npx -y @upstash/context7-mcp
+```
+
+And inside a session, `/mcp` shows the currently configured MCP tools.
+
+## Your prompts should change once MCP exists
+
+If MCP is connected but you still paste everything manually, you lose most of the benefit.
+
+A better shape is:
+
+```text
+Before touching the billing code,
+read the connected issue tracker and refund runbook,
+summarize the recent rule changes,
+then map the likely code impact.
+```
+
+The key is not just “use external context.”
+It is **tell Codex what outside context to consult and in what order.**
+
+## Good MCP operating rules
+
+### 1. Start read-only
+Do not begin with broad write-capable servers unless you truly need them.
+
+### 2. Keep the trusted server list small
+Docs, tickets, and search are usually high-value starting points.
+
+### 3. Document trusted MCP surfaces in `AGENTS.md`
+That helps the whole team understand which external systems are expected and safe.
+
+### 4. Minimize secrets and permissions
+MCP is another boundary crossing surface. Least privilege still applies.
+
+## MCP plus skills is a strong combination
+
+MCP fetches context. Skills package procedure.
+Together they can create powerful repeatable workflows.
+
+Examples:
+
+- a release-note skill reads MCP-backed issues and PR metadata
+- a bug triage skill looks at incident docs plus current ticket state
+- a docs update skill checks official references through MCP before editing copy
+
+## Common failure modes
+
+### “The server is connected, but Codex doesn’t use it”
+Often the prompt never clearly asked for that outside context.
+
+### “We connected too many things and now trust is fuzzy”
+Usually the server set needs to be smaller and more intentional.
+
+### “Now that we have MCP, sandboxing matters less”
+Usually the opposite. More external access means boundary design matters more.
+
+## Quick checklist
+
+- Is outside-repo information truly required?
+- Is connection better than copy-paste here?
+- Can you begin read-only?
+- Does the team agree on which servers are trusted?
+- Does the prompt specify when and why Codex should use the MCP surface?
+
+MCP is the surface that upgrades Codex from “works on code” to “works with context.”

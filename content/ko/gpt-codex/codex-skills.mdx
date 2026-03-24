@@ -1,0 +1,160 @@
+---
+title: Codex Skills — 반복 프롬프트를 재사용 가능한 워크플로우로 바꾸기
+description: SKILL.md, scripts, references, team-shared skills를 활용해 Codex의 반복 작업을
+  줄이고 온보딩 비용을 낮추는 방법
+difficulty: intermediate
+tags:
+- skills
+- workflow
+- 자동화
+- 반복작업
+connections:
+- slug: codex-task-design
+  tool: gpt-codex
+  type: prerequisite
+- slug: codex-mcp
+  tool: gpt-codex
+  type: enhances
+- slug: sub-agents-and-skills
+  tool: gemini-cli
+  type: compare
+featured: true
+order: 5
+date: '2026-03-24'
+---
+
+> **공식 참고 자료**: [Skills](https://developers.openai.com/codex/skills) · [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [Automations](https://developers.openai.com/codex/app/automations)
+
+<!-- curriculum:start -->
+## 커리큘럼 흐름
+
+1. [Codex 시작하기](./codex-getting-started) — 입문 루프
+2. [Codex 지시문](./codex-instructions) — 저장소 규칙
+3. [Codex 샌드박싱](./codex-sandbox) — 권한과 승인
+4. [Codex 작업 설계](./codex-task-design) — 좋은 task shape 만들기
+5. **Codex Skills** — 반복 워크플로우를 재사용 자산으로 만들기 ← **현재 문서**
+6. [Codex MCP](./codex-mcp) — 외부 시스템 연결
+7. [Codex 리뷰와 자동화](./codex-ci-cd-workflows) — 반복 작업 운영
+
+### 이 문서에서 참고한 공식 문서
+- **skill의 기본 구조와 progressive disclosure** — [Skills](https://developers.openai.com/codex/skills)
+- **개인 skill과 저장소 공유 skill 위치** — [Best practices](https://developers.openai.com/codex/learn/best-practices)
+- **안정화된 반복 작업을 automation으로 스케줄링** — [Automations](https://developers.openai.com/codex/app/automations)
+<!-- curriculum:end -->
+
+## 언제 프롬프트를 skill로 올려야 할까
+
+같은 작업을 세 번 이상 반복하면서 매번 비슷한 설명을 복붙하게 된다면, 이제 프롬프트가 아니라 **skill** 문제일 가능성이 큽니다.
+
+좋은 skill 후보:
+
+- 릴리즈 노트 초안 만들기
+- PR 리뷰 체크리스트 적용
+- 특정 에러 유형 triage
+- 문서 frontmatter 정리
+- 레거시 API 마이그레이션 후속 작업
+
+즉, **입력 패턴과 출력 기대치가 반복되는 작업**이 잘 맞습니다.
+
+## skill은 어떤 구조인가
+
+Skills 문서 기준으로 skill은 디렉터리 하나입니다.
+
+```text
+my-skill/
+  SKILL.md          # 필수
+  scripts/          # 선택
+  references/       # 선택
+  agents/openai.yaml # 선택
+```
+
+공식 문서는 `SKILL.md`에 **name**과 **description**이 반드시 있어야 한다고 설명합니다.
+
+## 중요한 포인트: Codex는 skill을 한 번에 다 읽지 않는다
+
+Skills 문서는 Codex가 먼저 **메타데이터(name, description, path 등)** 를 보고, 실제로 필요하다고 판단될 때만 `SKILL.md` 전체를 불러온다고 설명합니다.
+
+이게 중요한 이유는 두 가지입니다.
+
+- context를 낭비하지 않음
+- description 품질이 skill 선택 정확도를 좌우함
+
+설명이 모호하면 Codex도 잘못 고를 수 있습니다.
+
+## skill을 호출하는 두 방법
+
+### 명시적 호출
+CLI/IDE에서 `/skills`를 보거나 `$skill-name` 형태로 직접 언급합니다.
+
+### 암묵적 호출
+Codex가 description을 보고 “이 작업은 저 skill이 맞다”고 판단하면 스스로 사용합니다.
+
+그래서 description에는 “무엇을 하고, 언제 쓰는지”가 분명해야 합니다.
+
+## 어디에 저장할까
+
+Best practices 문서 기준:
+
+- 개인 skill → `$HOME/.agents/skills`
+- 팀 공유 skill → 저장소 내부 `.agents/skills`
+
+팀 skill을 저장소에 함께 두면 온보딩이 쉬워집니다.
+“이 팀은 반복 작업을 어떻게 처리하는가?”가 코드와 함께 남기 때문입니다.
+
+## 좋은 skill 설계법
+
+### 1. 범위를 좁혀라
+“모든 문서를 고품질로 바꿔라”보다 “frontmatter를 점검하고 누락 필드를 채워라”가 낫습니다.
+
+### 2. scripts와 references를 활용하라
+반복 명령이 있으면 `scripts/`에 두고, 문서나 표준 예시가 있으면 `references/`로 분리하세요.
+`SKILL.md`에 모든 걸 길게 적는 것보다 유지보수가 쉽습니다.
+
+### 3. 시작과 종료 조건을 적어라
+언제 쓰는지, 언제 끝났다고 보는지를 써두면 암묵적 호출 품질이 좋아집니다.
+
+## skill, AGENTS, MCP의 역할 분리
+
+- `AGENTS.md` = 저장소의 지속 규칙
+- skill = 반복 워크플로우
+- MCP = 외부 시스템 접근
+- 프롬프트 = 오늘 해야 하는 일
+
+이 넷을 섞어 쓰면 강력하지만, 하나에 몰아넣으면 금방 지저분해집니다.
+
+## subagent가 더 맞는 경우도 있다
+
+skill은 반복 절차를 패키징하는 데 좋습니다.
+반면 아래는 skill만으로 해결되지 않을 수 있습니다.
+
+- 병렬 코드베이스 탐색
+- 구현안 여러 개 비교
+- 탐색/구현/검증을 동시에 돌리는 작업
+
+이런 경우는 subagent 요청이나 worktree 기반 병렬 흐름이 더 잘 맞습니다.
+
+## automation과 조합하면 진가가 난다
+
+Automations 문서에 따르면 안정된 반복 작업은 background에서 스케줄링할 수 있습니다.
+여기서 skill은 automation의 재사용 가능한 본문이 됩니다.
+
+예를 들어:
+
+- 매주 release notes draft 생성
+- 최근 커밋 요약
+- docs drift 점검
+- 특정 폴더 lint/triage
+
+이런 작업은 프롬프트 하나보다 **skill + automation** 조합이 오래갑니다.
+
+## 시작용 체크리스트
+
+skill을 만들기 전에 아래를 보세요.
+
+- 정말 반복 작업인가?
+- 입력과 출력이 비교적 일정한가?
+- description만 읽어도 언제 써야 하는지 명확한가?
+- 긴 설명 대신 script/reference로 분리할 수 있는가?
+
+반복 작업이 쌓이기 시작했다면, Codex를 더 잘 쓰는 다음 단계는 프롬프트 장인이 되는 것이 아니라
+**좋은 skill을 쌓는 팀**이 되는 것입니다.

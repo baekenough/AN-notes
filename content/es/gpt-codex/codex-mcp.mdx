@@ -1,0 +1,140 @@
+---
+title: MCP en Codex — Conecta Contexto Externo en Vez de Copiarlo y Pegar
+description: Usa MCP para conectar docs, issue trackers y sistemas internos, y así
+  permitir que Codex razone con contexto real más allá del repositorio.
+difficulty: intermediate
+tags:
+- mcp
+- context
+- integration
+- tooling
+connections:
+- slug: codex-skills
+  tool: gpt-codex
+  type: combines
+- slug: codex-sandbox
+  tool: gpt-codex
+  type: enhances
+- slug: mcp-power-tools
+  tool: claude-code
+  type: compare
+featured: false
+order: 6
+date: '2026-03-24'
+---
+
+> **Referencias Oficiales**: [MCP](https://developers.openai.com/codex/mcp) · [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [Sandboxing](https://developers.openai.com/codex/concepts/sandboxing)
+
+<!-- curriculum:start -->
+## Ruta del currículo
+
+1. [Primeros Pasos con Codex](./codex-getting-started) — primer loop estable
+2. [Instrucciones de Codex](./codex-instructions) — reglas del repo y defaults
+3. [Sandboxing en Codex](./codex-sandbox) — límites de permisos primero
+4. [Diseño de Tareas en Codex](./codex-task-design) — dar forma a la tarea
+5. [Skills de Codex](./codex-skills) — encapsular procedimiento repetible
+6. **MCP en Codex** — conectar sistemas externos de forma segura ← **Estás aquí**
+7. [Reviews y Automatizaciones con Codex](./codex-ci-cd-workflows) — review y workflows unattended
+
+### Documentación oficial usada en esta guía
+- **Cómo comparten config MCP el CLI y el IDE** — [MCP](https://developers.openai.com/codex/mcp)
+- **`codex mcp add` y `/mcp`** — [MCP](https://developers.openai.com/codex/mcp), [CLI Slash Commands](https://developers.openai.com/codex/cli/slash-commands)
+- **Por qué los límites de sandbox siguen importando** — [Sandboxing](https://developers.openai.com/codex/concepts/sandboxing)
+<!-- curriculum:end -->
+
+## Por qué MCP cambia el juego
+
+Mucha gente todavía pega docs externas, resúmenes de issues o notas de runbooks dentro del prompt.
+Eso funciona una o dos veces, pero se rompe pronto:
+
+- el contexto queda viejo
+- los prompts se alargan demasiado
+- la procedencia se vuelve difusa
+- el trabajo repetido duele más de la cuenta
+
+MCP importa porque permite que Codex **conecte contexto externo de forma estructural en lugar de cargarlo manualmente**.
+
+## Dónde aporta más valor
+
+- portales internos de documentación
+- acceso a Jira, Linear o GitHub issues
+- sistemas de diseño y repos de especificación
+- runbooks y playbooks operativos
+- acceso de solo lectura a herramientas internas o fuentes de datos
+
+Si el código por sí solo no basta, MCP suele ser la siguiente superficie correcta.
+
+## Flujo básico de setup
+
+La documentación de MCP explica que la configuración suele vivir junto con la config de Codex, normalmente en `~/.codex/config.toml`.
+El CLI y la extensión de IDE comparten esa configuración. En proyectos trusted, también puedes usar `.codex/config.toml` a nivel de repo.
+
+Un ejemplo básico por CLI:
+
+```bash
+codex mcp add context7 -- npx -y @upstash/context7-mcp
+```
+
+Y dentro de la sesión, `/mcp` muestra las herramientas MCP configuradas.
+
+## El prompt debe cambiar una vez que existe MCP
+
+Si conectas MCP pero sigues pegando todo a mano, pierdes casi todo el beneficio.
+
+Una forma mejor es:
+
+```text
+Antes de tocar el código de billing,
+lee el issue tracker conectado y el runbook de refunds,
+resume los cambios recientes de reglas,
+y luego mapea el impacto probable en el código.
+```
+
+La clave no es solo “usar contexto externo”.
+La clave es **decirle a Codex qué contexto consultar y en qué orden**.
+
+## Buenas reglas de operación con MCP
+
+### 1. Empieza read-only
+No arranques con servidores write-capable amplios si no son realmente necesarios.
+
+### 2. Mantén pequeña la lista de servidores trusted
+Docs, tickets y search suelen ser las mejores primeras conexiones.
+
+### 3. Documenta las superficies trusted en `AGENTS.md`
+Eso ayuda a todo el equipo a entender qué sistemas externos se esperan y se consideran seguros.
+
+### 4. Minimiza secretos y permisos
+MCP es otra superficie de cruce de frontera. Least privilege sigue aplicando.
+
+## MCP + skills es una combinación fuerte
+
+MCP trae contexto. Las skills encapsulan procedimiento.
+Juntas pueden crear workflows repetibles muy potentes.
+
+Ejemplos:
+
+- una skill de release notes lee issues y metadatos de PR vía MCP
+- una skill de bug triage mira docs de incidentes más el estado del ticket
+- una skill de docs update consulta referencias oficiales por MCP antes de editar copy
+
+## Fallos típicos
+
+### “El servidor está conectado, pero Codex no lo usa”
+Muchas veces el prompt nunca pidió con claridad ese contexto externo.
+
+### “Conectamos demasiadas cosas y ahora la confianza es difusa”
+Normalmente conviene reducir el conjunto de servidores y hacerlo más intencional.
+
+### “Ahora que tenemos MCP, el sandbox importa menos”
+Suele ser al revés. Más acceso externo implica que el diseño de límites importa más.
+
+## Checklist rápido
+
+- ¿de verdad hace falta información fuera del repo?
+- ¿conectar es mejor que copiar y pegar aquí?
+- ¿puedes empezar en read-only?
+- ¿el equipo acordó qué servidores son trusted?
+- ¿el prompt especifica cuándo y por qué debe usar Codex la superficie MCP?
+
+MCP es la superficie que hace que Codex pase de “trabaja sobre código” a “trabaja con contexto”.

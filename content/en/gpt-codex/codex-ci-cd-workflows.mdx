@@ -1,175 +1,173 @@
 ---
-title: "Codex in CI/CD — Repeatable Reviews, Fixes, and Batch Work"
-description: "Where Codex fits in CI pipelines, background task queues, and repeatable engineering automation without turning every workflow into a risky black box"
+title: Codex Reviews and Automations — /review, Worktrees, and Repeatable Engineering
+description: Use review pane workflows, Git worktrees, automations, and CI/CD-shaped
+  task design to make Codex useful for repeated engineering work, not just one-off
+  edits.
 difficulty: advanced
-tags: ["ci-cd", "automation", "review", "workflow"]
+tags:
+- review
+- automation
+- ci-cd
+- worktrees
 connections:
-  - slug: "codex-task-design"
-    tool: "gpt-codex"
-    type: "prerequisite"
-  - slug: "codex-sandbox"
-    tool: "gpt-codex"
-    type: "prerequisite"
-  - slug: "multi-agent-workflow"
-    tool: "claude-code"
-    type: "compare"
+- slug: codex-task-design
+  tool: gpt-codex
+  type: prerequisite
+- slug: codex-sandbox
+  tool: gpt-codex
+  type: prerequisite
+- slug: codex-skills
+  tool: gpt-codex
+  type: enhances
+- slug: multi-agent-workflow
+  tool: claude-code
+  type: compare
 featured: false
-order: 4
-date: "2026-03-21"
+order: 7
+date: '2026-03-24'
 ---
 
-> **Official References**: [Code Generation Guide](https://platform.openai.com/docs/guides/code-generation) · [Cloud Environments](https://developers.openai.com/codex/cloud/environments) · [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [How OpenAI uses Codex](https://openai.com/business/guides-and-resources/how-openai-uses-codex/)
+> **Official References**: [Review](https://developers.openai.com/codex/app/review) · [Automations](https://developers.openai.com/codex/app/automations) · [Worktrees](https://developers.openai.com/codex/app/worktrees) · [How OpenAI uses Codex](https://openai.com/business/guides-and-resources/how-openai-uses-codex/)
 
 <!-- curriculum:start -->
 ## Curriculum path
 
-1. [Codex Instructions](/gpt-codex/codex-instructions) — instruction layering and repo rules
-2. [Codex Sandboxing](/gpt-codex/codex-sandbox) — permissions and cloud environments
-3. [Codex Task Design](/gpt-codex/codex-task-design) — scope and issue-shaped prompts
-4. **Codex in CI/CD** — repeatable automation and batch work ← **You are here**
+1. [Codex Getting Started](./codex-getting-started) — first local wins
+2. [Codex Instructions](./codex-instructions) — stable rules
+3. [Codex Sandboxing](./codex-sandbox) — safe execution boundaries
+4. [Codex Task Design](./codex-task-design) — size tasks for reviewability
+5. [Codex Skills](./codex-skills) — package repeated procedure
+6. [Codex MCP](./codex-mcp) — bring in outside context
+7. **Codex Reviews and Automations** — review, worktrees, and background loops ← **You are here**
 
 ### Official docs used in this guide
-- **Where Codex fits in CI/CD pipelines** — [Code generation](https://developers.openai.com/api/docs/guides/code-generation)
-- **Setup scripts, environment variables, and secrets in cloud execution** — [Cloud environments](https://developers.openai.com/codex/cloud/environments)
-- **Task queue and Best-of-N for repeatable automation** — [How OpenAI uses Codex](https://openai.com/business/guides-and-resources/how-openai-uses-codex/)
+- **Review pane defaults and scope switching** — [Review](https://developers.openai.com/codex/app/review)
+- **Recurring tasks with cadence and execution environment choices** — [Automations](https://developers.openai.com/codex/app/automations)
+- **Parallel work without repo collisions via worktrees** — [Worktrees](https://developers.openai.com/codex/app/worktrees)
+- **Best-of-N and repeatable engineering operations** — [How OpenAI uses Codex](https://openai.com/business/guides-and-resources/how-openai-uses-codex/)
 <!-- curriculum:end -->
 
-## Why Codex Works Well in Pipelines
+## The real leverage comes from repeated work
 
-Codex is a good fit for CI/CD because its execution model is naturally bounded:
+One successful Codex task is useful.
+A repeatable Codex workflow is much more valuable.
 
-- tasks are isolated
-- environments can be reproducible
-- setup is explicit
-- output is reviewable as a diff or report
+This is where review loops, maintenance work, docs sync, safe refactors, and narrow automation all start compounding.
 
-That makes it more pipeline-friendly than a purely conversational coding assistant.
+## Make `/review` part of the habit
 
-## Good CI/CD Use Cases
+The Review docs explain that the review pane reflects your Git repository state.
+By default it focuses on **uncommitted changes**, and you can switch the scope to:
 
-Codex is especially strong for jobs like:
+- all branch changes against the base branch
+- last-turn changes only
+- staged vs unstaged changes locally
 
-- automated code review comments
-- test generation for touched modules
-- docs refresh for changed APIs
-- dependency migration follow-ups
-- repetitive refactors across known file patterns
-- issue-shaped bug fixes with deterministic reproduction
+That matters because it turns Codex output back into an engineering artifact you can inspect before you trust it.
 
-These are all tasks where “bounded, inspectable, repeatable” matters more than live brainstorming.
+A strong short loop is:
 
-## Bad CI/CD Use Cases
+1. implementation
+2. lint / build / tests
+3. `/review`
+4. stage, revert, or revise
 
-Avoid pushing Codex into pipeline steps that require:
+## Which changes deserve the heaviest review?
 
-- product ambiguity
-- live decision making with a human loop every minute
-- broad architectural invention across unrelated systems
-- unsafe production credentials or wide-open internet access
-
-Codex is strongest when the system can validate the result after the change.
-
-## A Simple Pipeline Pattern
-
-A practical Codex workflow often looks like this:
-
-1. Trigger on PR or issue label
-2. Spin up a cloud environment with a deterministic setup script
-3. Pass an issue-shaped task prompt
-4. Let Codex edit, run checks, and produce a summary
-5. Require human review before merge
-
-This keeps the agent autonomous without making the merge path fully trust-based.
-
-## Use Setup Scripts Like Build Contracts
-
-In CI and cloud tasks, setup scripts are part of the contract.
-
-A good setup script should install everything needed for the agent to succeed without improvising:
-
-```bash
-#!/usr/bin/env bash
-set -euo pipefail
-
-npm ci
-npm run codegen
-npm run db:prepare-test
-```
-
-If your pipeline success depends on hidden local state, Codex will feel flaky even when the model is fine.
-
-## Keep Validation Mechanical
-
-The best Codex pipeline stages end with unambiguous checks:
-
-- lint
-- typecheck
-- unit tests
-- snapshot or fixture validation
-- narrow integration tests
-
-Prefer “the task passes when these commands pass” over subjective checks like “the change looks production-ready.”
-
-## CI/CD Is Not Just GitHub Actions
-
-Even if you do not fully automate Codex in CI, the same mindset applies to background task queues and team workflows.
-
-Good uses:
-
-- queue a cleanup task while you work elsewhere
-- batch five similar doc fixes instead of doing them manually
-- send a reproducible bug task to Codex while you stay on the main thread
-
-OpenAI describes this as using the task queue like a lightweight backlog. That is often a better mental model than “one task, one final PR, every time.”
-
-## Human Review Should Stay in the Loop
-
-The right question is not “can Codex merge by itself?” but “where should humans review?”
-
-Good review boundaries:
+Human review becomes especially important for:
 
 - API contract changes
 - schema or migration edits
 - auth, billing, or security logic
-- user-facing copy and product behavior
-- anything that changes ops or deployment assumptions
+- user-facing copy and behavior
+- large renames or deletions
 
-Let Codex do the mechanical work. Keep irreversible judgment with reviewers.
+Codex can produce a fast draft, but irreversible judgment still belongs to humans.
 
-## Parallel Batch Work
+## Worktrees give you speed and isolation together
 
-Codex also shines when work is embarrassingly parallel.
+The Worktrees docs describe how Codex can run multiple independent tasks in parallel inside the same project without stepping on each other.
+In Git repositories, automations can also run on dedicated background worktrees.
+
+That is useful because it:
+
+- reduces conflict with your main working tree
+- isolates experimental runs
+- makes recurring automation safer
+
+A worktree is both a speed feature and a blast-radius feature.
+
+## Use automations only after the workflow is stable
+
+The Automations docs describe background recurring runs where you choose the project, prompt, cadence, and execution environment. Skills can also be invoked inside those runs.
+
+Good automation candidates:
+
+- recent commit summaries
+- release note drafts
+- docs drift checks
+- likely-bug scans
+- low-risk static checks
+
+Bad automation candidates:
+
+- feature work that requires constant product judgment
+- flows with broad secret or production access
+- deployment steps with high failure cost
+
+## What Codex looks like in CI/CD in practice
+
+The most practical pattern is rarely “let Codex merge by itself.”
+It is usually **automate the repeated engineering work before a human decision point**.
 
 Examples:
 
-- migrate ten similar handlers
-- update doc frontmatter across many files
-- generate tests for multiple isolated modules
-- apply the same lint-safe refactor to a directory tree
+- draft a PR review pass
+- process an issue label into a narrow structured task
+- generate a first pass on large docs updates
+- identify missing test coverage candidates
 
-This is where bounded autonomous tasks can save hours.
+The value is less about full autonomy and more about repeatable pre-review acceleration.
 
-## A Useful Adoption Ladder
+## Skill + automation + worktree + review
 
-If your team is new to Codex, adopt in stages:
+Once a workflow is stable, this combination is powerful:
+
+- skill = reusable procedure
+- automation = scheduling
+- worktree = isolation
+- `/review` = final inspection
+
+When those four pieces fit together, Codex starts behaving less like a one-off assistant and more like a repeatable engineering system.
+
+## Increase maturity in steps
 
 ### Stage 1
-Review-only or suggestion-only tasks
+Local work plus `/review`
 
 ### Stage 2
-Small automated fixes behind human review
+Repeated workflows packaged as skills
 
 ### Stage 3
-Repetitive migration and maintenance tasks
+Worktree-based parallel flows
 
 ### Stage 4
-Richer queued workflows with cloud setup and constrained internet
+Background automations
 
-Teams that skip directly to full automation usually end up tightening permissions after avoidable mistakes.
+### Stage 5
+Narrow CI/CD integration
 
-## The Real Win
+This staged approach keeps the failure surface understandable.
 
-The biggest gain is not “AI writes all the code.”
-It is that repetitive, bounded engineering work becomes easier to delegate without losing reproducibility.
+## Final operating checklist
 
-That is why Codex feels especially natural in CI/CD and structured team workflows.
+Before you automate or productionize a workflow, ask:
+
+- Is the task shape narrow enough?
+- Do the sandbox and approval settings match the risk?
+- Are the checks mechanical and reliable?
+- Can a human still review the outcome cleanly?
+- Is the run isolated from your main working tree?
+
+The teams that use Codex well over time are not the teams with the broadest permissions.
+They are the teams that keep reviewable, repeatable boundaries.

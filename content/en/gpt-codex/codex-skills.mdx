@@ -1,0 +1,161 @@
+---
+title: Codex Skills — Turn Repeated Prompts into Reusable Workflows
+description: Use SKILL.md, scripts, references, and team-shared skills to reduce repeated
+  prompting and make successful Codex workflows portable.
+difficulty: intermediate
+tags:
+- skills
+- workflow
+- automation
+- repeat-work
+connections:
+- slug: codex-task-design
+  tool: gpt-codex
+  type: prerequisite
+- slug: codex-mcp
+  tool: gpt-codex
+  type: enhances
+- slug: sub-agents-and-skills
+  tool: gemini-cli
+  type: compare
+featured: true
+order: 5
+date: '2026-03-24'
+---
+
+> **Official References**: [Skills](https://developers.openai.com/codex/skills) · [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [Automations](https://developers.openai.com/codex/app/automations)
+
+<!-- curriculum:start -->
+## Curriculum path
+
+1. [Codex Getting Started](./codex-getting-started) — first safe loops
+2. [Codex Instructions](./codex-instructions) — repo rules and defaults
+3. [Codex Sandboxing](./codex-sandbox) — permissions and boundaries
+4. [Codex Task Design](./codex-task-design) — shape work well
+5. **Codex Skills** — turn repeated work into reusable assets ← **You are here**
+6. [Codex MCP](./codex-mcp) — connect outside systems
+7. [Codex Reviews and Automations](./codex-ci-cd-workflows) — run stable workflows repeatedly
+
+### Official docs used in this guide
+- **Skill structure and progressive disclosure** — [Skills](https://developers.openai.com/codex/skills)
+- **Personal skills vs repository-shared skills** — [Best Practices](https://developers.openai.com/codex/learn/best-practices)
+- **Scheduling stable workflows in the background** — [Automations](https://developers.openai.com/codex/app/automations)
+<!-- curriculum:end -->
+
+## When should a prompt become a skill?
+
+If you keep repeating the same setup and expectations, you are no longer dealing with a prompting problem.
+You are dealing with a missing skill.
+
+Strong candidates include:
+
+- drafting release notes
+- applying a PR review checklist
+- triaging a recurring error class
+- cleaning document frontmatter
+- follow-up migrations after a framework upgrade
+
+Skills shine when the input pattern and expected output shape repeat.
+
+## What does a skill look like?
+
+The Skills docs describe a skill as a directory like this:
+
+```text
+my-skill/
+  SKILL.md           # required
+  scripts/           # optional
+  references/        # optional
+  agents/openai.yaml # optional
+```
+
+The docs also make one requirement explicit: `SKILL.md` must include **name** and **description**.
+
+## Why progressive disclosure matters
+
+The skill system does not load everything all at once.
+According to the docs, Codex starts with each skill’s metadata and only loads the full `SKILL.md` when it decides the skill is relevant.
+
+That matters because:
+
+- it keeps context lighter
+- the description becomes a routing surface
+
+If your description is vague, Codex may pick the wrong skill or never pick it at all.
+
+## Two ways skills get used
+
+### Explicit invocation
+Mention the skill directly with `$skill-name`, or browse from `/skills`.
+
+### Implicit invocation
+Codex can choose a skill when the task matches the description.
+
+That means the description should say **what the skill does** and **when to use it**.
+
+## Where should skills live?
+
+Best Practices points to two standard homes:
+
+- personal skills → `$HOME/.agents/skills`
+- shared team skills → `.agents/skills` inside the repository
+
+Shared repo skills are especially useful for onboarding. They encode “how this team repeatedly gets work done.”
+
+## Good skill design rules
+
+### 1. Keep the scope narrow
+“Improve all docs” is worse than “validate frontmatter and fill missing fields.”
+
+### 2. Move repeated mechanics into scripts and references
+If the workflow always calls the same commands, put them in `scripts/`.
+If it depends on standard examples or docs, put them in `references/`.
+
+### 3. Include start and finish conditions
+A good skill says when to use it and what success looks like.
+
+## Skills vs AGENTS vs MCP
+
+- `AGENTS.md` = durable repo rules
+- skill = reusable workflow
+- MCP = outside context/tool access
+- prompt = today’s request
+
+These surfaces work best together when they stay distinct.
+
+## Sometimes a subagent is the better tool
+
+Skills package repeated procedure.
+They are not always the right answer for:
+
+- parallel codebase exploration
+- comparing multiple implementation options
+- running exploration, implementation, and verification in parallel
+
+In those cases, explicit subagent workflows or worktree-based parallelism may fit better.
+
+## Skills become even stronger with automations
+
+The Automations docs describe recurring background runs.
+In that setup, a skill becomes a reusable body for the automation.
+
+Examples:
+
+- weekly release note drafts
+- recent commit summaries
+- docs drift scans
+- low-risk lint or triage routines
+
+That is where skills stop being just convenience and start becoming systemized leverage.
+
+## A quick go/no-go checklist
+
+Before building a skill, ask:
+
+- Is this truly repeated work?
+- Are the inputs and outputs fairly stable?
+- Is the description enough to know when it applies?
+- Can long instructions be split into scripts or references?
+
+When repeated work starts piling up, the next level in Codex is not “becoming better at one-off prompting.”
+It is building a good skill library.

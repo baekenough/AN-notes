@@ -1,203 +1,188 @@
 ---
-title: "Codex 작업 설계 — 소원 말고 이슈처럼 프롬프트 쓰기"
-description: "Codex 작업을 적절한 크기로 자르고, 재작업을 줄이며, 이슈 형태의 프롬프트로 더 좋은 diff를 얻는 방법"
+title: Codex 작업 설계 — 소원 말고 이슈처럼 프롬프트 쓰기
+description: Codex 작업을 적절한 크기로 자르고, 재작업을 줄이며, 이슈 형태의 프롬프트와 명확한 완료 조건으로 더 좋은 diff를
+  얻는 방법
 difficulty: intermediate
-tags: ["프롬프팅", "계획", "분해", "워크플로우"]
+tags:
+- prompting
+- 계획
+- 분해
+- workflow
 connections:
-  - slug: "codex-instructions"
-    tool: "gpt-codex"
-    type: "prerequisite"
-  - slug: "codex-sandbox"
-    tool: "gpt-codex"
-    type: "combines"
-  - slug: "codex-ci-cd-workflows"
-    tool: "gpt-codex"
-    type: "enhances"
+- slug: codex-instructions
+  tool: gpt-codex
+  type: prerequisite
+- slug: codex-sandbox
+  tool: gpt-codex
+  type: combines
+- slug: codex-skills
+  tool: gpt-codex
+  type: enhances
 featured: false
-order: 3
-date: "2026-03-21"
+order: 4
+date: '2026-03-24'
 ---
 
-> **공식 참고 자료**: [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [How OpenAI uses Codex](https://openai.com/business/guides-and-resources/how-openai-uses-codex/) · [AGENTS.md 가이드](https://developers.openai.com/codex/guides/agents-md)
+> **공식 참고 자료**: [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [How OpenAI uses Codex](https://openai.com/business/guides-and-resources/how-openai-uses-codex/) · [Subagents](https://developers.openai.com/codex/subagents)
 
 <!-- curriculum:start -->
 ## 커리큘럼 흐름
 
-1. [Codex 지시문](/gpt-codex/codex-instructions) — instruction layering과 저장소 규칙
-2. [Codex 샌드박싱](/gpt-codex/codex-sandbox) — 권한과 실행 경계
-3. **Codex 작업 설계** — scope, 프롬프트, 작업 분해 ← **현재 문서**
-4. [Codex와 CI/CD](/gpt-codex/codex-ci-cd-workflows) — 반복 자동화와 배치 작업
+1. [Codex 시작하기](./codex-getting-started) — 첫 성공 루프 만들기
+2. [Codex 지시문](./codex-instructions) — 저장소 규칙 정리
+3. [Codex 샌드박싱](./codex-sandbox) — 실행 경계 정리
+4. **Codex 작업 설계** — scope, 프롬프트, 완료 조건 ← **현재 문서**
+5. [Codex Skills](./codex-skills) — 반복 작업 패키징
+6. [Codex MCP](./codex-mcp) — 외부 컨텍스트 연결
+7. [Codex 리뷰와 자동화](./codex-ci-cd-workflows) — 반복 가능한 운영
 
 ### 이 문서에서 참고한 공식 문서
-- **Goal / Context / Constraints / Done when** — [Best practices](https://developers.openai.com/codex/learn/best-practices)
-- **복잡한 작업에서는 먼저 계획 세우기** — [Best practices](https://developers.openai.com/codex/learn/best-practices)
-- **Best-of-N과 lightweight backlog로서의 task queue** — [How OpenAI uses Codex](https://openai.com/business/guides-and-resources/how-openai-uses-codex/)
+- **Goal / Context / Constraints / Done when 구조** — [Best practices](https://developers.openai.com/codex/learn/best-practices)
+- **Best-of-N과 task queue 아이디어** — [How OpenAI uses Codex](https://openai.com/business/guides-and-resources/how-openai-uses-codex/)
+- **병렬 작업이 필요한 경우 subagents 사용** — [Subagents](https://developers.openai.com/codex/subagents)
 <!-- curriculum:end -->
 
-## 핵심 원칙
+## 핵심 원칙: 추측할 여지를 줄여라
 
-Codex는 작업이 실제 엔지니어링 티켓처럼 생겼을 때 가장 잘 동작합니다.
+Codex는 강한 실행기이지만, 사용자가 모호하게 말할수록 모델이 추측해야 할 영역이 커집니다.
+좋은 프롬프트의 목적은 “멋진 문장”이 아니라 **추측 비용을 줄이는 것**입니다.
 
-OpenAI도 Codex 프롬프트를 GitHub 이슈나 PR 설명처럼 구조화하라고 권장합니다. 실무적으로는 다음 네 가지가 중요합니다.
+## 가장 잘 먹히는 기본 틀
 
-- 명확한 목표
-- 파일/모듈 단위의 구체적 컨텍스트
-- 나쁜 해법을 막는 제약
-- 분명한 완료 조건
-
-“이거 좀 개선해줘” 같은 말만 던지면, 실제 과업을 모델이 스스로 발명해야 합니다.
-
-## 이슈 형태 프롬프트 템플릿
-
-중간 이상 규모의 작업은 이런 구조가 좋습니다.
+공식 best practices는 이슈나 PR 설명처럼 쓰는 방식을 권장합니다.
 
 ```text
 Goal:
-cart drawer에 optimistic update를 추가해.
+무엇을 바꾸고 싶은가
 
 Context:
-- UI는 src/components/cart/ 에 있음
-- server action은 src/app/actions/cart.ts 에 있음
-- src/components/wishlist/ 의 패턴을 따를 것
+어떤 파일, 에러, 기존 패턴이 중요한가
 
 Constraints:
-- API shape는 바꾸지 말 것
-- 새로운 상태 관리 라이브러리 추가 금지
-- diff는 작고 국소적으로 유지할 것
+무엇을 건드리면 안 되는가
 
 Done when:
-- 변경이 즉시 반영되어 보일 것
+무엇이 완료 기준인가
+```
+
+이 구조는 단순하지만 강력합니다.
+Goal만 있고 Done when이 없으면 끝을 알 수 없고, Context가 없으면 저장소 내부 패턴을 추측하게 됩니다.
+
+## 예시: 나쁜 프롬프트 vs 좋은 프롬프트
+
+나쁨:
+
+```text
+cart 쪽 개선해줘
+```
+
+나음:
+
+```text
+Goal:
+cart drawer의 수량 변경에 optimistic update를 추가해.
+
+Context:
+- UI는 src/components/cart/ 아래에 있음
+- server action은 src/app/actions/cart.ts 에 있음
+- loading 상태 패턴은 wishlist 구현을 따를 것
+
+Constraints:
+- public API shape는 바꾸지 말 것
+- 새 상태관리 라이브러리 추가 금지
+
+Done when:
+- 수량 변경이 즉시 반영되어 보일 것
 - 실패 시 rollback 될 것
-- lint, typecheck, cart 테스트가 통과할 것
+- lint, build, 관련 테스트가 통과할 것
 ```
 
-이 형식은 사람에게도, Codex에게도 리뷰가 쉽습니다.
+## scope는 검증 루프 하나로 잘라라
 
-## 스코프가 전부다
+작업 크기를 잡을 때 가장 좋은 기준은 “기능 단위”가 아니라 **검증 루프 단위**입니다.
 
-Codex의 강점은 경계가 있는 실행입니다. 그래서 중요한 건 “완벽한 프롬프트 문장”보다 **작업을 알맞은 크기로 자르는 것**입니다.
+좋은 작업:
 
-좋은 작업 형태:
+- 한 폴더 안의 refactor
+- 재현 가능한 버그 수정
+- 특정 API 변경에 맞춘 문서 업데이트
 
-- 한 서브시스템의 한 기능
-- 한 영역에 국한된 리팩토링
-- 재현 가능한 실패가 있는 버그
-- 여러 파일에 반복 적용되는 마이그레이션 패턴
+나쁜 작업:
 
-좋지 않은 작업 형태:
+- auth, onboarding, billing을 한 번에 재설계
+- 기술부채를 전체적으로 정리
+- 앱을 전반적으로 modernize
 
-- “앱 전체를 현대화해줘”
-- “모든 기술 부채를 해결해줘”
-- “auth, onboarding, billing을 한 번에 갈아엎어줘”
+한 번의 lint/build/test 루프로 건강을 판단하기 어려우면 대개 너무 큽니다.
 
-사람 엔지니어에게 먼저 설계 문서를 요구할 만한 일이라면, Codex 작업도 대개 너무 큽니다.
+## 계획부터 세워야 하는 작업도 있다
 
-## 언제 작업을 쪼개야 하나
+다음 조건이면 먼저 plan을 요청하는 편이 낫습니다.
 
-다음과 같으면 여러 Codex 작업으로 나누는 편이 좋습니다.
+- 파일/도메인이 세 군데 이상 걸침
+- 구현보다 설계 판단 비중이 큼
+- rollback 비용이 큼
+- 여러 reasonable solution이 있음
 
-- 파일이 서로 다른 도메인에 흩어져 있을 때
-- 검증 방식이 서로 다를 때
-- 한 부분은 탐색적이고 다른 부분은 결정적일 때
-- 첫 결과를 보고 다음 단계를 승인하고 싶을 때
-
-예시:
-
-1. DB 필드와 스키마 wiring 추가
-2. API 핸들러 업데이트
-3. UI와 테스트 수정
-
-한 방에 끝내는 것보다 덜 화려해 보여도, 훨씬 신뢰성이 높습니다.
-
-## 추상 조언보다 저장소 예시를 줘라
-
-Codex는 일반론보다 저장소 안의 구체적 앵커에 더 잘 반응합니다.
-
-더 좋은 예:
+이럴 때는 바로 구현보다 아래처럼 시작하세요.
 
 ```text
-src/features/profile/actions.ts 와 같은 방식으로 구현해.
+먼저 구현하지 말고 plan만 제안해.
+위험, 변경 파일, 검증 방법을 포함해.
 ```
 
-덜 좋은 예:
+## 로컬 예시를 주면 추측이 줄어든다
 
-```text
-우리 아키텍처에 맞게 구현해.
-```
-
-기존 패턴을 정확히 가리킬수록 Codex의 추측 비용이 줄어듭니다.
-
-## 규칙은 AGENTS.md에, 의도는 프롬프트에
-
-흔한 안티패턴은 영구 규칙을 모든 작업 프롬프트에 반복해서 넣는 것입니다.
-
-더 나은 방식:
-
-- 지속 규칙은 `AGENTS.md`
-- 오늘의 과업은 프롬프트
-
-예:
-
-- `AGENTS.md`: lint + typecheck 실행, generated 파일 수정 금지
-- 프롬프트: billing export에 draft invoice 지원 추가
-
-## 제약은 결과를 더 좋게 만든다
-
-제약은 방해가 아니라 방향입니다.
-
-가치가 큰 제약 예시:
-
-- 의존성 추가 금지
-- 공개 API shape 변경 금지
-- 특정 폴더 안에서만 수정
-- 기존 테스트 보존
-- 새 추상화 대신 기존 유틸 재사용
-
-제약이 없으면 문제는 풀 수 있어도 팀이 원한 방식이 아닐 수 있습니다.
-
-## “Done”을 관찰 가능한 형태로 적어라
-
-결과 품질을 높이는 가장 쉬운 방법 중 하나는 완료 조건을 관찰 가능한 기준으로 적는 것입니다.
+Codex는 추상적인 “우리 스타일대로”보다 구체적인 “이 파일처럼”에 훨씬 강합니다.
 
 좋은 예:
 
-- `pnpm lint` 통과
-- `auth.spec.ts`의 실패 테스트 수정
-- empty state UI가 기존 dashboard 카드 스타일과 일치
-- `src/payments/` 밖 변경 없음
+- `src/features/profile/actions.ts` 패턴을 따르기
+- `docs/releases/` 포맷에 맞추기
+- `Button` 컴포넌트 variant naming을 재사용하기
 
-“보기 좋게” 같은 기준은 너무 약합니다.
+가능한 한 **기존 구현을 참조점으로 붙여주세요.**
 
-## 불확실한 작업엔 Best-of-N
+## 제약 조건은 결과 품질을 올린다
 
-OpenAI는 난도가 있는 작업에서 **Best-of-N** 패턴을 강조합니다.
+제약은 Codex를 묶는 족쇄가 아니라, 팀 기준으로 유도하는 가드레일입니다.
 
-다음 경우에 유용합니다.
+특히 자주 쓰는 제약:
 
-- 여러 구현안이 모두 그럴듯할 때
-- 이름과 구조 선택이 중요할 때
-- merge 전 tradeoff를 비교하고 싶을 때
+- 새 의존성 추가 금지
+- public API shape 유지
+- 특정 디렉터리 밖 수정 금지
+- generated file 수정 금지
+- diff를 작게 유지
 
-## Task Queue를 가벼운 백로그처럼 써라
+## 언제 skill, MCP, subagent로 승격할까
 
-OpenAI는 Codex task queue를 lightweight backlog처럼 쓰는 것도 권장합니다.
+같은 작업을 여러 번 반복하면 프롬프트만 계속 다듬지 말고 표면을 바꾸는 게 낫습니다.
 
-예를 들면:
+- **반복 작업**이면 → [Skills](./codex-skills)
+- **repo 밖 컨텍스트**가 필요하면 → [MCP](./codex-mcp)
+- **병렬 탐색/구현**이 유리하면 → subagent 요청 고려
 
-- 흐름을 끊지 않고 곁다리 수정 아이디어 저장
-- 나중에 검토할 cleanup 작업 적재
-- 큰 작업 뒤 follow-up 작업 예약
+공식 subagents 문서는 Codex가 **명시적으로 요청했을 때만** subagent를 띄우고, 현재 sandbox policy를 상속한다고 설명합니다. 즉, 복잡한 작업을 병렬화할 수 있지만 비용도 같이 늘어납니다.
 
-모든 Codex 작업이 바로 최종 PR이 될 필요는 없습니다.
+## 불확실하면 Best-of-N
 
-## 빠른 체크리스트
+OpenAI는 어려운 작업에서 Best-of-N을 강조합니다.
+특히 아래에서 유용합니다.
 
-비단순 작업을 보내기 전에 확인하세요.
+- 네이밍과 구조 선택이 중요한 작업
+- 구현 후보가 둘 이상 타당한 작업
+- 한 번에 merge하기 전 비교 검토가 필요한 작업
 
-- 목표가 하나인가?
-- 관련 파일/디렉터리를 적었는가?
-- 중요한 제약을 적었는가?
-- 성공 검증 방법을 적었는가?
-- 다른 엔지니어가 봐도 그럴듯한 이슈처럼 읽히는가?
+## 빠른 출발 체크리스트
 
-그렇다면 작업 설계가 대체로 잘 된 것입니다.
+프롬프트를 보내기 전에 아래 다섯 가지만 확인해도 품질이 달라집니다.
+
+- 목표가 한 문장으로 말해지는가?
+- 관련 파일/폴더를 적었는가?
+- 금지할 것을 적었는가?
+- 완료 기준을 측정 가능하게 적었는가?
+- 한 번의 review로 판단 가능한 크기인가?
+
+Codex 작업 설계의 본질은 특별한 프롬프트 공식이 아니라,
+**사람 엔지니어에게도 명확한 작업을 만드는 것**입니다.

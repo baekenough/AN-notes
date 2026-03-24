@@ -1,231 +1,190 @@
 ---
-title: "Sandboxing en Codex — Permisos, Approvals y Entornos Cloud"
-description: "Entiende los sandbox modes locales de Codex, las approval policies, los setup scripts cloud y los controles de internet para que la autonomía sea útil y segura"
+title: Sandboxing en Codex — Permisos, Approvals y Entornos Cloud
+description: Entiende sandbox modes locales, approval policies, writable roots y setup
+  scripts cloud para que Codex sea rápido sin volverse temerario.
 difficulty: intermediate
-tags: ["sandbox", "seguridad", "entorno", "approvals"]
+tags:
+- sandbox
+- seguridad
+- entorno
+- approvals
 connections:
-  - slug: "codex-instructions"
-    tool: "gpt-codex"
-    type: "prerequisite"
-  - slug: "codex-ci-cd-workflows"
-    tool: "gpt-codex"
-    type: "enhances"
-  - slug: "mcp-power-tools"
-    tool: "claude-code"
-    type: "compare"
+- slug: codex-instructions
+  tool: gpt-codex
+  type: prerequisite
+- slug: codex-ci-cd-workflows
+  tool: gpt-codex
+  type: enhances
+- slug: mcp-power-tools
+  tool: claude-code
+  type: compare
 featured: true
-order: 2
-date: "2026-03-21"
+order: 3
+date: '2026-03-24'
 ---
 
-> **Referencias Oficiales**: [Sandboxing](https://developers.openai.com/codex/concepts/sandboxing) · [Agent Approvals & Security](https://developers.openai.com/codex/agent-approvals-security) · [Cloud Environments](https://developers.openai.com/codex/cloud/environments) · [Agent Internet Access](https://developers.openai.com/codex/cloud/internet-access)
+> **Referencias Oficiales**: [Sandboxing](https://developers.openai.com/codex/concepts/sandboxing) · [Config Basics](https://developers.openai.com/codex/config-basic) · [Cloud Environments](https://developers.openai.com/codex/cloud/environments) · [Review](https://developers.openai.com/codex/app/review)
 
 <!-- curriculum:start -->
 ## Ruta del currículo
 
-1. [Instrucciones de Codex](/gpt-codex/codex-instructions) — capas de instrucciones y reglas del repo
-2. **Sandboxing en Codex** — permisos, approvals y cloud environments ← **Estás aquí**
-3. [Diseño de Tareas en Codex](/gpt-codex/codex-task-design) — scope, prompts y descomposición
-4. [Codex en CI/CD](/gpt-codex/codex-ci-cd-workflows) — automatización repetible y trabajo por lotes
+1. [Primeros Pasos con Codex](./codex-getting-started) — flujo base primero
+2. [Instrucciones de Codex](./codex-instructions) — `AGENTS.md` y config
+3. **Sandboxing en Codex** — permisos, approvals, writable roots y runtime cloud ← **Estás aquí**
+4. [Diseño de Tareas en Codex](./codex-task-design) — tamaño de tarea y criterios de cierre
+5. [Skills de Codex](./codex-skills) — encapsular trabajo repetido
+6. [MCP en Codex](./codex-mcp) — conectar sistemas externos
+7. [Reviews y Automatizaciones con Codex](./codex-ci-cd-workflows) — workflows unattended pero revisables
 
 ### Documentación oficial usada en esta guía
-- **Sandbox modes locales y approval presets** — [Sandboxing](https://developers.openai.com/codex/concepts/sandboxing), [Agent approvals & security](https://developers.openai.com/codex/agent-approvals-security)
-- **Setup scripts, variables de entorno y secrets** — [Cloud environments](https://developers.openai.com/codex/cloud/environments)
-- **Riesgos, allowlists y política de internet por entorno** — [Agent internet access](https://developers.openai.com/codex/cloud/internet-access)
+- **Diferencia entre `read-only`, `workspace-write` y `danger-full-access`** — [Sandboxing](https://developers.openai.com/codex/concepts/sandboxing)
+- **Combinaciones base de config** — [Config basics](https://developers.openai.com/codex/config-basic)
+- **Ciclo de vida cloud, setup e internet** — [Cloud environments](https://developers.openai.com/codex/cloud/environments)
 <!-- curriculum:end -->
 
-## Dos Modelos Distintos de Ejecución
+## El sandbox es seguridad y también UX
 
-“Sandbox” no significa exactamente lo mismo en todos los contextos de Codex.
+Si el límite es demasiado estricto, todo se convierte en approvals.
+Si es demasiado amplio, un error pequeño puede costar caro.
 
-### Codex local (CLI / IDE)
+La meta real es esta:
+**dejar que Codex haga trabajo normal sin frenarse todo el tiempo, mientras las acciones riesgosas siguen bajo control humano.**
 
-Codex corre en **tu máquina**, pero dentro de un límite de permisos que tú defines.
+## Mantén separados local y cloud en tu cabeza
+
+### Codex local
+Corre en tu máquina, con sandbox y approval policy definidos por ti.
 
 ### Codex cloud
+Corre en un contenedor administrado por OpenAI, donde setup scripts, variables de entorno y política de internet importan más.
 
-Codex corre en un **contenedor administrado por OpenAI**. Tu máquina host no queda expuesta, y el entorno se prepara con settings y setup scripts.
+Mezclar ambos modelos es una fuente clásica de confusión.
 
-Si mezclas estos dos modelos, la configuración se vuelve confusa muy rápido.
+## Los tres sandbox modes locales más comunes
 
-## Sandbox Modes Locales
+La documentación de Sandboxing los resume así:
 
-OpenAI documenta tres modos principales para trabajo local:
+| Modo | Significado | Cuándo usarlo |
+|------|-------------|---------------|
+| `read-only` | inspección; editar o ejecutar pide approval | auditoría, exploración, review segura |
+| `workspace-write` | edita dentro del workspace y corre comandos rutinarios | desarrollo diario normal |
+| `danger-full-access` | elimina restricciones del sandbox | automatización rara y de mucha confianza |
 
-| Modo | Qué puede hacer Codex | Cuándo usarlo |
-|------|-----------------------|---------------|
-| `read-only` | inspeccionar archivos; editar o ejecutar requiere approval | auditorías, review, exploración segura |
-| `workspace-write` | editar dentro del workspace y correr comandos rutinarios | desarrollo diario normal |
-| `danger-full-access` | sin restricciones de sandbox | automatización rara y muy confiada |
+OpenAI describe `workspace-write` como el modo local de baja fricción por defecto.
 
-Para la mayoría de los equipos, `workspace-write` es el mejor punto de partida. Reduce fricción sin regalarle toda tu máquina al agente.
+## La approval policy define cuándo se detiene Codex
 
-## Approval Policies
+Los docs de config muestran una combinación muy común:
 
-El sandbox mode responde **qué puede hacer técnicamente Codex**.
-La approval policy responde **cuándo debe frenarse y preguntarte**.
-
-Las políticas más comunes son:
-
-- `untrusted` — pregunta antes de comandos fuera del set confiable
-- `on-request` — trabaja dentro del sandbox y pide permiso cuando necesita salir
-- `never` — no se detiene para pedir aprobación
-
-El preset local más razonable que destaca OpenAI equivale a:
-
-```text
-sandbox_mode = "workspace-write"
+```toml
 approval_policy = "on-request"
+sandbox_mode = "workspace-write"
 ```
 
-Eso es mucho más seguro que combinar `danger-full-access` con `never`.
+Funciona bien porque:
 
-## El Objetivo Real: Menos Interrupciones, No Libertad Infinita
+- el trabajo normal dentro del repo sigue avanzando
+- los cruces de frontera todavía piden permiso
 
-El sandbox no existe solo por seguridad. También reduce la fatiga de approvals.
+Para la mayoría de los equipos, ese es el default práctico.
 
-Con el límite correcto, Codex puede:
-- inspeccionar el repo
-- editar los archivos que sí debe tocar
-- correr lint, typecheck y tests
-- detenerse solo cuando realmente necesita más autoridad
+## Writable roots importa más de lo que parece
 
-Ahí es cuando la autonomía empieza a sentirse útil de verdad.
+Mucha gente mira solo el sandbox mode y olvida writable roots.
+En la práctica, ahí vive bastante riesgo accidental.
 
-## Ciclo de Vida de una Tarea en Cloud
+Buenos defaults:
 
-En los entornos cloud, la documentación actual de OpenAI describe este flujo:
+- el propio repositorio
+- quizá un directorio temporal
 
-1. Codex crea un contenedor y hace checkout del repo
-2. Ejecuta un **setup script**
-3. Aplica la configuración de acceso a internet
-4. El agente edita, valida y ejecuta checks
-5. Tú recibes el diff y el reporte final
+Defaults riesgosos:
 
-Hay dos detalles clave:
+- todo tu home
+- múltiples proyectos sin relación
 
-- **Los setup scripts sí corren con internet**
-- **El agent internet access está apagado por defecto** salvo que lo habilites por entorno
+La pregunta no es solo “¿puede escribir Codex?”, sino **¿exactamente dónde puede escribir?**
 
-Así que si el trabajo depende de descargas, instalación de herramientas o levantar servicios, haz eso en setup.
+## En cloud, setup es el contrato
 
-## Qué Meter en el Setup Script
+Cloud Environments describe un flujo parecido a este:
 
-Un buen setup script adelanta todo lo que el agente no debería descubrir a mitad de la tarea.
+1. crear el contenedor y hacer checkout del repo
+2. ejecutar el setup script
+3. aplicar la política de internet
+4. dejar que el agente edite y verifique
 
-```bash
-#!/usr/bin/env bash
-set -euo pipefail
+Dos detalles importan mucho:
 
-npm ci
-npm run build:types
-python -m pip install -r requirements-dev.txt
-./scripts/bootstrap-test-db.sh
-```
+- **los setup scripts corren con internet**
+- **el internet en la agent phase está apagado por defecto**
 
-Tareas de setup con mucho valor:
+Por eso instalación de dependencias, codegen y bootstrap de tests conviene moverlos a setup.
+
+## Qué sí y qué no meter en setup
+
+Buenos candidatos:
+
 - instalar dependencias
-- fijar versiones de runtime
-- compilar módulos nativos una sola vez
-- sembrar datos de prueba
-- instalar linters, formatters y codegen
+- fijar versiones de runtime o tooling
+- preparar datos de test
+- codegen
+- preparación de builds nativos
 
-Un mal setup script intenta hacer toda la feature antes de que el agente empiece.
+Malos candidatos:
 
-## Usa AGENTS.md para Hacer Más Inteligente al Sandbox
+- implementar toda la feature
+- pasos que requieren juicio humano repetido
 
-En cloud, Codex usa `AGENTS.md` para encontrar comandos y reglas del proyecto.
+Setup debe volver reproducible el entorno, no resolver la tarea en silencio.
 
-Eso significa que un buen `AGENTS.md` le dice al agente:
+## Review y sandbox deberían pensarse juntos
 
-- qué comando de test importa de verdad
-- qué target de lint es el autoritativo
-- qué carpetas generadas no debe tocar
-- dónde está la fuente de verdad
+La documentación de Review explica que el panel se enfoca por defecto en **uncommitted changes**, y puede cambiar a diff contra base branch o last-turn changes.
+Eso importa porque permisos más amplios implican una necesidad mayor de review.
 
-Sandbox + instrucciones es la pareja correcta. El entorno pone **límites de capacidad**; `AGENTS.md` pone **límites de criterio**.
+En la práctica:
 
-## Internet Access: Úsalo Como un Bisturí
+- sandbox más estricto = más interrupciones, menor blast radius
+- sandbox más amplio = menos interrupciones, mayor carga de revisión
 
-OpenAI advierte explícitamente que habilitar internet para el agente aumenta el riesgo:
+Las dos cosas siempre van juntas.
 
-- prompt injection desde páginas no confiables
-- exfiltración de código o secretos
-- descarga de dependencias riesgosas
-- contaminación de licencias
-
-Si lo habilitas, usa la configuración más estrecha posible:
-
-- define una **domain allowlist**
-- limita métodos a **`GET`, `HEAD`, `OPTIONS`** cuando puedas
-- configúralo **por entorno**, no de forma global
-
-Si el agente solo necesita GitHub y un registry de paquetes, no le abras toda la web.
-
-## Secrets y Variables de Entorno
-
-En cloud, los secretos no son un detalle menor.
-
-Una regla útil:
-- deja secretos de build solo donde setup los necesite
-- evita exponer secretos largos a la agent phase
-- prefiere mocks o credenciales de test para validación
-
-OpenAI señala que los secrets del entorno cloud están disponibles durante setup y se retiran antes de la agent phase offline por defecto.
-
-## Fallos Típicos
-
-### “Codex me pide permiso todo el tiempo”
-
-Normalmente el sandbox o la approval policy son demasiado estrictos.
-
-**Arreglo:** pasar de `read-only` a `workspace-write`, o mantener `workspace-write` con `on-request`.
-
-### “El agente cloud no puede instalar una herramienta faltante”
-
-Normalmente esa dependencia no se instaló en setup.
-
-**Arreglo:** agrega la instalación al setup script, no esperes que el agente la descargue más tarde.
-
-### “Funciona local pero falla en cloud”
-
-Suele significar que tu máquina tenía estado oculto: caches, servicios locales o env vars no declaradas.
-
-**Arreglo:** vuelve explícito y reproducible el setup.
-
-### “El agente siguió instrucciones peligrosas de una página web”
-
-Normalmente el acceso a internet era demasiado amplio.
-
-**Arreglo:** restringe dominios, restringe métodos y apunta solo a recursos confiables.
-
-## Configuración Inicial Sensata
+## Una configuración inicial sensata
 
 ### Local
 
-- sandbox mode: `workspace-write`
-- approval policy: `on-request`
-- writable roots: solo el repo y quizá un directorio temporal
+```toml
+model = "gpt-5.4"
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+```
+
+Y luego mantén narrow los writable roots.
 
 ### Cloud
 
 - setup script determinista
-- internet apagado salvo necesidad real
-- allowlist mínima cuando internet esté activo
-- comandos explícitos de lint, typecheck y test en `AGENTS.md`
+- internet solo cuando haga falta
+- exposición mínima de secretos
+- comandos reales de verificación documentados en `AGENTS.md`
 
-Eso te da autonomía sin fingir que el riesgo no existe.
+## Fallos típicos
 
-## Codex vs Claude Code MCP
+### “Me pide approval todo el tiempo”
+A menudo `read-only` es demasiado estricto, o el límite de escritura está mal definido.
 
-Claude Code suele resolver faltas de capacidad conectando herramientas live con MCP.
-Codex suele resolverlas endureciendo el contrato del runtime:
+### “Funciona local pero falla en cloud”
+Suele haber estado local oculto que nunca se modeló en setup.
 
-| Problema | Patrón en Claude Code | Patrón en Codex |
-|---------|------------------------|-----------------|
-| docs externas | MCP server | allowlist o docs precargadas |
-| acceso a base de datos | conexión viva | setup, mocks o acceso controlado |
-| seguridad local | permisos por herramienta | sandbox mode + approval policy |
-| reproducibilidad | depende más de tu máquina | más fuerte en contenedores cloud |
+### “Ahora va más rápido, pero me da miedo”
+Suele pasar cuando se amplían permisos sin mejorar review ni rollback.
 
-Ninguno es universalmente mejor. Codex gana cuando quieres **ejecución repetible y acotada**. Claude gana cuando quieres **exploración viva con muchas herramientas**.
+## Regla práctica
+
+Empieza con límites más estrechos.
+Ábrelos solo cuando la fatiga de approvals sea el verdadero cuello de botella.
+Y cada vez que amplíes permisos, refuerza review y disciplina de rollback.
+
+El mejor sandbox de Codex no es el más poderoso.
+Es el que tu equipo puede confiar una y otra vez.

@@ -30,7 +30,7 @@ export const tools: ToolConfig[] = [
     gradient: 'from-emerald-500/20 to-green-500/20',
     icon: 'G',
     status: 'active',
-    url: 'https://platform.openai.com/docs/guides/codex',
+    url: 'https://developers.openai.com/codex/quickstart',
   },
   {
     id: 'gemini-cli',
