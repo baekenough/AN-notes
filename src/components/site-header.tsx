@@ -20,9 +20,9 @@ export async function SiteHeader({ locale }: { locale: string }) {
             className="flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-ring rounded"
           >
             <span className="text-xl font-bold tracking-tight">
-              AN
+              AI Native{" "}
               <span className="bg-gradient-to-r from-orange-400 to-amber-400 bg-clip-text text-transparent">
-                -Con
+                Notes
               </span>
             </span>
           </Link>

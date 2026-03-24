@@ -11,7 +11,7 @@ export function generateStaticParams() {
 }
 
 export const metadata: Metadata = {
-  title: "AN-Con — AI-Native Con",
+  title: "AI Native Notes",
   description: "Master your AI coding tools the right way",
 };
 
