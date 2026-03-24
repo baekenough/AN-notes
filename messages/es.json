@@ -101,19 +101,19 @@
       "title": "Gemini CLI",
       "features": [
         {
-          "tag": "IMPRESIONANTE",
-          "title": "1 Millón de tokens de contexto — Ve todo",
-          "description": "Lee toda tu base de código en una sola conversación. Sin selección de archivos, sin límites de contexto. Gemini procesa 500+ archivos simultáneamente para refactorizaciones entre módulos."
+          "tag": "SEGURO",
+          "title": "Plan Mode — Sandbox de Diseño de Solo Lectura",
+          "description": "Antes de editar código, usa /plan para entrar en un modo de solo lectura estricto para explorar y diseñar la arquitectura. Solo los planes aprobados se ejecutan."
         },
         {
-          "tag": "CAMBIO TOTAL",
-          "title": "Open Source + Tier gratuito",
-          "description": "Licencia Apache 2.0, 60 solicitudes/minuto gratis. Haz fork, extiéndelo, alójalo tú mismo. La primera herramienta mayor de IA para código que es verdaderamente abierta."
+          "tag": "EFICIENTE",
+          "title": "Sub-agentes — Delega en Expertos",
+          "description": "Delega las refactorizaciones masivas al Generalist y la búsqueda de bugs al Codebase Investigator. Ahorra tu contexto principal y maximiza la velocidad."
         },
         {
           "tag": "PODEROSO",
-          "title": "Entrada multimodal — Capturas de pantalla a código",
-          "description": "Añade una captura de pantalla, un export de Figma o un wireframe dibujado a mano. Gemini ve las imágenes de forma nativa y genera el código correspondiente — sin plugins."
+          "title": "Agent Skills — Sobrescribe el Comportamiento del Agente",
+          "description": "Invoca flujos expertos como security-review, o usa skill-creator para enseñarle al agente los estándares de revisión únicos de tu equipo."
         }
       ]
     }

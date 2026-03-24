@@ -1,8 +1,8 @@
 ---
 title: "Headless Automation con Gemini CLI"
-description: "Cómo ejecutar Gemini CLI en scripts, CI y pipelines con salida estructurada, códigos de salida estables y la autenticación correcta"
+description: "Cómo ejecutar Gemini CLI en scripts, GitHub Actions y pipelines CI con salida estructurada JSON."
 difficulty: intermediate
-tags: ["automatizacion", "headless", "json", "ci-cd"]
+tags: ["automatizacion", "headless", "json", "ci-cd", "github-actions"]
 connections:
   - slug: "codex-sandbox"
     tool: "gpt-codex"
@@ -15,145 +15,92 @@ connections:
     type: "enhances"
 featured: true
 order: 5
-date: "2026-03-21"
+date: "2026-03-24"
 ---
 
-> **Referencias oficiales**: [Headless mode](https://geminicli.com/docs/cli/headless/) · [Authentication](https://geminicli.com/docs/get-started/authentication/) · [Configuration reference](https://geminicli.com/docs/reference/configuration) · [Token caching](https://geminicli.com/docs/cli/token-caching/)
+> **Referencias oficiales**: [Headless mode](https://geminicli.com/docs/cli/headless/) · [Authentication](https://geminicli.com/docs/get-started/authentication/)
 
 ## Por qué importa el modo headless
 
-El chat interactivo es solo la mitad de Gemini CLI. La otra mitad es la **automatización**: usar la CLI en scripts de shell, jobs de CI, pipelines de contenido o herramientas internas.
-
-La documentación oficial define el modo headless como una ejecución no interactiva que devuelve texto estructurado o JSON en lugar de la interfaz TUI.
+El chat interactivo es solo la mitad de Gemini CLI. La automatización lo lleva a pipelines CI/CD, scripts de bash y tooling.
+La documentación define el modo headless como una ejecución que devuelve JSON o texto estructurado sin terminal interactiva.
 
 ## Cómo se activa
 
-El modo headless se activa cuando:
-
-- Gemini CLI corre en un entorno **non-TTY**, o
-- se pasa un prompt directo con `-p` / `--prompt`
+Se activa cuando:
+- Corre en un entorno **non-TTY** (como GitHub Actions).
+- Se pasa un prompt directo con `-p` / `--prompt`.
 
 Ejemplo:
-
 ```bash
-gemini -p "Resume la arquitectura de este repositorio"
+gemini -p "Resume la arquitectura de este repositorio" --output-format json
 ```
+Con `--output-format json`, obtienes un objeto parseable con `response`, `stats` y `error`.
 
-## Formatos de salida estructurada
+## La autenticación correcta ahorra costos
 
-### Texto plano
-
-```bash
-gemini -p "Resume este repo"
-```
-
-### JSON
-
-```bash
-gemini -p "Resume este repo" --output-format json
-```
-
-La documentación describe un objeto con:
-
-- `response`
-- `stats`
-- `error` opcional
-
-### JSONL en streaming
-
-```bash
-gemini -p "Revisa estos archivos" --output-format jsonl
-```
-
-Eventos útiles:
-
-- `init`
-- `message`
-- `tool_use`
-- `tool_result`
-- `error`
-- `result`
-
-Eso hace que Gemini CLI sea mucho más integrable en tooling propio que un transcript de chat sin estructura.
-
-## Códigos de salida útiles para CI
-
-La referencia oficial del modo headless publica estos códigos:
-
-| Código | Significado |
-|--------|-------------|
-| `0` | éxito |
-| `1` | error general o fallo de API |
-| `42` | entrada o argumentos inválidos |
-| `53` | se superó el límite de turnos |
-
-Para automatización, esto es mucho mejor que intentar parsear prosa.
-
-## La autenticación correcta mejora la automatización
-
-La guía de autenticación indica que en modo headless lo normal es usar:
-
-- **Gemini API key**, o
+En automatización, la documentación aconseja evitar el login de navegador y usar:
+- **Gemini API key** (`GEMINI_API_KEY`)
 - **Vertex AI**
 
-Eso encaja mucho mejor con automatización que un login por navegador.
-
-Ejemplo:
-
-```bash
-export GEMINI_API_KEY="YOUR_GEMINI_API_KEY"
-gemini -p "@content enumera temas faltantes de Gemini CLI" --output-format json
-```
+Usar estos métodos habilita automáticamente el **Token Caching**, haciendo que los pipelines repetitivos sean extremadamente baratos.
 
 ## Patrones prácticos de automatización
 
-### 1) QA de contenido en un script
-
+### 1) QA de contenido en script
 ```bash
-gemini -p "@content compara los artículos de gemini-cli entre ko, en y es y reporta slugs faltantes o claims inconsistentes" --output-format json
+gemini -p "@content compara los artículos entre ko, en y es y reporta slugs faltantes" --output-format json
 ```
 
-### 2) Pasar la respuesta a otra herramienta
-
+### 2) Integración con jq
 ```bash
-gemini -p "Resume tareas pendientes desde @src" --output-format json   | jq -r '.response'
+gemini -p "Enumera vulnerabilidades desde @src" --output-format json | jq -r '.response'
 ```
 
-### 3) Obtener una traza apta para máquinas
-
+### 3) JSONL en streaming
 ```bash
 gemini -p "Revisa @content/en/gemini-cli" --output-format jsonl
 ```
+Ideal para mostrar progreso de herramientas (`tool_use`) en interfaces propias.
 
-Es útil para reportar progreso, guardar trazas de herramientas o disparar pasos posteriores.
+### 4) Ejemplo Real: GitHub Actions (Review automático)
 
-## Nota de costo y rendimiento
+Un pipeline clásico donde Gemini analiza los Pull Requests en busca de fallos o faltas al `GEMINI.md`.
 
-Si usas API key o Vertex AI, Gemini CLI puede aprovechar **token caching**. Eso es especialmente valioso en automatizaciones repetitivas porque el contexto reutilizado sale más barato.
+```yaml
+name: Gemini CLI Code Review
+on: [pull_request]
 
-Antes de formalizar un workflow, conviene mirar `/stats` en sesiones interactivas.
+jobs:
+  gemini-review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Necesario para entender los diffs
 
-## Cuándo Gemini CLI encaja mejor que otras herramientas
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
 
-| Escenario | Mejor ajuste | Motivo |
-|-----------|--------------|--------|
-| Análisis scriptable de repo con salida JSON | Gemini CLI | modo headless + tools |
-| Ejecución aislada con más contención | GPT Codex | enfoque sandbox |
-| Edición conversacional de alta interacción | Claude Code | mejor loop humano-modelo |
+      - name: Install Gemini CLI
+        run: npm install -g @google/gemini-cli
+
+      - name: Run Headless Review
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          gemini -p "Revisa los archivos modificados y comprueba que cumplan las reglas de GEMINI.md. Devuelve un reporte JSON." --output-format json > review.json
+          cat review.json
+```
 
 ## Un buen uso dentro de este proyecto
 
-AN-Con ya organiza conocimiento en MDX multilenguaje. Eso hace que Gemini CLI sea una muy buena opción para:
-
-- revisar paridad entre idiomas
-- detectar huecos de contenido
-- auditar frontmatter
-- generar sugerencias de reescritura en JSON estructurado
-
-La idea práctica es: descubre el flujo en modo interactivo y luego congela la parte útil en un script headless.
+Descubre un flujo útil en modo interactivo (ej: validar frontmatter de MDX), y luego empaquétalo usando el código superior en tus GitHub Actions.
 
 ## Qué leer después
 
 - [Primeros pasos con Gemini CLI](/gemini-cli/getting-started)
 - [Trusted Folders, Sandboxing y Restore](/gemini-cli/trusted-folders-sandboxing)
-- [La ventaja de 1M tokens](/gemini-cli/million-token-context)

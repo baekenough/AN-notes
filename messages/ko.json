@@ -101,19 +101,19 @@
       "title": "Gemini CLI",
       "features": [
         {
-          "tag": "충격적",
-          "title": "100만 토큰 컨텍스트 — 모든 것을 본다",
-          "description": "전체 코드베이스를 한 대화에서 읽습니다. 파일 선택도, 컨텍스트 제한도 없습니다. 500개 이상의 파일을 동시에 처리합니다."
+          "tag": "안전함",
+          "title": "Plan Mode — 읽기 전용 설계 샌드박스",
+          "description": "코드를 수정하기 전, /plan 명령어를 통해 완벽한 읽기 전용 모드에서 탐색하고 아키텍처를 설계하세요. 오직 당신이 승인한 계획만 실행됩니다."
         },
         {
-          "tag": "혁신",
-          "title": "오픈소스 + 무료 티어",
-          "description": "Apache 2.0 라이선스, 분당 60회 요청 무료. 포크하고, 확장하고, 셀프호스트하세요. 진정으로 오픈된 최초의 주요 AI 코딩 도구."
+          "tag": "생산성",
+          "title": "Sub-agents — 전문가에게 위임하기",
+          "description": "반복적인 노동은 Generalist에게, 복잡한 버그 추적은 Codebase Investigator에게 위임하세요. 메인 에이전트의 컨텍스트를 아끼면서 속도를 극대화합니다."
         },
         {
-          "tag": "강력",
-          "title": "멀티모달 입력 — 스크린샷에서 코드로",
-          "description": "스크린샷, Figma 내보내기, 손 그림 와이어프레임을 넣으세요. Gemini가 이미지를 네이티브로 보고 매칭되는 코드를 생성합니다."
+          "tag": "강력함",
+          "title": "Agent Skills — 커스텀 워크플로 포맷팅",
+          "description": "security-review, code-review 같은 내장 스킬을 호출하거나 skill-creator로 우리 팀만의 완벽한 사내 워크플로를 CLI에 직접 이식하세요."
         }
       ]
     }

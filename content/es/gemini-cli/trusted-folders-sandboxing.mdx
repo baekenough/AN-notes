@@ -1,8 +1,8 @@
 ---
 title: "Trusted Folders, Sandboxing y Restore"
-description: "Cómo usar Gemini CLI con más seguridad mediante trusted folders, ejecución en sandbox y rollback por checkpoints"
+description: "Cómo usar Gemini CLI con más seguridad mediante trusted folders, sandboxing, Plan Mode y rollback por checkpoints"
 difficulty: intermediate
-tags: ["seguridad", "sandbox", "trusted-folders", "checkpointing"]
+tags: ["seguridad", "sandbox", "trusted-folders", "checkpointing", "plan-mode"]
 connections:
   - slug: "codex-sandbox"
     tool: "gpt-codex"
@@ -15,26 +15,30 @@ connections:
     type: "enhances"
 featured: false
 order: 4
-date: "2026-03-21"
+date: "2026-03-24"
 ---
 
-> **Referencias oficiales**: [Trusted folders](https://geminicli.com/docs/cli/trusted-folders/) · [Sandboxing](https://geminicli.com/docs/cli/sandbox/) · [Checkpointing](https://geminicli.com/docs/cli/checkpointing/) · [Configuration reference](https://geminicli.com/docs/reference/configuration)
+> **Referencias oficiales**: [Trusted folders](https://geminicli.com/docs/cli/trusted-folders/) · [Sandboxing](https://geminicli.com/docs/cli/sandbox/) · [Checkpointing](https://geminicli.com/docs/cli/checkpointing/)
 
-## Gemini CLI ya tiene un modelo de seguridad bastante claro
+## Gemini CLI tiene un modelo de seguridad bastante claro
 
-Todavía mucha gente piensa en Gemini CLI como "un chat en la terminal". La documentación actual muestra algo más serio:
+Si temes que la IA arruine tu código, comprende sus múltiples líneas de defensa:
 
-- **trusted folders** para decidir qué workspaces desbloquean capacidades completas
-- **sandboxing** para aislar acciones de riesgo
-- **checkpointing** para volver atrás después de cambios en archivos
+1. **Trusted Folders**: Controla qué workspaces desbloquean capacidades completas.
+2. **Plan Mode**: Entorno de solo lectura para diseñar antes de tocar el código.
+3. **Sandboxing**: Aísla comandos destructivos de tu host.
+4. **Checkpointing**: Crea puntos de retorno automáticos antes de escribir.
 
-Juntas, estas funciones hacen que Gemini CLI sea mucho más utilizable en repositorios reales.
+## Plan Mode: Diseño seguro antes de la ejecución (Read-Only)
+
+En refactorizaciones enormes o repositorios ajenos, **Plan Mode** (`/plan` o `enter_plan_mode`) es tu mejor escudo.
+
+- Obliga al agente a usar **únicamente herramientas de solo lectura**. No puede modificar archivos ni ejecutar shells destructivos.
+- Su único propósito aquí es mapear el código y crear un documento de diseño arquitectónico. Solo cuando tú apruebas ese plan, cambias al modo normal para aplicar la ejecución.
 
 ## Trusted folders: protegerte de workspaces riesgosos
 
-Los trusted folders vienen **desactivados por defecto**. Cuando los activas, Gemini CLI pregunta si debe confiar en una carpeta antes de cargar configuración específica del proyecto.
-
-Actívalo en tu configuración de usuario:
+Los trusted folders vienen **desactivados por defecto**. Actívalo en tu configuración:
 
 ```json
 {
@@ -46,57 +50,21 @@ Actívalo en tu configuración de usuario:
 }
 ```
 
-### Opciones del diálogo de confianza
-
-- **Trust folder** — confiar solo en el proyecto actual
-- **Trust parent folder** — confiar en todo el árbol del directorio padre
-- **Don't trust** — ejecutar en modo seguro restringido
-
-Las decisiones se guardan en:
-
-```text
-~/.gemini/trustedFolders.json
-```
-
-## Qué cambia en un workspace no confiable
-
-La documentación oficial indica que el modo no confiable desactiva o restringe, entre otras cosas:
-
-- `.gemini/settings.json` del workspace
-- carga de `.env` del proyecto
-- instalar / actualizar / desinstalar extensiones
-- auto-acceptance de herramientas
-- carga automática de memoria desde settings locales
-- conexión a servidores MCP
-- comandos personalizados
-
-Si trabajas con repos de clientes, demos o código de terceros, esta función importa mucho.
+En un repositorio *no confiable* (como un repo open-source cualquiera o código de cliente), Gemini CLI bloqueará la carga de `.env`, los MCP y la auto-aceptación de herramientas.
 
 ## Sandboxing: aislar acciones con efectos laterales
 
-Gemini CLI puede ejecutar modificaciones de archivos y comandos shell dentro de un sandbox en lugar de hacerlo en tu entorno host.
+Gemini CLI puede ejecutar modificaciones y shell dentro de un contenedor en lugar de tu host.
 
 ```bash
 gemini --sandbox
 ```
 
-También puede controlarse con `GEMINI_SANDBOX` y otras opciones de configuración.
+Si el proyecto requiere binarios específicos, pon un Dockerfile en `.gemini/sandbox.Dockerfile`. Es la mejor forma de mantener tu SO limpio.
 
-### Imagen de sandbox específica por proyecto
+## Checkpointing: crear un punto de retorno automático
 
-La documentación soporta un Dockerfile personalizado en:
-
-```text
-.gemini/sandbox.Dockerfile
-```
-
-Eso ayuda cuando un proyecto necesita binarios o dependencias concretas y no quieres contaminar la máquina local.
-
-## Checkpointing: crear un punto de retorno antes de escribir archivos
-
-Checkpointing es una función separada y viene **apagada por defecto**.
-
-Actívala en `settings.json`:
+Para evitar sorpresas, activa el checkpointing en `settings.json`:
 
 ```json
 {
@@ -108,55 +76,18 @@ Actívala en `settings.json`:
 }
 ```
 
-Cuando está activa, Gemini CLI crea un checkpoint antes de ejecutar herramientas que escriben archivos.
-
-Ese checkpoint incluye:
-
-1. un shadow Git snapshot
-2. el historial de conversación
-3. la tool call que iba a ejecutarse
-
-### Restaurar con `/restore`
-
+El agente creará un "shadow commit" en Git y guardará la conversación antes de reescribir archivos.
+Si algo sale mal, simplemente:
 ```text
 /restore
-/restore <checkpoint_file>
 ```
-
-Para sesiones con muchos cambios, esta es una de las funciones más valiosas del producto.
 
 ## Cómo lo usaría en la práctica
 
-### Repo propio y confiable
-
-- confiar la carpeta
-- trabajar normalmente en modo interactivo
-- activar checkpointing si habrá muchas ediciones
-
-### Repo desconocido de cliente
-
-- activar trusted folders globalmente
-- no confiar de inmediato
-- preferir sandboxing para acciones con riesgo
-
-### Automatización o ráfagas de cambios generados
-
-- ejecutar en sandbox
-- mantener checkpointing activado
-- revisar diffs antes de aceptar ediciones amplias
-
-## Comparación con Codex y Claude Code
-
-| Herramienta | Postura de seguridad |
-|-------------|----------------------|
-| Claude Code | entorno local + confirmaciones + límites MCP |
-| GPT Codex | modelo de ejecución centrado en sandbox |
-| Gemini CLI | local por defecto, pero con trusted folders, sandbox y restore |
-
-Si te gusta la ergonomía local de Gemini CLI pero quieres más guardrails, estas tres funciones son justo lo que cierra esa brecha.
+- **Repo desconocido**: Activa Trusted folders globalmente -> No confíes -> Usa **Plan Mode** para entender -> Usa **Sandboxing** para aislar pruebas.
+- **Repo propio**: Confía en la carpeta -> Modo interactivo normal -> Activa **Checkpointing** si la edición será masiva.
 
 ## Qué leer después
 
 - [Headless Automation](/gemini-cli/headless-automation)
-- [Gemini Extensions & MCP](/gemini-cli/gemini-extensions)
-- [Codex Sandbox](/gpt-codex/codex-sandbox)
+- [Sub-agentes y Skills](/gemini-cli/sub-agents-and-skills)

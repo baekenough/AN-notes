@@ -1,6 +1,6 @@
 ---
 title: "Gemini Extensions & MCP — crear flujos personalizados"
-description: "Qué son las extensiones de Gemini CLI, cuándo usar MCP directamente y cómo empaquetar herramientas, prompts y skills reutilizables"
+description: "Extensiones de Gemini CLI, integraciones MCP, y cómo activar poderosas Agent Skills para dominar tareas expertas"
 difficulty: advanced
 tags: ["extensions", "mcp", "hooks", "skills", "customizacion"]
 connections:
@@ -18,156 +18,70 @@ connections:
     type: "enhances"
 featured: false
 order: 3
-date: "2026-03-21"
+date: "2026-03-24"
 ---
 
-> **Referencias oficiales**: [Resumen de extensiones](https://geminicli.com/docs/extensions/) · [Extension reference](https://geminicli.com/docs/extensions/reference/) · [Tools](https://geminicli.com/docs/tools/) · [Trusted folders](https://geminicli.com/docs/cli/trusted-folders/)
+> **Referencias oficiales**: [Resumen de extensiones](https://geminicli.com/docs/extensions/) · [Extension reference](https://geminicli.com/docs/extensions/reference/) · [Tools](https://geminicli.com/docs/tools/)
 
 ## Las extensiones son más que "plugins"
 
-La documentación actual describe las extensiones de Gemini CLI como paquetes que pueden incluir:
-
+La documentación actual describe las extensiones como paquetes que pueden incluir:
 - prompts
 - servidores MCP
 - comandos personalizados
-- themes
 - hooks
-- sub-agents
-- agent skills
-
-Eso hace que el modelo mental de "instalo un plugin y aparece un comando" se quede corto.
+- sub-agentes
+- **agent skills** (habilidades de agente)
 
 ## Piensa en capas
 
 ### Capa 1: `GEMINI.md`
-
 Para instrucciones estables y reglas del equipo.
 
-Útil para:
-- estilo de código
-- restricciones del repo
-- políticas de contenido o revisión
-
 ### Capa 2: MCP
+Para dar acceso a bases de datos, APIs o herramientas externas (Jira, Confluence, etc.).
 
-Para dar acceso a sistemas externos o herramientas especializadas.
+### Capa 3: Extensions y Skills
+Para **empaquetar y compartir** workflows complejos. Aquí es donde brillan las **Agent Skills**.
 
-Útil para:
-- bases de datos
-- documentación interna
-- sistemas de tickets
-- design systems
-- APIs externas
+## El Poder de las Agent Skills
 
-### Capa 3: Extensions
+Una de las características más singulares de Gemini CLI es poder activar "modos expertos" mediante la herramienta `activate_skill`.
 
-Para **empaquetar y compartir** workflows entre personas o máquinas.
-
-Útil para:
-- comandos internos reutilizables
-- hooks comunes del equipo
-- paquetes de prompts
-- bundles de MCP
-- skills compartibles
+- **Skills incorporadas**: Permiten sobreescribir la mente del agente para enfocarse en un objetivo. Por ejemplo, `security-review` (mentalidad hacker), `code-review` (ingeniero senior) o `web-clone` (clonación visual de UI).
+- **Crear tus propias skills**: Con `skill-creator`, puedes interactuar con el agente para crear flujos únicos de tu empresa (ej: "checklist de QA interno") y guardarlo permanentemente como una habilidad compartible en tu equipo.
 
 ## Qué puedes gestionar hoy
 
 Dentro del CLI interactivo:
-
 ```text
 /extensions list
 ```
 
 Desde la terminal:
-
 ```bash
 gemini extensions list
-```
-
-Instalar desde GitHub:
-
-```bash
+# Instalar desde GitHub
 gemini extensions install https://github.com/gemini-cli-extensions/workspace
 ```
 
-La referencia oficial también soporta instalación desde **ruta local**, lo que viene muy bien para desarrollar una extensión interna antes de publicarla.
-
-## Cuándo usar MCP directo y cuándo empaquetarlo
-
-| Necesidad | Mejor elección | Motivo |
-|-----------|----------------|--------|
-| Un proyecto necesita un solo servidor | MCP directo | Menor fricción |
-| Un equipo necesita la misma configuración | Extension | Más reutilizable |
-| Estás experimentando en local | Ruta local de extension | Iteración rápida |
-| Solo necesitas instrucciones persistentes | `GEMINI.md` | No hace falta empaquetar |
-
 ## Un patrón sensato para equipos
 
-Muchas veces el camino correcto es:
-
-1. poner reglas del repo en `GEMINI.md`
-2. conectar uno o dos MCP esenciales
-3. cuando el flujo se repite, empaquetarlo como extension
-
-Así experimentas barato al principio y estandarizas después.
-
-## Casos de uso realistas
-
-### Asistente de documentación interna
-
-Bundle posible:
-- un MCP de búsqueda documental
-- prompts para release notes
-- una skill de estilo de ingeniería
-
-### Extension de content ops
-
-Bundle posible:
-- comandos para revisar paridad entre idiomas
-- hooks para validar frontmatter
-- plantillas de reescritura por idioma
-
-### Extension de platform engineering
-
-Bundle posible:
-- herramientas MCP para GCP o despliegues
-- prompts de respuesta a incidentes
-- hooks de seguridad para shell
-
-## Comparación rápida con Claude y Codex
-
-| Herramienta | Ángulo fuerte de extensibilidad |
-|-------------|---------------------------------|
-| Claude Code | expansión local centrada en MCP |
-| GPT Codex | control del entorno y scripts de setup |
-| Gemini CLI | extensiones empaquetadas + MCP + skills + hooks |
-
-Esa comparación incluye algo de inferencia, pero es útil para decidir cuánto quieres invertir en portabilidad del workflow.
-
-## Seguridad: más poder, más disciplina
-
-Cuanto más extiendes Gemini CLI, más importante se vuelve revisar:
-
-- trusted folders
-- confirmaciones de herramientas
-- sandboxing
-- checkpointing
-
-Sobre todo si una extension instala hooks, conecta MCP o automatiza cambios de archivos.
+1. Poner reglas del repo en `GEMINI.md`.
+2. Conectar uno o dos MCP esenciales.
+3. Formalizar procesos repetitivos creando habilidades con `skill-creator`.
+4. Empaquetarlo como extension cuando el flujo sea estándar.
 
 ## Recomendación para este proyecto
 
 Si AN-Con crece, una buena extension de Gemini CLI probablemente agruparía:
-
-- comandos de revisión de paridad de contenido
+- comandos de revisión de paridad
 - helpers para validar frontmatter MDX
-- prompts de revisión de localización
-- quizá más adelante una integración MCP con docs o CMS
-
-No hace falta empezar por una extension. Primero valida el patrón con **`GEMINI.md` + prompts** y empaquétalo después.
+- una Skill propia (`locale-reviewer`) para tono y localización
+- un MCP de búsqueda documental
 
 ## Qué leer después
 
+- Dominar delegación: [Sub-agentes y Skills](/gemini-cli/sub-agents-and-skills)
 - [Trusted Folders, Sandboxing y Restore](/gemini-cli/trusted-folders-sandboxing)
-- [Headless Automation](/gemini-cli/headless-automation)
 - [MCP Power Tools](/claude-code/mcp-power-tools)

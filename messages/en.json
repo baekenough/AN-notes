@@ -101,19 +101,19 @@
       "title": "Gemini CLI",
       "features": [
         {
-          "tag": "MIND-BLOWING",
-          "title": "1 Million Token Context — See Everything",
-          "description": "Read your entire codebase in one conversation. No file selection, no context limits. Gemini processes 500+ files simultaneously for cross-module refactoring."
+          "tag": "SAFE",
+          "title": "Plan Mode — Read-Only Design Sandbox",
+          "description": "Before editing any code, use /plan to enter a strict read-only mode to explore and draft your architecture. Only approved plans get executed."
         },
         {
-          "tag": "GAME CHANGER",
-          "title": "Open Source + Free Tier",
-          "description": "Apache 2.0 license, 60 requests/minute free. Fork it, extend it, self-host it. The first major AI coding tool that's truly open."
+          "tag": "EFFICIENT",
+          "title": "Sub-agents — Delegate to Experts",
+          "description": "Offload batch refactoring to the Generalist and bug hunting to the Codebase Investigator. Save your main context window and maximize throughput."
         },
         {
           "tag": "POWERFUL",
-          "title": "Multimodal Input — Screenshots to Code",
-          "description": "Drop a screenshot, a Figma export, or a hand-drawn wireframe. Gemini sees images natively and generates matching code — no plugins needed."
+          "title": "Agent Skills — Override Agent Behavior",
+          "description": "Summon specialized workflows like security-review, or use skill-creator to teach the agent your team's unique deployment checklist."
         }
       ]
     }

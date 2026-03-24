@@ -1,6 +1,6 @@
 ---
 title: "Gemini Extensions & MCP — 커스텀 워크플로 만들기"
-description: "Gemini CLI 확장 시스템, MCP를 직접 쓸 때와 패키징할 때의 차이, 그리고 재사용 가능한 워크플로 설계법"
+description: "Gemini CLI 확장 시스템, MCP 연동, 그리고 강력한 Agent Skills를 활용한 커스텀 워크플로 설계법"
 difficulty: advanced
 tags: ["확장", "mcp", "hooks", "skills", "커스터마이징"]
 connections:
@@ -18,10 +18,10 @@ connections:
     type: "enhances"
 featured: false
 order: 3
-date: "2026-03-21"
+date: "2026-03-24"
 ---
 
-> **공식 레퍼런스**: [Extensions 개요](https://geminicli.com/docs/extensions/) · [Extension reference](https://geminicli.com/docs/extensions/reference/) · [Tools](https://geminicli.com/docs/tools/) · [Trusted folders](https://geminicli.com/docs/cli/trusted-folders/)
+> **공식 레퍼런스**: [Extensions 개요](https://geminicli.com/docs/extensions/) · [Extension reference](https://geminicli.com/docs/extensions/reference/) · [Tools](https://geminicli.com/docs/tools/)
 
 ## Extensions는 단순한 플러그인보다 넓다
 
@@ -30,10 +30,9 @@ date: "2026-03-21"
 - prompts
 - MCP servers
 - custom commands
-- themes
 - hooks
 - sub-agents
-- agent skills
+- **agent skills** (에이전트 스킬)
 
 즉 "명령 하나 추가하는 플러그인" 정도로 생각하면 범위를 너무 좁게 보는 셈입니다.
 
@@ -42,134 +41,53 @@ date: "2026-03-21"
 Gemini CLI 커스터마이징은 보통 세 층으로 나누면 정리가 잘 됩니다.
 
 ### 1단계: `GEMINI.md`
-
-지속적인 지시문과 팀 규칙을 두는 곳입니다.
-
-적합한 용도:
-- 코딩 스타일
-- 저장소 제약 조건
-- 콘텐츠 작성 정책
+지속적인 지시문과 팀 규칙을 두는 곳입니다. (코딩 스타일, 저장소 제약 조건 등)
 
 ### 2단계: MCP 서버
+외부 시스템이나 특수 도구 접근이 필요할 때 씁니다. (DB, Jira, 내부 API 등)
 
-외부 시스템이나 특수 도구 접근이 필요할 때 씁니다.
+### 3단계: Extensions & Skills
+워크플로를 **묶어서 배포/공유**하고 싶을 때 씁니다. 반복되는 내부 명령, 프롬프트 팩, 그리고 전문가 워크플로인 **Skills**가 여기에 포함됩니다.
 
-적합한 용도:
-- 데이터베이스
-- 사내 문서 검색
-- 티켓 시스템
-- 디자인 시스템
-- 외부 API
+## 에이전트 스킬 (Agent Skills)의 강력함
 
-### 3단계: Extensions
+Gemini CLI의 가장 큰 차별점 중 하나는 `activate_skill` 도구를 통해 **특화된 전문가 모드**를 켤 수 있다는 점입니다.
 
-워크플로를 **묶어서 배포/공유**하고 싶을 때 씁니다.
-
-적합한 용도:
-- 반복되는 내부 명령
-- 회사 공통 훅
-- 프롬프트 팩
-- 표준화된 MCP 세트
-- 공유 가능한 agent skills
+- **기본 탑재 스킬들**: `security-review` (보안 취약점 리뷰), `code-review` (코드 리뷰), `web-clone` (URL 기반 UI 복제) 등의 특화된 지침을 불러와 에이전트의 행동 방식을 완전히 전문가 모드로 전환할 수 있습니다.
+- **Skill-Creator**: 사용자는 `skill-creator` 스킬을 활성화하여 사내만의 독자적인 업무 프로세스(예: 사내 배포 규칙 적용기)를 새로운 스킬로 손쉽게 만들고 팀과 공유할 수 있습니다.
 
 ## 지금 바로 관리할 수 있는 것들
 
 대화형 CLI 안에서는:
-
 ```text
 /extensions list
 ```
 
 터미널에서는:
-
 ```bash
 gemini extensions list
-```
-
-GitHub 저장소에서 설치:
-
-```bash
+# GitHub에서 설치
 gemini extensions install https://github.com/gemini-cli-extensions/workspace
 ```
 
-공식 reference는 **로컬 경로 설치**도 지원합니다. 사내 확장을 공개하기 전에 로컬에서 먼저 다듬기 좋습니다.
-
-## MCP를 직접 둘까, extension으로 묶을까?
-
-| 필요 | 더 나은 선택 | 이유 |
-|------|--------------|------|
-| 특정 프로젝트에 서버 하나만 필요 | 직접 MCP 설정 | 가장 단순함 |
-| 팀 전체에 동일한 구성이 필요 | Extension | 재사용/배포가 쉬움 |
-| 로컬에서 실험 중 | 로컬 extension 경로 | 반복 속도가 빠름 |
-| 지속 지시문만 필요 | `GEMINI.md` | 패키징 불필요 |
-
 ## 좋은 팀 도입 순서
-
-현실적인 도입 흐름은 보통 이렇습니다.
 
 1. `GEMINI.md`에 저장소 규칙 정리
 2. 꼭 필요한 MCP 1~2개 연결
-3. 워크플로가 반복되기 시작하면 extension으로 패키징
-
-이 순서가 좋은 이유는, 초반에는 가볍게 실험하고 나중에 표준화로 넘어가기 쉽기 때문입니다.
-
-## 어떤 확장을 만들 수 있나?
-
-### 사내 문서 도우미
-
-묶을 수 있는 것:
-- 문서 검색 MCP
-- 릴리스 노트 프롬프트
-- 엔지니어링 스타일 skill
-
-### 콘텐츠 운영 확장
-
-묶을 수 있는 것:
-- 로케일 parity 점검 명령
-- frontmatter 검증 훅
-- 언어별 리라이팅 프롬프트 템플릿
-
-### 플랫폼 엔지니어링 확장
-
-묶을 수 있는 것:
-- GCP/배포용 MCP
-- 장애 대응 프롬프트
-- shell 안전성 훅
-
-## Claude / Codex / Gemini를 여기서 비교하면
-
-| 도구 | 확장 관점의 강점 |
-|------|------------------|
-| Claude Code | MCP 중심의 로컬 확장 |
-| GPT Codex | 환경/셋업 스크립트 제어 |
-| Gemini CLI | extension 패키징 + MCP + skills + hooks |
-
-이 비교는 일부 해석이 섞여 있지만, 워크플로 이식성을 판단할 때 꽤 유용합니다.
-
-## 확장을 키울수록 보안이 중요해진다
-
-권한이 커질수록 아래 항목을 같이 봐야 합니다.
-
-- trusted folders
-- confirmation prompts
-- sandboxing
-- checkpointing
-
-특히 hooks, MCP, 자동화가 파일을 건드릴 수 있는 extension이면 더 중요합니다.
+3. `skill-creator`로 사내 반복 작업을 스킬로 정의
+4. 워크플로가 안정화되면 전체를 Extension으로 패키징하여 팀에 배포
 
 ## 이 프로젝트에 대한 추천
 
 AN-Con이 더 커진다면 Gemini CLI 패키지는 아마 이런 구성이 좋습니다.
+- 콘텐츠 parity 점검 커스텀 명령
+- 언어별 번역 및 톤앤매너 리뷰 스킬 (`locale-reviewer` 스킬 생성)
+- 추후 docs/CMS 연동용 MCP 포함
 
-- 콘텐츠 parity 점검 명령
-- MDX frontmatter 검증 헬퍼
-- 번역/현지화 리뷰 프롬프트
-- 추후 docs/CMS 연동용 MCP
-
-처음부터 extension으로 가지 말고, **`GEMINI.md` + 프롬프트**로 반복 패턴을 검증한 뒤 패키징하는 편이 낫습니다.
+처음부터 확장을 만들지 말고, **`GEMINI.md` + 자체 생성 스킬**로 반복 패턴을 검증한 뒤 패키징하는 편이 낫습니다.
 
 ## 다음에 읽으면 좋은 글
 
+- 스킬과 서브 에이전트 심화 활용은 [서브 에이전트와 스킬](/gemini-cli/sub-agents-and-skills)
 - [Trusted Folders, Sandboxing, and Restore](/gemini-cli/trusted-folders-sandboxing)
-- [Headless Automation](/gemini-cli/headless-automation)
 - [Claude Code의 MCP 활용](/claude-code/mcp-power-tools)

@@ -1,8 +1,8 @@
 ---
 title: "Gemini CLI 시작하기"
-description: "Gemini CLI 설치, 인증 방식 선택, 그리고 실전용 GEMINI.md 구성까지 한 번에 정리합니다"
+description: "Gemini CLI 설치, 인증 방식 선택, 그리고 실전용 GEMINI.md 구성과 핵심 워크플로까지 한 번에 정리합니다"
 difficulty: beginner
-tags: ["설치", "인증", "gemini-md", "워크플로"]
+tags: ["설치", "인증", "gemini-md", "워크플로", "plan-mode"]
 connections:
   - slug: "claude-md-mastery"
     tool: "claude-code"
@@ -15,7 +15,7 @@ connections:
     type: "enhances"
 featured: true
 order: 1
-date: "2026-03-21"
+date: "2026-03-24"
 ---
 
 > **공식 레퍼런스**: [개요](https://geminicli.com/docs/get-started/) · [설치](https://geminicli.com/docs/get-started/installation/) · [인증](https://geminicli.com/docs/get-started/authentication/) · [GEMINI.md](https://geminicli.com/docs/cli/gemini-md/)
@@ -91,35 +91,34 @@ export GOOGLE_CLOUD_LOCATION="us-central1"
 gemini
 ```
 
-## 먼저 익혀 둘 명령 패턴
+## 먼저 익혀 둘 명령 패턴과 워크플로
 
-Gemini CLI는 긴 자연어만 던질 때보다, **도구 문법**을 같이 쓸 때 훨씬 좋습니다.
+Gemini CLI는 긴 자연어만 던질 때보다, **도구 문법과 워크플로**를 같이 쓸 때 훨씬 좋습니다.
 
-### 대화형 모드 시작
+### 기본 대화 및 도구 사용
 
 ```bash
+# 대화형 모드 시작
 gemini
-```
 
-### `@`로 파일/디렉터리 포함
-
-```bash
+# @로 파일/디렉터리 포함
 gemini "@package.json @src 앱 아키텍처를 설명해줘"
-```
 
-### `!`로 셸 명령 실행
-
-```text
+# !로 셸 명령 실행 (결과를 에이전트가 읽고 판단)
 !npm test
 ```
 
-이 패턴은 에이전트가 명령 결과를 읽고 바로 다음 판단으로 이어가게 할 때 유용합니다.
+### 핵심 워크플로: 조사 -> 전략 -> 실행
 
-### 시작 프롬프트를 붙여 대화 시작
+단순한 채팅을 넘어, 에이전트에게 명확한 단계별 지시를 내리는 것이 실무 베스트 프랙티스입니다.
+1. **조사 (Research)**: 파일과 디렉터리를 탐색(`grep_search`, `glob`)하여 현황을 파악하게 합니다.
+2. **전략 (Strategy)**: 코드를 수정하기 전, 어떻게 접근할지 설계하고 사용자에게 계획을 공유하게 합니다.
+3. **실행 (Execution)**: 확정된 계획을 바탕으로 파일을 수정(`replace`, `write_file`)하고 검증(`run_shell_command`)합니다.
 
-```bash
-gemini -i "이 저장소를 리뷰하고 온보딩 계획을 만들어줘"
-```
+### Plan Mode (`/plan`) 활용하기
+
+대규모 리팩터링이나 구조를 잡을 때는 섣불리 코드를 수정하지 않는 것이 좋습니다.
+이때 `/plan` 명령어를 입력해 **Plan Mode**로 진입하세요. 이 모드에서는 에이전트가 파일을 수정할 수 없으며, 오직 "읽기 전용 도구"를 사용해 아키텍처를 조사하고 완벽한 설계 문서를 작성하는 데 집중합니다. 계획이 확정되면 수동으로 기본 모드로 돌아와 안전하게 실행할 수 있습니다.
 
 ## 진짜 핵심은 `GEMINI.md`
 
@@ -128,12 +127,6 @@ gemini -i "이 저장소를 리뷰하고 온보딩 계획을 만들어줘"
 1. `~/.gemini/GEMINI.md`
 2. 워크스페이스 및 상위 경로의 컨텍스트 파일
 3. 특정 디렉터리를 건드릴 때 즉시 발견되는 JIT 컨텍스트 파일
-
-즉 다음처럼 나눌 수 있습니다.
-
-- **전역 선호도**: 홈 디렉터리
-- **저장소 공통 규칙**: 프로젝트 루트
-- **모듈별 세부 지침**: 하위 디렉터리
 
 ### 예시 `GEMINI.md`
 
@@ -164,33 +157,17 @@ gemini -i "이 저장소를 리뷰하고 온보딩 계획을 만들어줘"
 /memory add Always preserve locale parity when editing content.
 ```
 
-### 의외로 좋은 기능: import
-
-`GEMINI.md`는 `@file.md` 형태 import를 지원합니다. 긴 지침을 한 파일에 몰아 넣지 않고 역할별로 분리해 재사용하기 좋습니다.
-
-## 이 저장소에 맞는 시작 워크플로
-
-```text
-gemini
-→ @content @src/lib/content.ts 콘텐츠 모델 파악
-→ gemini-cli 주제 공백 찾기
-→ 한 언어 초안 먼저 작성
-→ ko / en / es 동일 slug로 확장
-→ frontmatter parity 검증
-```
-
 ## Claude Code / GPT Codex / Gemini CLI 비교
 
 | 항목 | Claude Code | GPT Codex | Gemini CLI |
 |------|-------------|-----------|------------|
 | 핵심 지시 파일 | CLAUDE.md | AGENTS.md | GEMINI.md |
 | 컨텍스트 성격 | 대화형 메모리 강점 | 태스크 단위 실행 | 계층형 메모리 + 대형 컨텍스트 |
-| 로컬 도구 접근 | 로컬 + MCP | 샌드박스 중심 | 로컬 도구 + 웹 + MCP |
-| 첫 사용 추천 | 함께 고치며 탐색 | 경계가 분명한 구현 작업 | 저장소 이해 + 자동화 |
-| 팀 인증 선택지 | 벤더 계정 중심 | 제품 워크스페이스 | Google 로그인 / API 키 / Vertex AI |
+| 로컬 도구 접근 | 로컬 + MCP | 샌드박스 중심 | 로컬 도구 + 웹 + MCP + 서브 에이전트 |
+| 첫 사용 추천 | 함께 고치며 탐색 | 경계가 분명한 구현 작업 | 저장소 이해 + 자동화 + 대형 리팩터링 |
 
 ## 다음에 읽으면 좋은 글
 
 - 저장소 단위 분석 패턴은 [100만 토큰 컨텍스트 활용법](/gemini-cli/million-token-context)
-- 도구/확장은 [Gemini Extensions & MCP](/gemini-cli/gemini-extensions)
+- 복잡한 작업 위임은 [서브 에이전트와 스킬](/gemini-cli/sub-agents-and-skills)
 - 스크립트/CI는 [Headless Automation](/gemini-cli/headless-automation)
