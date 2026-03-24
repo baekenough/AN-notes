@@ -2,21 +2,21 @@
 
 ---
 
-# AN-Con
+# AI Native Notes
 
 ![Next.js](https://img.shields.io/badge/Next.js-16-black) ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue) ![License](https://img.shields.io/badge/License-MIT-green)
 
 AI 코딩 도구를 제대로 쓰기 위한 커뮤니티 가이드 사이트
 
-**라이브 사이트**: https://ancon.baekenough.com
+**라이브 사이트**: https://annotes.baekenough.com
 
-![AN-Con Screenshot](docs/screenshot.png)
+![AI Native Notes Screenshot](docs/screenshot.png)
 
 ---
 
-## AN-Con이란?
+## AI Native Notes란?
 
-AN-Con(AI-Native Con)은 PyCon에서 영감을 받은 프로젝트입니다. PyCon이 Python 커뮤니티를 위한 공간이듯, AN-Con은 AI 코딩 도구를 실제로 잘 쓰고 싶은 모든 사람을 위한 실용적인 가이드 모음입니다.
+AI Native Notes는 PyCon에서 영감을 받은 프로젝트입니다. PyCon이 Python 커뮤니티를 위한 공간이듯, AI Native Notes는 AI 코딩 도구를 실제로 잘 쓰고 싶은 모든 사람을 위한 실용적인 가이드 모음입니다.
 
 Claude Code, GPT Codex, Gemini CLI — 각 도구의 실전 팁을 한곳에서 찾아보세요. 개발자뿐만 아니라 AI 도구를 업무에 활용하고 싶은 모든 분을 위해 만들었습니다.
 
@@ -54,8 +54,8 @@ Claude Code, GPT Codex, Gemini CLI — 각 도구의 실전 팁을 한곳에서 
 ### 설치 및 실행
 
 ```bash
-git clone https://github.com/baekenough/an-con.git
-cd an-con
+git clone https://github.com/baekenough/AN-notes.git
+cd AN-notes
 npm install
 npm run dev
 ```
@@ -105,10 +105,10 @@ Docker를 사용한 프로덕션 배포:
 
 ```bash
 # 이미지 빌드
-docker build -t an-con .
+docker build -t ai-native-notes .
 
 # 컨테이너 실행
-docker run -p 3000:3000 an-con
+docker run -p 3000:3000 ai-native-notes
 ```
 
 HTTPS는 Cloudflare Tunnel을 통해 처리됩니다.
@@ -136,5 +136,5 @@ HTTPS는 Cloudflare Tunnel을 통해 처리됩니다.
 
 ## 링크
 
-- 라이브 사이트: https://ancon.baekenough.com
-- GitHub: https://github.com/baekenough/an-con
+- 라이브 사이트: https://annotes.baekenough.com
+- GitHub: https://github.com/baekenough/AN-notes

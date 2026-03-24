@@ -2,21 +2,21 @@
 
 ---
 
-# AN-Con
+# AI Native Notes
 
 ![Next.js](https://img.shields.io/badge/Next.js-16-black) ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue) ![License](https://img.shields.io/badge/License-MIT-green)
 
 Una guía comunitaria para usar herramientas de codificación con IA correctamente
 
-**Sitio en vivo**: https://ancon.baekenough.com
+**Sitio en vivo**: https://annotes.baekenough.com
 
-![AN-Con Screenshot](docs/screenshot.png)
+![AI Native Notes Screenshot](docs/screenshot.png)
 
 ---
 
-## ¿Qué es AN-Con?
+## ¿Qué es AI Native Notes?
 
-AN-Con (AI-Native Con) está inspirado en PyCon. Así como PyCon es un espacio de encuentro para la comunidad Python, AN-Con es una colección de guías prácticas para cualquier persona que quiera usar las herramientas de codificación con IA de manera efectiva.
+AI Native Notes está inspirado en PyCon. Así como PyCon es un espacio de encuentro para la comunidad Python, AI Native Notes es una colección de guías prácticas para cualquier persona que quiera usar las herramientas de codificación con IA de manera efectiva.
 
 Claude Code, GPT Codex, Gemini CLI — encuentra consejos del mundo real para cada herramienta en un solo lugar. Creado no solo para desarrolladores, sino para todos los que quieran aprovechar las herramientas de IA en su trabajo.
 
@@ -54,8 +54,8 @@ Claude Code, GPT Codex, Gemini CLI — encuentra consejos del mundo real para ca
 ### Instalación y Ejecución
 
 ```bash
-git clone https://github.com/baekenough/an-con.git
-cd an-con
+git clone https://github.com/baekenough/AN-notes.git
+cd AN-notes
 npm install
 npm run dev
 ```
@@ -105,10 +105,10 @@ Despliegue en producción con Docker:
 
 ```bash
 # Construir la imagen
-docker build -t an-con .
+docker build -t ai-native-notes .
 
 # Ejecutar el contenedor
-docker run -p 3000:3000 an-con
+docker run -p 3000:3000 ai-native-notes
 ```
 
 HTTPS se gestiona mediante Cloudflare Tunnel.
@@ -136,5 +136,5 @@ Para sugerencias de consejos o comentarios, abre un issue.
 
 ## Enlaces
 
-- Sitio en vivo: https://ancon.baekenough.com
-- GitHub: https://github.com/baekenough/an-con
+- Sitio en vivo: https://annotes.baekenough.com
+- GitHub: https://github.com/baekenough/AN-notes

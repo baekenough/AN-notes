@@ -2,21 +2,21 @@
 
 ---
 
-# AN-Con
+# AI Native Notes
 
 ![Next.js](https://img.shields.io/badge/Next.js-16-black) ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue) ![License](https://img.shields.io/badge/License-MIT-green)
 
 A community-driven guide site for using AI coding tools properly
 
-**Live site**: https://ancon.baekenough.com
+**Live site**: https://annotes.baekenough.com
 
-![AN-Con Screenshot](docs/screenshot.png)
+![AI Native Notes Screenshot](docs/screenshot.png)
 
 ---
 
-## What is AN-Con?
+## What is AI Native Notes?
 
-AN-Con (AI-Native Con) is inspired by PyCon. Just as PyCon is a gathering space for the Python community, AN-Con is a collection of practical guides for anyone who wants to use AI coding tools effectively.
+AI Native Notes is inspired by PyCon. Just as PyCon is a gathering space for the Python community, AI Native Notes is a collection of practical guides for anyone who wants to use AI coding tools effectively.
 
 Claude Code, GPT Codex, Gemini CLI — find real-world tips for each tool in one place. Built not just for developers, but for everyone who wants to put AI tools to work.
 
@@ -54,8 +54,8 @@ Claude Code, GPT Codex, Gemini CLI — find real-world tips for each tool in one
 ### Install and Run
 
 ```bash
-git clone https://github.com/baekenough/an-con.git
-cd an-con
+git clone https://github.com/baekenough/AN-notes.git
+cd AN-notes
 npm install
 npm run dev
 ```
@@ -105,10 +105,10 @@ Production deployment with Docker:
 
 ```bash
 # Build the image
-docker build -t an-con .
+docker build -t ai-native-notes .
 
 # Run the container
-docker run -p 3000:3000 an-con
+docker run -p 3000:3000 ai-native-notes
 ```
 
 HTTPS is handled via Cloudflare Tunnel.
@@ -136,5 +136,5 @@ For tip suggestions or feedback, open an issue.
 
 ## Links
 
-- Live site: https://ancon.baekenough.com
-- GitHub: https://github.com/baekenough/an-con
+- Live site: https://annotes.baekenough.com
+- GitHub: https://github.com/baekenough/AN-notes

@@ -11,7 +11,7 @@ export async function SiteFooter() {
         </p>
         <div className="flex items-center gap-4">
           <a
-            href="https://github.com/baekenough/An-Con"
+            href="https://github.com/baekenough/AN-notes"
             target="_blank"
             rel="noopener noreferrer"
             className="text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring rounded"
