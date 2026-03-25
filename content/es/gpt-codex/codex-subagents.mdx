@@ -1,0 +1,206 @@
+---
+title: Subagentes de Codex — Ejecución Paralela y Patrones de Delegación
+description: Aprende cuándo y cómo usar subagentes para ejecución paralela de tareas,
+  y comprende los tradeoffs entre subagentes, worktrees y flujos de agente único.
+difficulty: advanced
+tags:
+- subagentes
+- paralelo
+- orquestación
+- delegación
+connections:
+- slug: codex-task-design
+  tool: gpt-codex
+  type: prerequisite
+- slug: codex-skills
+  tool: gpt-codex
+  type: combines
+- slug: codex-sandbox
+  tool: gpt-codex
+  type: enhances
+- slug: sub-agents-and-skills
+  tool: gemini-cli
+  type: compare
+featured: false
+order: 6
+date: '2026-03-24'
+---
+
+> **Referencias Oficiales**: [Subagents](https://developers.openai.com/codex/subagents) · [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [Worktrees](https://developers.openai.com/codex/app/worktrees)
+
+<!-- curriculum:start -->
+## Ruta del currículo
+
+1. [Primeros Pasos con Codex](./codex-getting-started) — primeros loops seguros
+2. [Instrucciones de Codex](./codex-instructions) — reglas del repo y defaults
+3. [Sandboxing en Codex](./codex-sandbox) — permisos y límites
+4. [Diseño de Tareas en Codex](./codex-task-design) — dar buena forma al trabajo
+5. [Skills de Codex](./codex-skills) — convertir trabajo repetido en activos reutilizables
+6. **Subagentes de Codex** — ejecución paralela y delegación ← **Estás aquí**
+7. [MCP en Codex](./codex-mcp) — conectar sistemas externos
+8. [Reviews y Automatizaciones con Codex](./codex-ci-cd-workflows) — ejecutar workflows estables una y otra vez
+
+### Documentación oficial usada en esta guía
+- **Cuándo y cómo Codex crea agentes paralelos** — [Subagents](https://developers.openai.com/codex/subagents)
+- **Dimensionamiento y descomposición de tareas** — [Best Practices](https://developers.openai.com/codex/learn/best-practices)
+- **Aislamiento paralelo via Git worktrees** — [Worktrees](https://developers.openai.com/codex/app/worktrees)
+<!-- curriculum:end -->
+
+## Por qué existen los subagentes
+
+Un solo agente de Codex funciona bien para tareas enfocadas y secuenciales. Pero cierto trabajo se beneficia de hacer varias cosas a la vez:
+
+- explorar varias opciones de implementación antes de elegir una
+- escanear diferentes partes del codebase en paralelo
+- ejecutar pasos de verificación independientes simultáneamente
+
+Los subagentes permiten que Codex se bifurque en múltiples workers paralelos, cada uno manejando una parte del problema.
+
+## Codex solo crea subagentes cuando lo pides
+
+La documentación de Subagents lo deja claro: Codex no crea subagentes automáticamente. Necesitas pedir la ejecución paralela de forma explícita.
+
+Buenos disparadores:
+
+```text
+Explora tres enfoques diferentes para refactorizar el módulo de pagos.
+Ejecuta cada uno en paralelo y resume los tradeoffs.
+```
+
+```text
+Revisa los cinco directorios de servicios buscando uso de APIs deprecadas.
+Ejecuta las revisiones en paralelo.
+```
+
+Si tu prompt no menciona paralelismo o múltiples enfoques, Codex manejará todo en un solo hilo.
+
+## Los subagentes heredan la política de sandbox
+
+Cada subagente se ejecuta bajo la misma configuración de sandbox que el agente principal.
+
+- si el agente principal tiene `workspace-write`, los subagentes también
+- si se requiere approval, los subagentes también lo necesitan
+- los writable roots aplican igualmente
+
+Esta es una feature de seguridad. El paralelismo no amplía el boundary de confianza.
+
+## Cuándo los subagentes ayudan más
+
+### Exploración paralela
+Tienes una pregunta amplia y quieres investigar múltiples ángulos a la vez.
+
+### Comparar y elegir
+Quieres generar varias opciones de implementación independientemente antes de elegir una.
+
+### Verificación independiente
+Quieres lint, tests y revisiones de seguridad ejecutándose simultáneamente en vez de secuencialmente.
+
+### Investigación en lote
+Necesitas repetir el mismo análisis en múltiples módulos o paquetes.
+
+## Cuándo los subagentes no son la herramienta correcta
+
+### Dependencias secuenciales
+Si el paso B depende de la salida del paso A, el paralelismo solo agrega overhead.
+
+### Tareas simples de un solo archivo
+Una edición enfocada en un archivo no necesita delegación.
+
+### Tareas que requieren contexto compartido
+Si los workers necesitan coordinarse o compartir resultados intermedios, un solo agente suele funcionar mejor.
+
+## Subagentes vs worktrees
+
+Ambos habilitan paralelismo, pero resuelven problemas diferentes.
+
+| Aspecto | Subagentes | Worktrees |
+|---------|-----------|-----------|
+| Qué se ejecuta en paralelo | Razonamiento y uso de herramientas | Operaciones de archivo con aislamiento Git |
+| Nivel de aislamiento | Sandbox compartido, contexto separado | Directorio de trabajo Git separado |
+| Mejor para | Exploración, análisis, comparación | Automatización en background, tareas largas |
+| Complejidad de merge | Los resultados vuelven como resúmenes | Los cambios viven en branches separados |
+| Costo | Costo en tokens por agente | Overhead de disco y Git |
+
+Los subagentes son sobre **pensar en paralelo**. Los worktrees son sobre **hacer en paralelo con aislamiento**.
+
+Para trabajo exploratorio, empieza con subagentes. Para automatización en producción que necesita aislamiento Git, usa worktrees.
+
+## Subagentes y skills
+
+Los subagentes pueden usar skills disponibles en el repositorio. Una biblioteca de skills bien construida hace el trabajo de subagentes más efectivo:
+
+- un subagente haciendo un pase de review puede invocar un skill de review
+- un subagente haciendo migraciones puede seguir un skill de migración
+- un subagente generando docs puede aplicar un skill de documentación
+
+La combinación de delegación más procedimiento codificado es donde los subagentes se vuelven más prácticos.
+
+## Subagentes y AGENTS.md
+
+Las instrucciones en `AGENTS.md` aplican al agente principal y a los subagentes por igual. Si tu `AGENTS.md` especifica estándares de código, requisitos de testing o prácticas de review, los subagentes los seguirán.
+
+No necesitas repetir las reglas del proyecto en cada prompt de subagente. La superficie de instrucción es compartida.
+
+## Costo y conciencia de tokens
+
+Los subagentes no son gratis. Cada subagente consume su propio presupuesto de tokens para razonamiento y llamadas a herramientas.
+
+- dos subagentes cuestan aproximadamente el doble que un solo agente
+- la exploración especulativa multiplica el costo por el número de ramas
+- los patrones Best-of-N intercambian costo por calidad
+
+Regla práctica: usa subagentes cuando el ahorro en tiempo o la mejora en calidad justifique el costo en tokens. No paralelices por el solo hecho de paralelizar.
+
+## Prompting para delegación efectiva
+
+### Sé explícito sobre la división
+
+```text
+Objetivo: Investigar cuellos de botella de rendimiento en tres servicios.
+
+División del trabajo:
+- Agente 1: analizar api-gateway/
+- Agente 2: analizar payment-service/
+- Agente 3: analizar notification-service/
+
+Cada agente debe perfilar los hot paths y reportar los 3 principales cuellos de botella.
+```
+
+### Define qué regresa
+
+```text
+Después de la exploración paralela, resume:
+- qué enfoque tiene el diff más pequeño
+- qué enfoque no requiere nuevas dependencias
+- qué enfoque pasa los tests existentes sin cambios
+```
+
+### Establece boundaries de scope
+
+```text
+Cada subagente solo debe leer archivos en su directorio asignado.
+No modifiquen archivos durante la exploración.
+```
+
+## Errores comunes
+
+### Pedir paralelismo sin boundaries claros de tarea
+Decir "investiga todo en paralelo" sin especificar qué es "todo" produce resultados dispersos.
+
+### Esperar coordinación entre subagentes
+Los subagentes trabajan independientemente. No comparten estado intermedio. Si necesitas refinamiento iterativo, mantenlo en el agente principal.
+
+### Olvidar que los subagentes cuestan tokens
+Lanzar cinco subagentes exploratorios para una pregunta simple quema presupuesto sin beneficio proporcional.
+
+## Checklist rápido
+
+Antes de pedir subagentes, verifica:
+
+- ¿El trabajo es genuinamente paralelizable?
+- ¿Los boundaries de cada subagente están claros?
+- ¿El costo en tokens se justifica por ahorro de tiempo o mejora de calidad?
+- ¿La política de sandbox permite lo que los subagentes necesitan hacer?
+- ¿Puedes definir cómo se ve un resultado útil para cada rama paralela?
+
+Los subagentes son la superficie que lleva a Codex de "una tarea a la vez" a "múltiples investigaciones a la vez." Úsalos deliberadamente, con boundaries claros y resultados definidos.
