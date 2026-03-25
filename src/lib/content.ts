@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
 import readingTime from 'reading-time';
+import { generateCurriculumNav } from './curriculum';
 
 export type Tool = 'claude-code' | 'gpt-codex' | 'gemini-cli';
 
@@ -67,6 +68,31 @@ export function getTipsByTool(locale: string, tool: Tool): TipMeta[] {
     .sort((a, b) => a.order - b.order);
 }
 
+function injectCurriculum(content: string, locale: string, tool: Tool, slug: string): string {
+  const startMarker = '<!-- curriculum:start -->';
+  const endMarker = '<!-- curriculum:end -->';
+
+  const startIdx = content.indexOf(startMarker);
+  const endIdx = content.indexOf(endMarker);
+
+  if (startIdx === -1 || endIdx === -1) return content;
+
+  // Extract the "### Official docs" subsection to preserve it
+  const existingBlock = content.slice(startIdx + startMarker.length, endIdx);
+  const existingLines = existingBlock.split('\n');
+  const h3Index = existingLines.findIndex(l => l.startsWith('### '));
+  const officialDocs = h3Index >= 0 ? '\n' + existingLines.slice(h3Index).join('\n') : '';
+
+  // Generate new curriculum nav from shared data
+  const tips = getTipsByTool(locale, tool);
+  const nav = generateCurriculumNav(tips, locale, tool, slug);
+  if (!nav) return content;
+
+  const newBlock = '\n' + nav + '\n' + officialDocs;
+
+  return content.slice(0, startIdx + startMarker.length) + newBlock + content.slice(endIdx);
+}
+
 export function getTip(locale: string, tool: Tool, slug: string): Tip | null {
   const filePath = path.join(contentDir, locale, tool, `${slug}.mdx`);
 
@@ -91,7 +117,7 @@ export function getTip(locale: string, tool: Tool, slug: string): Tip | null {
       order: data.order || 999,
       readingTime: Math.ceil(stats.minutes).toString(),
       date: data.date || new Date().toISOString().split('T')[0],
-      content,
+      content: injectCurriculum(content, locale, tool, slug),
     };
   }
 
@@ -111,7 +137,7 @@ export function getTip(locale: string, tool: Tool, slug: string): Tip | null {
     order: data.order || 999,
     readingTime: Math.ceil(stats.minutes).toString(),
     date: data.date || new Date().toISOString().split('T')[0],
-    content,
+    content: injectCurriculum(content, locale, tool, slug),
   };
 }
 
