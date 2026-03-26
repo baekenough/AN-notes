@@ -41,6 +41,9 @@ export const metadata: Metadata = {
     title: siteName,
     description: "Master your AI coding tools the right way",
   },
+  verification: {
+    google: process.env.GOOGLE_SITE_VERIFICATION,
+  },
 };
 
 export default function RootLayout({
