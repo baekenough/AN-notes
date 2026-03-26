@@ -1,7 +1,18 @@
+import type { Metadata } from "next";
+import { hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
+import { locales } from "@/i18n/config";
 import { getTipsByTool, type Tool } from "@/lib/content";
 import { getToolConfig } from "@/lib/tools";
+import {
+  buildLanguageAlternates,
+  ensureLocale,
+  getLocalePath,
+  getOgLocale,
+  siteName,
+  toAbsoluteUrl,
+} from "@/lib/seo";
 import { TipCard } from "@/components/tip-card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -10,6 +21,49 @@ const validTools: Tool[] = ["claude-code", "gpt-codex", "gemini-cli"];
 
 export function generateStaticParams() {
   return validTools.map(tool => ({ tool }));
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string; tool: string }>;
+}): Promise<Metadata> {
+  const { locale, tool } = await params;
+
+  if (!hasLocale(locales, locale) || !validTools.includes(tool as Tool)) {
+    return {};
+  }
+
+  const safeLocale = ensureLocale(locale);
+  const typedTool = tool as Tool;
+  const toolConfig = getToolConfig(typedTool);
+  const tipCount = getTipsByTool("en", typedTool).length;
+  const title = `${toolConfig.name} Guides`;
+  const description = `${tipCount} practical ${toolConfig.name} guides and tips for AI-assisted development.`;
+  const toolPath = `/${typedTool}`;
+  const localePath = getLocalePath(safeLocale, toolPath);
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: toAbsoluteUrl(localePath),
+      languages: buildLanguageAlternates(toolPath),
+    },
+    openGraph: {
+      type: "website",
+      siteName,
+      title,
+      description,
+      url: toAbsoluteUrl(localePath),
+      locale: getOgLocale(safeLocale),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
+  };
 }
 
 export default async function ToolPage({

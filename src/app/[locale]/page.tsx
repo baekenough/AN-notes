@@ -1,10 +1,60 @@
+import type { Metadata } from "next";
+import { hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import Link from "next/link";
+import { locales } from "@/i18n/config";
 import { tools } from "@/lib/tools";
 import { getAllTips } from "@/lib/content";
+import {
+  buildLanguageAlternates,
+  ensureLocale,
+  getHomeSeoCopy,
+  getLocalePath,
+  getOgLocale,
+  siteName,
+  toAbsoluteUrl,
+} from "@/lib/seo";
 import { TipCard } from "@/components/tip-card";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+
+  if (!hasLocale(locales, locale)) {
+    return {};
+  }
+
+  const safeLocale = ensureLocale(locale);
+  const copy = getHomeSeoCopy(safeLocale);
+  const localePath = getLocalePath(safeLocale);
+
+  return {
+    title: copy.title,
+    description: copy.description,
+    alternates: {
+      canonical: toAbsoluteUrl(localePath),
+      languages: buildLanguageAlternates(),
+    },
+    openGraph: {
+      type: "website",
+      siteName,
+      title: copy.title,
+      description: copy.description,
+      url: toAbsoluteUrl(localePath),
+      locale: getOgLocale(safeLocale),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: copy.title,
+      description: copy.description,
+    },
+  };
+}
 
 export default async function HomePage({
   params,

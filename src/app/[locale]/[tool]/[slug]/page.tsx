@@ -1,8 +1,20 @@
+import type { Metadata } from "next";
+import { hasLocale } from "next-intl";
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { locales } from "@/i18n/config";
 import { getTip, getTipsByTool, type Tool } from "@/lib/content";
 import { getToolConfig } from "@/lib/tools";
+import {
+  buildLanguageAlternates,
+  ensureLocale,
+  getLocalePath,
+  getOgLocale,
+  siteName,
+  siteUrl,
+  toAbsoluteUrl,
+} from "@/lib/seo";
 import { MdxContent } from "@/components/mdx-content";
 import { ConnectedGuides } from "@/components/connected-guides";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +32,59 @@ export async function generateStaticParams() {
     }
   }
   return params;
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string; tool: string; slug: string }>;
+}): Promise<Metadata> {
+  const { locale, tool, slug } = await params;
+
+  if (!hasLocale(locales, locale) || !validTools.includes(tool as Tool)) {
+    return {};
+  }
+
+  const safeLocale = ensureLocale(locale);
+  const typedTool = tool as Tool;
+  const tip = getTip(safeLocale, typedTool, slug);
+
+  if (!tip) {
+    notFound();
+  }
+
+  const toolConfig = getToolConfig(typedTool);
+  const pagePath = `/${typedTool}/${slug}`;
+  const localePath = getLocalePath(safeLocale, pagePath);
+  const title = tip.title;
+  const description = tip.description;
+
+  return {
+    title,
+    description,
+    keywords: tip.tags,
+    alternates: {
+      canonical: toAbsoluteUrl(localePath),
+      languages: buildLanguageAlternates(pagePath),
+    },
+    openGraph: {
+      type: "article",
+      siteName,
+      title,
+      description,
+      url: toAbsoluteUrl(localePath),
+      locale: getOgLocale(safeLocale),
+      publishedTime: tip.date,
+      modifiedTime: tip.date,
+      section: toolConfig.name,
+      tags: tip.tags,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
+  };
 }
 
 const difficultyColors = {
@@ -47,9 +112,38 @@ export default async function TipPage({
 
   const t = await getTranslations();
   const toolConfig = getToolConfig(tool as Tool);
+  const safeLocale = ensureLocale(locale);
+  const canonicalUrl = toAbsoluteUrl(getLocalePath(safeLocale, `/${tool}/${slug}`));
+  const articleJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: tip.title,
+    description: tip.description,
+    inLanguage: safeLocale,
+    datePublished: tip.date,
+    dateModified: tip.date,
+    keywords: tip.tags.join(", "),
+    articleSection: toolConfig.name,
+    mainEntityOfPage: canonicalUrl,
+    url: canonicalUrl,
+    author: {
+      "@type": "Person",
+      name: "Sangyi Baek",
+    },
+    publisher: {
+      "@type": "Organization",
+      name: siteName,
+      url: siteUrl,
+    },
+  };
 
   return (
     <div className="container mx-auto max-w-3xl px-4 py-12">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+      />
+
       {/* Back link */}
       <Button
         asChild

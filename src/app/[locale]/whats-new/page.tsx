@@ -1,9 +1,21 @@
+import type { Metadata } from "next";
+import { hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { locales } from "@/i18n/config";
 import { getToolConfig } from "@/lib/tools";
 import type { Tool } from "@/lib/content";
+import {
+  buildLanguageAlternates,
+  ensureLocale,
+  getLocalePath,
+  getOgLocale,
+  getWhatsNewSeoCopy,
+  siteName,
+  toAbsoluteUrl,
+} from "@/lib/seo";
 
 const tagStyles: Record<string, string> = {
   // English
@@ -35,6 +47,44 @@ const toolIdMap: Record<ToolKey, Tool> = {
 };
 
 const featureIndices = [0, 1, 2] as const;
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+
+  if (!hasLocale(locales, locale)) {
+    return {};
+  }
+
+  const safeLocale = ensureLocale(locale);
+  const copy = getWhatsNewSeoCopy(safeLocale);
+  const localePath = getLocalePath(safeLocale, "/whats-new");
+
+  return {
+    title: copy.title,
+    description: copy.description,
+    alternates: {
+      canonical: toAbsoluteUrl(localePath),
+      languages: buildLanguageAlternates("/whats-new"),
+    },
+    openGraph: {
+      type: "website",
+      siteName,
+      title: copy.title,
+      description: copy.description,
+      url: toAbsoluteUrl(localePath),
+      locale: getOgLocale(safeLocale),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: copy.title,
+      description: copy.description,
+    },
+  };
+}
 
 export default async function WhatsNewPage({
   params,
