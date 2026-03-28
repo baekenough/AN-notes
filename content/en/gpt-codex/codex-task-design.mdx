@@ -20,7 +20,7 @@ connections:
   type: enhances
 featured: false
 order: 4
-date: '2026-03-24'
+date: "2026-03-28"
 ---
 
 > **Official References**: [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [How OpenAI uses Codex](https://openai.com/business/guides-and-resources/how-openai-uses-codex/) · [Subagents](https://developers.openai.com/codex/subagents)
@@ -50,6 +50,9 @@ It gets weaker when you force it to infer what success means.
 
 A good prompt is not poetic. It is specific enough that the model has less room to invent the task.
 
+That is why the best Codex prompts read more like a clean engineering issue than a casual chat message.
+Another engineer should be able to pick up the same prompt and understand the target, the boundaries, and the finish line.
+
 ## The simplest useful structure
 
 Codex best practices recommend issue-shaped prompts.
@@ -68,8 +71,63 @@ Done when:
 What proves the task is finished?
 ```
 
-This is deceptively simple.
-Without Goal, there is no target. Without Done when, there is no finish line.
+This structure is small, but each part removes ambiguity: Goal sets the target, Context shows where to start, Constraints hold the boundary, and Done when defines the finish line.
+
+It also travels well:
+
+- Codex CLI sessions
+- IDE asks
+- issue trackers
+- later automation prompts
+
+Writing tasks in this shape early makes them easier to reuse across local work, review, and background workflows.
+
+## What to actually put in Goal, Context, Constraints, and Done when
+
+### Goal
+Describe the target state, not just the product area.
+
+Better:
+
+- show a clear validation error on failed checkout submission
+- add a new Codex section to the docs sidebar
+- make cart quantity changes feel immediate with optimistic updates
+
+Weaker:
+
+- improve checkout
+- clean up docs
+- fix the cart flow
+
+### Context
+Think of context as a starting map, not background prose.
+
+Good context often includes:
+
+- the first file or folder to inspect
+- a local implementation pattern to reuse
+- a failing test, log line, or reproduction command
+- the one risky edge case that should shape the work
+
+### Constraints
+State the boundaries that genuinely change the decision.
+
+Examples:
+
+- do not change the public API shape
+- do not add dependencies
+- keep edits inside one directory
+- do not touch generated files
+
+### Done when
+Make the finish line reviewable.
+
+Better:
+
+- the new behavior is visible
+- the rollback case is handled
+- the relevant tests pass
+- lint or build still succeeds
 
 ## Bad prompt vs better prompt
 
@@ -100,6 +158,53 @@ Done when:
 - lint, build, and relevant tests pass
 ```
 
+Better still, write the task so it can survive handoff:
+
+```text
+Goal:
+Add optimistic updates to the cart drawer quantity control.
+
+Context:
+- UI lives in src/components/cart/
+- server action lives in src/app/actions/cart.ts
+- follow the loading pattern already used in src/components/wishlist/
+- bug appears when quantity is changed twice quickly
+
+Constraints:
+- do not change the public API shape
+- do not add a new state library
+- keep the diff inside cart-related files unless a shared helper already exists
+
+Done when:
+- quantity changes render immediately in the drawer
+- duplicate rapid clicks do not leave stale counts behind
+- server failures restore the previous value
+- relevant tests pass and the cart flow still builds cleanly
+```
+
+This version is stronger because it names **where to look**, **what pattern to copy**, **what must stay stable**, and **how to tell the fix is actually done**.
+
+## Make the prompt portable enough for review and automation
+
+If a prompt is good enough for Codex but too vague for a reviewer, it is still weak.
+
+A durable task prompt should answer four review questions up front:
+
+1. What is changing?
+2. Where should the agent look first?
+3. What must stay unchanged?
+4. What evidence should exist before the task is called done?
+
+That portability matters later when you want to:
+
+- hand the task to another engineer
+- compare two implementation attempts
+- run the task in a worktree
+- turn the workflow into a skill or automation
+
+Issue shape is not just a prompting trick.
+It is reusable engineering intent.
+
 ## Size tasks around one verification loop
 
 A practical sizing rule is not “one feature” but **one reviewable verification loop**.
@@ -118,6 +223,30 @@ Bad tasks:
 
 If one lint/build/test loop cannot tell you whether the task is healthy, the task is probably too broad.
 
+Another way to say it:
+
+- one task should usually map to one obvious set of checks
+- one reviewer should be able to inspect the diff without changing mental models three times
+- one failure should lead to one clear next step
+
+### What “one verification loop” usually means
+
+For most teams, one loop looks like:
+
+1. make the change
+2. run the smallest relevant verification
+3. inspect the diff
+4. revise or finish
+
+The exact loop size depends on the work:
+
+- **small docs edit** → preview or link check plus review
+- **narrow bug fix** → targeted tests plus build or typecheck if affected
+- **bounded refactor** → existing tests plus quick regression inspection
+- **cross-cutting feature** → probably too broad for one task unless you first split it
+
+If the verification surface is unclear, split the task before you ask Codex to execute it.
+
 ## Some work should start with a plan only
 
 Ask for a plan first when:
@@ -134,6 +263,23 @@ Do not implement yet. Propose a plan first.
 Include risks, touched files, and verification steps.
 ```
 
+Plan-first requests are especially helpful when:
+
+- you expect a tradeoff between two valid implementations
+- the likely change will span multiple folders or services
+- the first job is codebase mapping, not code writing
+- you want a reviewer to approve the shape before any edits happen
+
+Useful follow-up language:
+
+```text
+Do not patch yet.
+First list likely files, decision points, and the smallest safe implementation order.
+Flag anything that should be reviewed by a human before coding.
+```
+
+This turns Codex into a planning partner first and an editor second.
+
 ## Local examples beat abstract advice
 
 Codex responds much better to “follow this file” than to “use our usual architecture.”
@@ -145,6 +291,21 @@ Better anchors:
 - “reuse the Button variant naming pattern”
 
 The more concrete the reference point, the less Codex has to guess.
+
+The strongest anchors are local file or directory paths, not vague team folklore.
+
+Examples:
+
+- `Follow src/features/profile/actions.ts for server action structure.`
+- `Match the test style used in tests/cart/cart-drawer.test.tsx.`
+- `Keep the docs wording aligned with content/en/gpt-codex/codex-skills.mdx.`
+- `Only edit files under src/features/billing/ unless a shared type already exists in src/types/.`
+
+Good anchors do three jobs at once:
+
+1. show Codex where to start
+2. reduce style drift
+3. make review easier because the comparison point is explicit
 
 ## Constraints are a quality tool
 
@@ -158,15 +319,99 @@ High-value constraints include:
 - do not touch generated files
 - keep the diff small
 
+Strong constraints are specific enough to change decisions, not just sound responsible.
+
+Weak:
+
+- keep it simple
+- avoid big changes
+
+Stronger:
+
+- do not change analytics event names
+- do not modify schema files in this pass
+- prefer existing helpers over new abstractions
+- keep the work inside `content/en/gpt-codex/`
+- do not rewrite neighboring docs unless they are directly linked and incorrect
+
+Constraints protect reviewability.
+They also help Codex avoid “helpful” expansions that create more surface area than the task deserves.
+
+## A practical escalation ladder: prompt, then skills, MCP, or subagents
+
+Not every problem should stay a plain prompt.
+
+Use this simple escalation ladder:
+
+### Stay with a plain prompt when:
+
+- the context already lives in the repository
+- the task is narrow
+- one person can review the outcome in one pass
+
+### Move to a skill when:
+
+- the same procedure repeats
+- the input and output shape are stable
+- you keep retyping the same verification or formatting expectations
+
+Examples:
+
+- recurring docs drift checks
+- release-note drafting
+- standard review passes
+
+### Move to MCP when:
+
+- the missing truth lives outside the repository
+- correctness depends on current tickets, runbooks, or docs
+- you want provenance instead of copy-pasted background
+
+Examples:
+
+- check the latest issue state before triage
+- read the current policy before editing auth docs
+- compare repo behavior against an external spec
+
+### Ask for subagents when:
+
+- you want bounded parallel exploration
+- the work naturally splits into independent slices
+- comparing multiple implementation options is faster than serial guessing
+
+Examples:
+
+- one subagent maps affected files while another inspects tests
+- one subagent drafts docs while another verifies code references
+- two implementation options are explored in parallel before review
+
+This is the important distinction:
+
+- **skills** package repeated procedure
+- **MCP** brings in outside context
+- **subagents** add decomposition and parallelism
+
+If you use the wrong surface, the work gets noisier instead of faster.
+
+## A quick decision table
+
+| If the problem is… | Best next surface |
+| --- | --- |
+| a focused edit with clear local context | a plain issue-shaped prompt |
+| the same checklist repeated over and over | [Skills](./codex-skills) |
+| outside truth lives in tickets, docs, or runbooks | [MCP](./codex-mcp) |
+| several independent exploration or implementation lanes exist | [Codex Subagents](./codex-subagents) |
+| the task is still too broad or risky to code immediately | plan first |
+
 ## When to move beyond a plain prompt
 
-If the same kind of task repeats, a better surface may exist:
+The ladder above is the practical shortcut:
 
 - repeated workflow → [Skills](./codex-skills)
 - outside context needed → [MCP](./codex-mcp)
-- parallel exploration or implementation helps → ask for subagents explicitly
+- explicit parallel exploration or implementation → ask for subagents
 
-The Subagents docs note that Codex only spawns subagents when you ask it to, and they inherit the current sandbox policy. That means parallelism is powerful, but not free.
+The Subagents docs note that Codex only spawns subagents when you ask it to, and they inherit the current sandbox policy. Parallelism is useful, but not free.
 
 ## Use Best-of-N for uncertain problems
 
@@ -176,6 +421,90 @@ It helps when:
 - naming or structure matters a lot
 - several solutions look reasonable
 - you want to compare options before merging
+
+You do not need Best-of-N for routine tasks.
+It is most useful when the hard part is selecting among reasonable answers rather than merely producing one.
+
+Good examples:
+
+- alternate architecture shapes
+- competing copy structures for an important doc
+- refactor plans with different risk tradeoffs
+
+Bad examples:
+
+- simple frontmatter cleanup
+- a typo fix
+- a known one-line bug with a single clear root cause
+
+## Two copyable task templates
+
+### Template 1: direct implementation
+
+Use this when the work is non-trivial but still bounded:
+
+```text
+Goal:
+Update [feature/file/workflow] so that [desired outcome].
+
+Context:
+- start in [file or folder]
+- follow the pattern in [local anchor]
+- relevant failure, issue, or behavior: [short note]
+
+Constraints:
+- do not change [API / schema / dependency surface]
+- keep edits inside [scope] unless clearly necessary
+- run [specific verification] before finishing
+
+Done when:
+- [observable behavior or artifact]
+- [tests / lint / build / review condition]
+- [important risk is confirmed not broken]
+```
+
+Even if you later wrap this inside a skill or automation, this shape still holds up well.
+
+### Template 2: plan-first
+
+Use this when implementation should wait for review:
+
+```text
+Goal:
+Improve [system/workflow] so that [desired outcome].
+
+Context:
+- likely affected areas: [files/folders/services]
+- current concern: [risk, ambiguity, or failure]
+- relevant local anchor: [reference file or workflow]
+
+Constraints:
+- do not implement yet
+- prefer reversible changes first
+- call out any human approval points
+
+Done when:
+- a phased plan exists
+- likely touched files are named
+- risks and verification steps are explicit
+```
+
+## Common task-design failure modes
+
+### “Codex touched the wrong files”
+Usually the prompt named a goal but not a starting area or scope boundary.
+
+### “The diff is technically valid but not how our codebase works”
+Usually the prompt lacked a concrete local anchor.
+
+### “The task kept growing while the agent worked”
+Usually the constraints did not say what must stay out of scope.
+
+### “The answer sounds good, but we cannot tell if it is done”
+Usually the Done when section described intent instead of evidence.
+
+### “We turned a repeated workflow into repeated prompting”
+Usually the team should have promoted the procedure into a skill.
 
 ## Fast preflight checklist
 
@@ -189,3 +518,14 @@ Before you send a non-trivial task, check these:
 
 Great Codex task design is not a hidden prompt trick.
 It is the discipline of making the task clear even for another engineer.
+
+## Sharp operating advice
+
+If you only remember six things, remember these:
+
+1. **Write prompts like issues: Goal, Context, Constraints, Done when.**
+2. **Size work so one verification loop can prove health.**
+3. **Ask for a plan first when the first problem is shape, not typing.**
+4. **Use local file anchors instead of abstract architecture slogans.**
+5. **Escalate to skills, MCP, or subagents for the right reasons—not just because the task feels “advanced.”**
+6. **A good prompt should still make sense to a reviewer after Codex is done.**

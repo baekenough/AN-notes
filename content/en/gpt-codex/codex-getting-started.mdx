@@ -20,7 +20,7 @@ connections:
   type: compare
 featured: true
 order: 1
-date: '2026-03-24'
+date: "2026-03-28"
 ---
 
 > **Official References**: [Quickstart](https://developers.openai.com/codex/quickstart) · [CLI Slash Commands](https://developers.openai.com/codex/cli/slash-commands) · [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [Review](https://developers.openai.com/codex/app/review)
@@ -55,49 +55,134 @@ Early on, you only need to answer four questions:
 - How small is your first task?
 - How will you roll back if you dislike the result?
 
+That is the beginner loop:
+**pick a bounded task, give Codex clear context, review the diff, checkpoint the result, repeat.**
+
 ## Where should you start?
 
 Codex can be used through the app, CLI, IDE extension, and cloud flows.
+The official quickstart covers all of them, but they are not equal for learning.
 
 ### Codex app
 Best for most people at the start.
-Review, automations, and worktrees are visible in one place.
+Review, branches, and diff inspection are visible in one place.
+If you want the easiest mental model for “ask → inspect → iterate,” start here.
 
 ### CLI
 Great if you live in the terminal.
-It is the clearest way to see prompts, commands, diff generation, and verification loops.
+It is the clearest way to see prompts, commands, slash commands, and verification loops.
+It is also where many configuration and sandbox details feel most explicit.
 
 ### IDE extension
 Useful if you prefer to stay inside your editor.
-Still, for your first few sessions, the app or CLI usually makes the behavior easier to understand.
+It can feel natural once you already understand the flow, but for your first few sessions the app or CLI often makes Codex behavior easier to reason about.
 
 ### Cloud
 Do not start here unless you already know what your local workflow should look like.
-Local success first, cloud later, is much less confusing.
+Cloud becomes much easier after you already understand task sizing, review, and rollback locally.
+
+## Local first, cloud second
+
+A good beginner sequence is:
+
+1. succeed locally with a tiny task
+2. repeat the loop a few times
+3. learn review and checkpoints
+4. only then move into cloud or automation
+
+This order works because local runs are easier to explain and review, and cloud failures are easier to debug once you already know what a healthy local run looks like.
+The wrong beginner pattern is trying to learn prompts, sandboxing, setup scripts, and cloud runtime behavior all at once.
 
 ## Your first 10 minutes
 
 The Quickstart flow is straightforward:
 
 1. Install the Codex app or CLI
-2. **Sign in with your ChatGPT account or an OpenAI API key**
+2. Sign in
 3. Select the project folder
 4. Send your first task
 
-The docs note that signing in with an API key can limit some features, such as certain cloud capabilities. For most new users, **local project + normal account sign-in** is the simplest path.
+If you use the CLI, the quickstart also makes it easy to point Codex at your current repo and begin with a local request.
+The important beginner move is not picking the perfect tool; it is getting to the first full success loop quickly.
 
-## Start local before you start ambitious
+## Pick the repo before you pick the task
 
-If you try to learn cloud environments, automations, wide permissions, and prompt design at the same time, it becomes hard to tell what actually failed.
+Your first Codex task should happen in a repo that is easy to understand and easy to revert.
+Strong first candidates:
 
-Better first tasks:
+- a personal project you already know
+- an internal docs repo
+- a small service with working tests
+- a side project where a small mistake is cheap
 
-- “Explain this repo in five bullets.”
-- “Find the files most relevant to this error message.”
-- “Identify dead-code candidates in this folder.”
-- “Make a tiny refactor without changing behavior.”
+Weaker first candidates:
 
-That means: choose work that is easy to inspect and easy to revert.
+- the largest monorepo on your machine
+- a repo with broken setup or failing tests
+- a codebase where you cannot tell whether the diff is safe
+- a production-critical service you do not yet understand
+
+Your first win should teach the workflow, not test your courage.
+
+## Size your first task around one obvious review
+
+The best beginner tasks have three traits:
+
+1. **small enough to inspect manually**
+2. **clear enough that success is visible**
+3. **safe enough that rollback is cheap**
+
+Good first-task shapes:
+
+- one docs page
+- one failing test or one narrow test gap
+- one bounded refactor in one directory
+- one bug with a clear reproduction
+
+Poor first-task shapes:
+
+- “modernize the whole app”
+- “fix everything this week”
+- “clean up auth, billing, and onboarding”
+- anything where you cannot name the likely verification step before you start
+
+If you cannot explain how you will review the result, the task is still too large.
+
+## Your first prompt should feel like work, not like a wish
+
+Best Practices recommends giving Codex a clear structure:
+
+- Goal
+- Context
+- Constraints
+- Done when
+
+A strong first prompt looks like this:
+
+```text
+Goal:
+Find unused utility candidates under src/lib/.
+
+Context:
+- Start in src/lib/
+- Prefer import/usage evidence over guesses
+
+Constraints:
+- Investigation only; do not modify files
+
+Done when:
+- You list the top three candidates with reasons
+```
+
+That works because it gives Codex:
+
+- a target
+- a starting point
+- a boundary
+- a finish line
+
+Beginners often think they need an elaborate prompt.
+Usually they need a smaller task and a clearer finish line instead.
 
 ## Use Git checkpoints early
 
@@ -114,61 +199,195 @@ git add -A && git commit -m "checkpoint: before codex task"
 If the result looks good, make another checkpoint after the task.
 This removes a lot of “I think this is better, but I can’t see what happened” anxiety.
 
-## Four commands to learn first
+### A practical checkpoint rhythm
 
-The slash command docs expose many commands, but early on you mostly need these:
+Use checkpoints at these moments:
+
+- before the first Codex task in a repo
+- before any task that might edit multiple files
+- after a result you want to preserve before trying a variation
+- before asking Codex to attempt a riskier follow-up
+
+You do not need perfect commit messages for checkpoints.
+You need fast recovery.
+
+## Review is part of the loop, not the cleanup step
+
+A lot of beginners treat review as optional if the output “looks plausible.”
+That is exactly when they should review.
+
+The official review flow matters early because it helps you answer:
+
+- what changed?
+- which hunks do I want to keep?
+- where did scope drift happen?
+- what feedback should I give before the next turn?
+
+The review pane shows the current Git diff, and `/review` can summarize issues in the working tree.
+That means your loop is really:
+
+1. ask
+2. inspect
+3. review
+4. iterate or accept
+
+not just “ask and hope.”
+
+## Slash commands worth learning in the first week
+
+The CLI exposes many slash commands, but early on you mostly need a small core set.
+
+### `/status`
+Check the current model, approval policy, writable roots, and remaining context.
+When Codex behaves differently than you expected, this is often the fastest diagnostic step.
 
 ### `/init`
 Generate an `AGENTS.md` scaffold in the current directory.
-Learn this as soon as you get tired of re-explaining repo rules.
+Use it once you get tired of re-explaining repo rules.
 
 ### `/review`
 Ask Codex to review your working tree.
-It is the easiest second pass after implementation.
+Use this after implementation or before committing.
 
 ### `/mcp`
-See the MCP tools currently available in the session.
-Useful when you need external docs, trackers, or internal systems.
+See which MCP tools are available in the session.
+This matters once your task depends on external docs, trackers, or systems.
 
-### `/status`
-Check your current model, approval policy, writable roots, and session state.
-When Codex behaves differently than you expected, start here.
+### `/plan`
+Use this when the task crosses multiple files or architecture boundaries and you want a plan before coding.
 
-## Your first prompt should feel like work, not like a wish
+### `/compact`
+Compress the visible conversation when the thread is getting long and noisy.
 
-Avoid “make the whole app better.”
-Try something shaped like this instead:
+Everything else can wait until the first loop feels stable.
 
-```text
-Goal:
-Find unused utility candidates under src/lib/.
-
-Constraints:
-- Investigation only; do not modify files
-- Show import or usage evidence for each candidate
-
-Done when:
-- You list the top three candidates with reasons
-```
-
-This gives Codex a target and a finish line.
-
-## A good first-week checklist
+## A useful onboarding loop for week one
 
 In week one, this progression works well:
 
-1. Small read-only local tasks
-2. Small code changes plus lint/test runs
-3. Use `/review` to inspect the diff again
-4. Use `/init` to draft an `AGENTS.md` for the repo
-5. Promote repeated work into skills or automations only after the workflow feels stable
+### Day 1–2: read-only wins
 
-The healthy order is **task → review → rule-making**, not “turn on everything.”
+- ask for repo explanation
+- ask for file mapping
+- ask for likely change points
+- inspect how Codex reasons before you trust it to edit
+
+### Day 2–3: tiny edits
+
+- docs update
+- narrow refactor
+- one small test improvement
+- always review the diff before you accept it
+
+### Day 3–4: instructions and repeatability
+
+- use `/init`
+- edit the generated `AGENTS.md` so it reflects the real repo
+- add build, lint, or test commands that actually work
+
+### Day 4–5: verification habits
+
+- ask Codex to run the relevant checks
+- use `/review` again
+- compare the diff to the requested scope
+
+### End of week one: stable loop before scale
+
+- only after the loop feels boring should you add more automation
+- only after local success should you move deeper into cloud or unattended workflows
+
+The healthy order is **task → review → rule-making → automation**, not “turn on everything.”
+
+## Common beginner failure modes
+
+### “Codex changed more than I expected”
+Usually the task was too broad or the finish line was vague.
+Shrink the task and add stronger constraints.
+
+### “I cannot tell whether the change is good”
+The task is too large, the repo is unfamiliar, or the review loop is missing.
+Return to a smaller task.
+
+### “It worked once, but I cannot reproduce the success”
+You probably skipped checkpoints, instructions, or verification.
+Write down the loop while it is still fresh.
+
+### “I keep asking for giant tasks”
+That is normal at first.
+Translate them into one reviewable unit of work at a time.
+
+### “Cloud feels confusing”
+That usually means local mental models are not stable yet.
+Go back to the local loop and make it boring first.
+
+## First-task templates you can copy
+
+### Read-only onboarding task
+
+```text
+Goal:
+Explain this repo in five bullets.
+
+Context:
+- Focus on the main application code paths
+- Call out the likely entrypoints and test locations
+
+Constraints:
+- Read-only; do not modify files
+
+Done when:
+- I have a short repo map and the first files I should inspect next
+```
+
+### Tiny bug-fix task
+
+```text
+Goal:
+Fix the empty-state button label in the dashboard.
+
+Context:
+- UI likely lives under src/components/dashboard/
+- Match nearby button copy conventions
+
+Constraints:
+- Keep the change minimal
+- Do not change layout or behavior beyond the label
+
+Done when:
+- The label text is corrected
+- Relevant checks still pass
+```
+
+### Small docs task
+
+```text
+Goal:
+Improve the onboarding paragraph in docs/setup.md.
+
+Context:
+- Keep wording aligned with the surrounding docs tone
+
+Constraints:
+- Edit that file only unless a linked doc also needs a broken link fix
+
+Done when:
+- The explanation is clearer
+- Links still make sense
+- The diff stays small
+```
+
+## Quick checklist before your first serious session
+
+- Am I in the right repo?
+- Is the first task small enough to review manually?
+- Do I know how I will roll back?
+- Did I make a Git checkpoint?
+- Do I know which slash command to use if I get confused?
 
 ## Fast summary
 
 - Start with the **app or CLI on a local repo**.
-- Pick a first task that is small and reversible.
+- Pick a first task that is small, reviewable, and reversible.
 - Use Git checkpoints from day one.
-- Learn `/init`, `/review`, `/mcp`, and `/status` early.
-- Go deeper with instructions, sandboxing, and task design only after your first loop feels solid.
+- Learn `/init`, `/review`, `/diff`, `/mcp`, and `/status` early.
+- Build a boring local success loop before you scale into cloud or automation.

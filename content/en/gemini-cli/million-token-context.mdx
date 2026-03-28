@@ -15,74 +15,152 @@ connections:
     type: "enhances"
 featured: true
 order: 2
-date: "2026-03-24"
+date: "2026-03-28"
 ---
 
-> **Official References**: [Gemini CLI Overview](https://github.com/google-gemini/gemini-cli) · [Project context with GEMINI.md](https://geminicli.com/docs/cli/gemini-md/) · [Token caching](https://geminicli.com/docs/cli/token-caching/)
+> **Official References**: [Gemini CLI overview](https://github.com/google-gemini/gemini-cli) · [Project context with GEMINI.md](https://geminicli.com/docs/cli/gemini-md/) · [Token caching](https://geminicli.com/docs/cli/token-caching/) · [Sub-agents](https://geminicli.com/docs/core/subagents/)
 
-## The 1M-token headline is real — but strategy still matters
+<!-- curriculum:start -->
+## Learning path
 
-The official Gemini CLI docs and repo position **1M tokens** as a major advantage. That is enough for broad, repo-level reasoning that smaller-context tools often have to approximate.
+1. [Getting Started with Gemini CLI](./getting-started) — install, auth, memory basics
+2. **The 1M Token Advantage** — repo-scale analysis without waste ← **You are here**
+3. [Gemini Extensions & MCP](./gemini-extensions) — package commands, MCP, and skills
+4. [Trusted Folders, Sandboxing, and Restore](./trusted-folders-sandboxing) — trust, isolation, and rollback
+5. [Headless Automation with Gemini CLI](./headless-automation) — scripts, CI, structured output
+6. [Sub-agents and Skills Orchestration](./sub-agents-and-skills) — delegation and specialist workflows
 
-But the practical lesson is not "always dump the whole repo into one prompt." The real win is this:
-- do a **broad architectural pass once**
-- then do **targeted follow-up turns** on the risky files
-- keep `GEMINI.md` carrying stable instructions so you do not resend them every time
+### Official docs used in this article
+- **How `GEMINI.md` reduces repeated prompt overhead** — [Project context with GEMINI.md](https://geminicli.com/docs/cli/gemini-md/)
+- **When token caching applies and why auth choice matters** — [Token caching](https://geminicli.com/docs/cli/token-caching/)
+- **How sub-agents help with broad architectural mapping** — [Sub-agents](https://geminicli.com/docs/core/subagents/)
+<!-- curriculum:end -->
 
-## Context Efficiency: Why you still need to save tokens
+## The headline is real, but the workflow matters more than the number
 
-Even with 1 million tokens, reading entire files unnecessarily (`read_file`) increases latency and cost. To use Gemini CLI like a pro, enforce **surgical targeting**:
+Gemini CLI's huge context window is not marketing fluff. It really changes what kind of questions you can ask.
 
-1. **Parallel searching**: Use `grep_search` with conservative limits (`total_max_matches`) and narrow scopes (`include_pattern`) in parallel.
-2. **Read with context**: When searching, request surrounding lines (`context`, `before`, `after`) so the agent does not waste an extra turn opening the file.
-3. **Read ranges**: Use `start_line` and `end_line` to extract only what is needed from massive files.
+You can do things that are awkward with smaller-context tools:
 
-## Patterns that are genuinely good
+- map a large repository before editing
+- reason across `src`, config, docs, and localization at once
+- compare patterns across distant folders in one session
+- keep higher-level architectural questions alive while reading specific files
 
-### 1) Architecture mapping before editing
+But the best practice is **not** “paste the whole repo every time.” The best practice is to use the large window to build a better map, then spend the rest of the session deliberately.
+
+## Use a broad → narrow → delegate loop
+
+This is the most reliable pattern.
+
+### 1. Broad pass
+
+Start with a repo-scale question.
 
 ```bash
-gemini "@src @content @package.json map this application's architecture, content pipeline, and likely maintenance risks"
+gemini "@src @content @messages Map the content architecture, locale strategy, and likely maintenance risks."
 ```
 
-### 2) Delegating to Sub-agents: Codebase Investigator
+You are not asking for implementation yet. You are asking for a map.
 
-When the repository is too vast, delegate the mapping task to the `codebase_investigator` sub-agent.
-Instead of polluting your main chat session, you can ask, "Find the root cause of the ambiguous auth bug" or "Map the entire routing architecture." The sub-agent navigates the code autonomously and returns a synthesized architectural report, saving your precious context window.
+### 2. Narrow pass
 
-### 3) Cross-cutting migrations
+Once the rough map exists, focus only on risky files or unclear subsystems.
 
-```bash
-gemini "@src @package.json We plan to change our content model. Show every place likely affected: loaders, routes, UI, and localization. Group risk by area."
-```
+- which loader actually owns slug resolution?
+- where can frontmatter drift break pages?
+- which component shapes article cards?
 
-## How to avoid wasting the context window
+This is where the big context window pays off. Gemini already knows the larger system and can reason locally without losing the broader thread.
 
-### Prefer structured inclusion over vague prompts
+### 3. Delegate or specialize
 
-Bad:
-```text
-Read everything and tell me what matters.
-```
+If the search space is still large, hand it to a sub-agent such as `codebase_investigator` instead of burning the main conversation history on every search turn.
 
-Better:
+## Large context does not remove the need for targeting
+
+Even with 1M tokens, careless reading still hurts:
+
+- latency rises
+- costs rise
+- answers get noisier
+- the agent spends attention on files that do not matter
+
+That is why the official tooling still matters. Use targeted inclusion, project memory, and sub-agents instead of treating the context window like infinite RAM.
+
+## `GEMINI.md` is how you stop resending stable instructions
+
+One of the easiest wins is moving durable instructions into `GEMINI.md`.
+
+Examples:
+
+- locale parity rules
+- content tone rules
+- frontmatter invariants
+- "always verify links after MDX edits"
+- repo-specific commands and terminology
+
+This does two things at once:
+
+1. it saves prompt budget in every session
+2. it improves consistency across unrelated tasks
+
+The more stable the rule, the less it belongs in your ad-hoc prompt.
+
+## Token caching changes the economics of large-context work
+
+The official docs are clear that token caching depends on the authentication path. In practice, that means repeated large-context workflows are much more attractive when you use API key or Vertex-based auth rather than a casual browser-login mindset.
+
+If you run the same architectural audit repeatedly in CI or as a recurring maintenance task, caching can change the cost profile enough that the workflow becomes practical instead of “interesting but too expensive.”
+
+## Prompts that scale well with big context
+
+### Good: structural questions
+
 ```text
 @src @content @messages
-Explain the content architecture, locale strategy, and where slug parity could drift.
+Explain how article metadata flows from MDX frontmatter into page rendering and SEO.
 ```
 
-### Token caching changes the economics
+### Good: cross-cutting impact analysis
 
-Official docs note that **token caching** is available when you authenticate with a **Gemini API key** or **Vertex AI**. It is **not** currently available for OAuth-style Google account sign-in.
+```text
+@src @content @package.json
+We plan to change content navigation. Which files, routes, and UI surfaces are likely affected?
+```
 
-That means large-context workflows are often cheaper and smoother when you use:
-- `GEMINI_API_KEY`, or
-- Vertex AI project auth
+### Bad: vague totalizing requests
 
-Use `/stats` to inspect usage and cached-token savings during longer sessions.
+```text
+Read everything and tell me what's important.
+```
+
+The bad version forces the model to guess your decision criteria. The good versions tell it what lens to apply.
+
+## When the big window is most valuable
+
+You get outsized value when the task spans multiple layers:
+
+- content + routing
+- localization + SEO
+- docs + generated artifacts
+- scripts + repo structure
+- architecture + implementation risks
+
+That is why Gemini CLI often feels strongest in medium-to-large repos that mix code, content, and operations.
+
+## When *not* to reach for the whole repo
+
+Do not pay the large-context tax for tiny jobs:
+
+- editing one article title
+- fixing one typo
+- changing a single component class
+- answering a question about one command flag
+
+For small work, a tight prompt is still faster and clearer.
 
 ## Recommended next reads
 
-- Deep dive into delegation: [Sub-agents and Skills](/gemini-cli/sub-agents-and-skills)
-- [Gemini Extensions & MCP](/gemini-cli/gemini-extensions)
-- [Headless Automation](/gemini-cli/headless-automation)
+- Learn safe repo-scale execution in [Trusted Folders, Sandboxing, and Restore](/gemini-cli/trusted-folders-sandboxing)
+- Learn how to delegate big investigations in [Sub-agents and Skills](/gemini-cli/sub-agents-and-skills)

@@ -74,7 +74,9 @@
 }
 
 @theme inline {
-  --font-sans: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Geist", "Geist Fallback", "Pretendard Variable", "Pretendard",
+    "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", ui-sans-serif,
+    system-ui, sans-serif;
   --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);

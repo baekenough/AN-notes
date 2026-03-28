@@ -20,7 +20,7 @@ connections:
   type: compare
 featured: false
 order: 7
-date: '2026-03-24'
+date: "2026-03-28"
 ---
 
 > **Referencias Oficiales**: [MCP](https://developers.openai.com/codex/mcp) · [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [Sandboxing](https://developers.openai.com/codex/concepts/sandboxing)
@@ -53,32 +53,72 @@ Eso funciona una o dos veces, pero se rompe pronto:
 - la procedencia se vuelve difusa
 - el trabajo repetido duele más de la cuenta
 
-MCP importa porque permite que Codex **conecte contexto externo de forma estructural en lugar de cargarlo manualmente**.
+MCP importa porque permite que Codex **conecte contexto externo de forma estructural en lugar de cargarlo manualmente**. También hace explícito **de dónde viene**, **cuándo conviene consultarlo** y **qué frontera de confianza estás cruzando**.
 
 ## Dónde aporta más valor
+
+MCP suele pagar su coste cuando el repositorio no basta por sí solo.
+Casos típicos:
 
 - portales internos de documentación
 - acceso a Jira, Linear o GitHub issues
 - sistemas de diseño y repos de especificación
 - runbooks y playbooks operativos
+- catálogos internos de APIs o contratos entre servicios
 - acceso de solo lectura a herramientas internas o fuentes de datos
 
 Si el código por sí solo no basta, MCP suele ser la siguiente superficie correcta.
+Si el problema sigue siendo puramente local al repo, probablemente todavía no hace falta.
 
-## Flujo básico de setup
+## Dónde vive la configuración
 
-La documentación de MCP explica que la configuración suele vivir junto con la config de Codex, normalmente en `~/.codex/config.toml`.
-El CLI y la extensión de IDE comparten esa configuración. En proyectos trusted, también puedes usar `.codex/config.toml` a nivel de repo.
+La configuración MCP vive en `config.toml`. Normalmente la verás en la configuración general de Codex, compartida por el CLI y el IDE. Además, en proyectos **trusted** puedes usar una configuración a nivel de proyecto dentro de `.codex/config.toml`.
 
-Un ejemplo básico por CLI:
+En la práctica, conviene pensar en dos niveles:
+
+- **personal/global**: conexiones que quieres disponibles casi siempre
+- **por proyecto trusted**: conexiones específicas del repo, del dominio o del equipo
+
+Una regla sana es: si una integración solo tiene sentido dentro de un proyecto concreto, colócala a nivel de proyecto en vez de ensuciar tu configuración global.
+
+## Dos puntos de entrada que debes memorizar
+
+Hay dos entradas que hacen casi todo el trabajo operativo:
+
+### 1. `codex mcp add ...`
+Es la forma más rápida de registrar un servidor MCP desde CLI.
 
 ```bash
 codex mcp add context7 -- npx -y @upstash/context7-mcp
 ```
 
-Y dentro de la sesión, `/mcp` muestra las herramientas MCP configuradas.
+Úsalo cuando quieras añadir una integración de forma repetible, sin editar a mano el archivo de configuración.
 
-## El prompt debe cambiar una vez que existe MCP
+### 2. `/mcp`
+Dentro de una sesión, `/mcp` te deja ver qué herramientas MCP están configuradas y disponibles.
+
+Es el comando que conviene usar cuando quieres responder rápidamente preguntas como:
+
+- “¿ya está conectado este servidor?”
+- “¿cómo se llama exactamente?”
+- “¿esta sesión ve la integración esperada?”
+
+Entre `codex mcp add ...` y `/mcp` resuelves buena parte del setup y del troubleshooting básico.
+
+## Quickstart práctico y seguro
+
+Si quieres introducir MCP sin meter ruido de más, este orden suele funcionar bien:
+
+1. **Empieza por un caso real**: un issue tracker, un portal de docs o un runbook que ya consultas a mano.
+2. **Conecta una sola fuente** con `codex mcp add ...`.
+3. **Confirma visibilidad** con `/mcp`.
+4. **Usa prompts que exijan consultar la fuente**, no prompts genéricos.
+5. **Mantén la integración en read-only** mientras validas si de verdad mejora el flujo.
+6. **Solo después** decide si merece vivir en tu config global o en `.codex/config.toml` del proyecto trusted.
+
+Ese orden evita el error clásico de “instalamos varias integraciones, pero nadie sabe cuál aporta valor real”.
+
+## Qué cambia en el prompt una vez que existe MCP
 
 Si conectas MCP pero sigues pegando todo a mano, pierdes casi todo el beneficio.
 
@@ -91,51 +131,165 @@ resume los cambios recientes de reglas,
 y luego mapea el impacto probable en el código.
 ```
 
-La clave no es solo “usar contexto externo”.
-La clave es **decirle a Codex qué contexto consultar y en qué orden**.
+La clave no es solo “usar contexto externo”, sino **decirle a Codex qué contexto consultar, en qué orden y para decidir qué**.
+
+## Patrones de prompt que suelen funcionar mejor
+
+### Patrón 1: fuente → resumen → impacto
+
+```text
+Consulta la documentación conectada por MCP sobre autenticación,
+resume los cambios relevantes para el flujo de login,
+y luego señala qué archivos del repo revisar primero.
+```
+
+Útil cuando primero necesitas entender y luego aterrizar el cambio en código.
+
+### Patrón 2: ticket → criterios → implementación
+
+```text
+Abre el ticket conectado por MCP,
+extrae criterios de aceptación y restricciones,
+compáralos con la implementación actual,
+y propone el diff mínimo.
+```
+
+Útil para evitar que el issue tracker sea solo “contexto decorativo”.
+
+### Patrón 3: runbook → diagnóstico → verificación
+
+```text
+Lee el runbook de incidentes conectado,
+resume los checks obligatorios,
+aplícalos al servicio actual
+y termina con una lista de verificaciones pendientes.
+```
+
+Útil cuando quieres que Codex trabaje como operador disciplinado y no solo como generador de texto.
+
+### Patrón 4: pedir procedencia visible en la respuesta
+
+```text
+Usa la documentación conectada por MCP para responder esto,
+resume la regla clave con tus palabras,
+di qué fuente consultaste,
+y recién después recomienda el cambio mínimo.
+```
+
+Útil cuando quieres que la respuesta quede anclada a una fuente visible y no solo a una impresión general del modelo.
 
 ## Buenas reglas de operación con MCP
 
 ### 1. Empieza read-only
 No arranques con servidores write-capable amplios si no son realmente necesarios.
+La mayoría de equipos obtiene mucho valor solo con lectura.
 
 ### 2. Mantén pequeña la lista de servidores trusted
 Docs, tickets y search suelen ser las mejores primeras conexiones.
+Pocas integraciones bien entendidas valen más que un catálogo enorme y opaco.
 
-### 3. Documenta las superficies trusted en `AGENTS.md`
-Eso ayuda a todo el equipo a entender qué sistemas externos se esperan y se consideran seguros.
+### 3. Usa config de proyecto cuando el contexto es local
+Si una integración aplica solo a un repo o a un dominio concreto, usa `.codex/config.toml` en proyectos trusted.
+Eso reduce ambigüedad y mejora el onboarding.
 
-### 4. Minimiza secretos y permisos
-MCP es otra superficie de cruce de frontera. Least privilege sigue aplicando.
+### 4. Documenta las superficies trusted en `AGENTS.md`
+Eso ayuda a todo el equipo a entender qué sistemas externos se esperan, cuáles son solo read-only y cuáles requieren precaución extra.
+
+### 5. Diseña prompts que nombren la fuente
+“Investiga el problema” es peor que “revisa el ticket conectado y el runbook de pagos antes de proponer cambios”.
+La especificidad aumenta mucho la probabilidad de uso correcto.
+
+### 6. Pide resumen y procedencia
+Cuando el contexto externo importa, pide un resumen corto y la fuente consultada antes de pasar a editar.
+Eso mejora trazabilidad y reduce alucinaciones operativas.
+
+### 7. Revisa sandbox y permisos como si fueran parte del diseño
+MCP no sustituye el sandbox: lo vuelve más importante.
+Cuanto más contexto externo conectas, más vale la pena que los límites estén bien pensados.
+
+## Proyecto trusted no significa “todo vale”
+
+Que un proyecto sea trusted solo significa que puedes usar configuración y comportamiento a nivel de repo con más confianza.
+No significa que debas abrir acceso indiscriminado.
+
+Una forma útil de decidir qué va en `.codex/config.toml` del proyecto:
+
+- la integración solo tiene sentido en ese repo
+- el equipo entero la usa con frecuencia
+- la superficie de permisos es entendible
+- existe una razón clara para no pedir setup manual a cada persona cada vez
+
+Si no se cumplen varias de esas condiciones, probablemente conviene dejar la integración fuera del repo.
 
 ## MCP + skills es una combinación fuerte
 
-MCP trae contexto. Las skills encapsulan procedimiento.
-Juntas pueden crear workflows repetibles muy potentes.
+MCP trae contexto. Las skills encapsulan procedimiento. Juntas crean workflows repetibles muy potentes.
 
 Ejemplos:
 
 - una skill de release notes lee issues y metadatos de PR vía MCP
 - una skill de bug triage mira docs de incidentes más el estado del ticket
 - una skill de docs update consulta referencias oficiales por MCP antes de editar copy
+- una skill de onboarding técnico combina documentación interna conectada con un checklist fijo del equipo
+
+Una forma práctica de pensarlo:
+
+- **MCP responde**: “¿qué información externa necesito?”
+- **skill responde**: “¿qué pasos repetimos siempre una vez que ya tenemos esa información?”
+
+## Señales de que tu integración MCP está bien diseñada
+
+- el prompt se acorta, no se alarga
+- el equipo deja de copiar y pegar contexto a mano
+- se vuelve obvio qué fuente consultar primero
+- los resúmenes son más trazables
+- la misma integración sirve en varias tareas reales, no solo en demos
+
+Si nada de eso está pasando, quizá el problema no era la falta de MCP sino la falta de una tarea mejor definida.
 
 ## Fallos típicos
 
 ### “El servidor está conectado, pero Codex no lo usa”
 Muchas veces el prompt nunca pidió con claridad ese contexto externo.
+Conectar no basta; hay que orientar el trabajo.
 
 ### “Conectamos demasiadas cosas y ahora la confianza es difusa”
 Normalmente conviene reducir el conjunto de servidores y hacerlo más intencional.
+Menos superficie también simplifica soporte interno.
 
 ### “Ahora que tenemos MCP, el sandbox importa menos”
-Suele ser al revés. Más acceso externo implica que el diseño de límites importa más.
+Suele ser al revés.
+Más acceso externo implica que el diseño de límites importa más.
 
-## Checklist rápido
+### “La integración solo vive en la máquina de una persona”
+Ese suele ser el síntoma de que algo que debía ir a `.codex/config.toml` del proyecto sigue atrapado en una configuración personal.
+
+### “Hay acceso, pero no hay método”
+Si cada prompt decide de cero cómo usar la fuente externa, probablemente falta una skill o una guía breve en `AGENTS.md`.
+
+## Checklist antes de agregar una nueva superficie MCP
+
+Antes de conectar una nueva superficie MCP:
 
 - ¿de verdad hace falta información fuera del repo?
 - ¿conectar es mejor que copiar y pegar aquí?
 - ¿puedes empezar en read-only?
+- ¿la integración encaja mejor en config global o en `.codex/config.toml` del proyecto trusted?
 - ¿el equipo acordó qué servidores son trusted?
 - ¿el prompt especifica cuándo y por qué debe usar Codex la superficie MCP?
+- ¿quedó claro qué parte es contexto, qué parte es decisión y qué parte es ejecución?
 
-MCP es la superficie que hace que Codex pase de “trabaja sobre código” a “trabaja con contexto”.
+## Checklist antes de pedirle trabajo a Codex con MCP
+
+Cuando ya tienes MCP conectado:
+
+- usa `/mcp` al inicio si sospechas un problema de visibilidad
+- nombra la fuente externa en el prompt
+- deja clara la fuente que debe leerse primero
+- pide resumen antes de pedir implementación
+- pide también la procedencia cuando el contexto externo sea decisivo
+- mantén las conexiones de alto riesgo fuera del camino por defecto
+- documenta qué integraciones son esperadas en el equipo
+- revisa periódicamente si una integración sigue aportando valor real
+
+MCP es la superficie que hace que Codex pase de “trabaja sobre código” a “trabaja con contexto”. Bien diseñado, reduce trabajo manual, mejora trazabilidad y vuelve operable el contexto externo.

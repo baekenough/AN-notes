@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Noto_Sans_KR } from "next/font/google";
 import { notFound } from "next/navigation";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
@@ -14,6 +15,12 @@ import {
   siteName,
   toAbsoluteUrl,
 } from "@/lib/seo";
+
+const notoSansKr = Noto_Sans_KR({
+  weight: ["400", "500", "700"],
+  preload: false,
+  display: "swap",
+});
 
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
@@ -74,7 +81,12 @@ export default async function LocaleLayout({
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
-      <div className="flex min-h-screen flex-col">
+      <div
+        lang={locale}
+        className={`flex min-h-screen flex-col ${
+          locale === "ko" ? notoSansKr.className : ""
+        }`}
+      >
         <SiteHeader locale={locale} />
         <main className="flex-1">{children}</main>
         <SiteFooter />

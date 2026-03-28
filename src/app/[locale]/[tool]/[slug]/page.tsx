@@ -19,6 +19,7 @@ import { MdxContent } from "@/components/mdx-content";
 import { ConnectedGuides } from "@/components/connected-guides";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { formatIsoDate } from "@/lib/utils";
 
 const validTools: Tool[] = ["claude-code", "gpt-codex", "gemini-cli"];
 
@@ -114,6 +115,7 @@ export default async function TipPage({
   const toolConfig = getToolConfig(tool as Tool);
   const safeLocale = ensureLocale(locale);
   const canonicalUrl = toAbsoluteUrl(getLocalePath(safeLocale, `/${tool}/${slug}`));
+  const formattedDate = formatIsoDate(tip.date, locale);
   const articleJsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",
@@ -193,6 +195,15 @@ export default async function TipPage({
           <span className="text-sm text-muted-foreground font-mono">
             {t("tip.readingTime", { minutes: tip.readingTime })}
           </span>
+          <span className="text-muted-foreground/30" aria-hidden="true">
+            ·
+          </span>
+          <time
+            dateTime={tip.date}
+            className="text-sm text-muted-foreground"
+          >
+            {t("tip.updatedOn", { date: formattedDate })}
+          </time>
         </div>
 
         <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-4">

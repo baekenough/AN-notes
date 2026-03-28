@@ -40,7 +40,7 @@ export const tools: ToolConfig[] = [
     gradient: 'from-blue-500/20 to-cyan-500/20',
     icon: 'G',
     status: 'active',
-    url: 'https://github.com/google-gemini/gemini-cli',
+    url: 'https://geminicli.com/docs/',
   },
 ];
 

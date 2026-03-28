@@ -24,7 +24,7 @@ connections:
   type: compare
 featured: false
 order: 8
-date: '2026-03-24'
+date: "2026-03-28"
 ---
 
 > **Official References**: [Review](https://developers.openai.com/codex/app/review) · [Automations](https://developers.openai.com/codex/app/automations) · [Worktrees](https://developers.openai.com/codex/app/worktrees) · [How OpenAI uses Codex](https://openai.com/business/guides-and-resources/how-openai-uses-codex/)
@@ -55,6 +55,9 @@ A repeatable Codex workflow is much more valuable.
 
 This is where review loops, maintenance work, docs sync, safe refactors, and narrow automation all start compounding.
 
+The key shift is moving from **“Codex can help me once”** to **“Codex can help us the same way every week.”**
+That second version needs scoped review, isolation, and stable operating rules.
+
 ## Make `/review` part of the habit
 
 The Review docs explain that the review pane reflects your Git repository state.
@@ -64,7 +67,7 @@ By default it focuses on **uncommitted changes**, and you can switch the scope t
 - last-turn changes only
 - staged vs unstaged changes locally
 
-That matters because it turns Codex output back into an engineering artifact you can inspect before you trust it.
+That turns Codex output back into something you can verify and inspect before you trust it.
 
 A strong short loop is:
 
@@ -72,6 +75,45 @@ A strong short loop is:
 2. lint / build / tests
 3. `/review`
 4. stage, revert, or revise
+
+This keeps Codex grounded in two things:
+
+- the verification output
+- the actual diff a human will merge or reject
+
+## Use the right review scope for the question you are asking
+
+The review pane is more useful when you deliberately switch scope instead of treating `/review` as a single generic action.
+
+### Uncommitted changes
+Use this for the default local safety pass.
+Best when you want to inspect the work that has not yet been staged or committed.
+
+### All branch changes against the base branch
+Use this when the task has lasted several turns or several commits and you want the full branch picture.
+This is the right lens before opening a PR or handing work to a reviewer.
+
+### Last-turn changes only
+Use this when you want to inspect what the most recent instruction actually changed.
+This is especially useful after a narrow follow-up such as:
+
+- “tighten the checklist”
+- “only fix the failing test”
+- “reword the intro, nothing else”
+
+### Staged vs unstaged changes
+Use this when you are separating “ready to keep” from “still under revision.”
+It is a good fit for surgical commits and for partial rollback decisions.
+
+The practical rule:
+
+- use **last-turn** for immediate audit
+- use **uncommitted** for active working-tree cleanup
+- use **branch vs base** before wider review or merge
+- use **staged vs unstaged** when you are curating what ships
+
+Review scope is not a UI detail.
+It changes which mistakes become visible.
 
 ## Which changes deserve the heaviest review?
 
@@ -85,18 +127,52 @@ Human review becomes especially important for:
 
 Codex can produce a fast draft, but irreversible judgment still belongs to humans.
 
+Add extra human attention when the workflow crosses any of these boundaries:
+
+- production deploy approval
+- permission or secret scope changes
+- schema migrations
+- destructive cleanup or deletion
+- user-visible policy, pricing, or compliance text
+
+The bigger the blast radius, the less sensible it is to rely on a purely unattended loop.
+
 ## Worktrees give you speed and isolation together
 
 The Worktrees docs describe how Codex can run multiple independent tasks in parallel inside the same project without stepping on each other.
 In Git repositories, automations can also run on dedicated background worktrees.
 
-That is useful because it:
+That is useful because it reduces conflict with your main working tree, isolates experimental runs, and makes recurring automation safer. A worktree is both a speed feature and a blast-radius feature, and one of the cleanest ways to separate local work from background runs.
 
-- reduces conflict with your main working tree
-- isolates experimental runs
-- makes recurring automation safer
+### Good worktree use cases
 
-A worktree is both a speed feature and a blast-radius feature.
+- a risky docs rewrite while your main tree stays stable
+- one branch for implementation and another for verification or comparison
+- a recurring automation that should not touch your active local edits
+- parallel issue-sized tasks that would otherwise collide in one directory
+
+### What worktrees are really buying you
+
+1. **Isolation** — one run does not overwrite another run’s state
+2. **Parallelism** — multiple tasks can move at once
+3. **Cleaner review** — each branch or worktree has a narrower story
+4. **Safer automation** — scheduled runs do not stomp on active development
+
+If you want Codex to do parallel work responsibly, worktrees are one of the best primitives.
+
+## A practical worktree operating pattern
+
+For repeated engineering work, a stable pattern looks like this:
+
+1. keep your main working tree for the primary branch of work
+2. create separate worktrees for independent tasks or background routines
+3. keep each worktree tied to one issue-shaped prompt or one automation purpose
+4. review each output in its own scope before merging across branches
+
+That keeps the mental model simple:
+
+- one worktree, one purpose
+- one review story, one merge decision
 
 ## Use automations only after the workflow is stable
 
@@ -116,6 +192,16 @@ Bad automation candidates:
 - flows with broad secret or production access
 - deployment steps with high failure cost
 
+The safe maturity ladder is:
+
+1. get the workflow working manually
+2. tighten the prompt until the outputs are predictable
+3. package the repeated procedure as a skill if needed
+4. move it into a worktree-friendly isolated run
+5. automate only after the human review path is already clear
+
+If the workflow still needs frequent prompt repair, it is not ready for unattended cadence yet.
+
 ## What Codex looks like in CI/CD in practice
 
 The most practical pattern is rarely “let Codex merge by itself.”
@@ -130,6 +216,42 @@ Examples:
 
 The value is less about full autonomy and more about repeatable pre-review acceleration.
 
+That is why human gates still matter.
+
+Good human gates in CI/CD include:
+
+- approving a PR after Codex-generated review output
+- confirming schema or migration changes before merge
+- checking risky diffs in `/review` before staging
+- deciding whether an automation finding deserves escalation
+- controlling deploy promotion even if the analysis was automated
+
+CI/CD should usually answer:
+
+- what changed
+- what checks passed
+- what needs attention
+
+Humans should still answer:
+
+- should this merge
+- should this deploy
+- is this risk acceptable
+
+## Do not confuse “automated” with “fully autonomous”
+
+A strong Codex workflow in CI/CD is often semi-automated by design.
+
+Examples:
+
+- automation gathers recent changes, but a human approves the release note wording
+- automation drafts a docs sync diff, but a reviewer checks tone and correctness
+- automation runs in a background worktree, but merge stays manual
+- Codex summarizes likely risk areas, but humans decide whether to block the release
+
+This is not a weakness.
+It is usually the right reliability tradeoff.
+
 ## Skill + automation + worktree + review
 
 Once a workflow is stable, this combination is powerful:
@@ -140,6 +262,40 @@ Once a workflow is stable, this combination is powerful:
 - `/review` = final inspection
 
 When those four pieces fit together, Codex starts behaving less like a one-off assistant and more like a repeatable engineering system.
+
+### A concrete combo pattern
+
+Example: recurring docs drift detection
+
+1. **skill** — defines how to compare current docs against the codebase
+2. **automation** — runs every week or after relevant merges
+3. **worktree** — gives the run an isolated place to write or stage results
+4. **`/review`** — lets a human inspect the generated diff cleanly before keeping it
+
+Example: low-risk maintenance triage
+
+1. skill collects standard evidence
+2. automation runs on cadence
+3. worktree keeps the run separate from active feature work
+4. review scope narrows the final human decision
+
+The sequence matters: **skill** gives shape, **automation** gives repetition, **worktree** gives safety, and **review** gives trust.
+
+## CI/CD patterns that work well
+
+### Pattern 1: Pre-review analysis
+Use Codex to summarize risk areas, missing tests, or likely regressions before human PR review.
+
+### Pattern 2: Docs or changelog drafting
+Use Codex to generate a first pass from known inputs, then keep human editorial approval.
+
+### Pattern 3: Label-to-task conversion
+Use issue metadata to produce issue-shaped prompts that humans or follow-on agents can execute.
+
+### Pattern 4: Narrow maintenance automations
+Use Codex for repeated low-risk scans, summaries, or drift detection rather than feature shipping.
+
+All four patterns preserve a human checkpoint while still saving real time.
 
 ## Increase maturity in steps
 
@@ -160,6 +316,78 @@ Narrow CI/CD integration
 
 This staged approach keeps the failure surface understandable.
 
+The ordering matters.
+Trying to jump directly to Stage 5 usually means automating a workflow that nobody has made stable yet.
+
+## Signs you are automating too early
+
+- the prompt still needs manual rewriting every run
+- outputs are inconsistent between runs
+- reviewers do not know what to validate
+- the task still mixes exploration, implementation, and final decision-making
+- one failure spills into too many unrelated parts of the repository
+
+If several of these are true, step back and improve task design, the skill, or the manual loop before adding more cadence.
+
+## Practical operating recipes
+
+### Repeated docs updates
+
+1. package the comparison logic as a skill
+2. run it in a dedicated worktree
+3. execute lint or validation checks
+4. inspect the output in `/review`
+5. keep the final merge decision human
+
+### PR triage automation
+
+1. define the intake procedure in a skill
+2. run automation on cadence or label trigger
+3. keep results in an isolated worktree or branch
+4. let a human decide comments, labels, escalation, or follow-on work
+
+### Long-running refactor assistance
+
+1. keep the main working tree for active development
+2. let Codex generate bounded diffs in a separate worktree
+3. use subagents only when exploration truly splits cleanly
+4. review each isolated diff before integrating it back
+
+## Common failure modes in review and automation setups
+
+### “The automation keeps producing useful-looking noise”
+Usually the prompt is too broad or the success criteria are not mechanical enough.
+
+### “Background runs interfere with active work”
+Usually the workflow should move into a dedicated worktree.
+
+### “Review feels expensive because the diff is too messy”
+Usually the task was too large for one verification loop or the prompt lacked constraints.
+
+### “The team cannot tell what the automation is allowed to decide”
+Usually the human gates were never written down explicitly.
+
+### “Codex is technically helping, but merge confidence is still low”
+Usually the workflow is missing one of the four stabilizers:
+
+- a skill for consistent procedure
+- a worktree for isolation
+- a review habit for inspection
+- a clear human decision point
+
+## A practical go/no-go checklist for productionizing a workflow
+
+Before you attach Codex to CI/CD, ask:
+
+- Is the task already reliable when run manually?
+- Is the prompt issue-shaped and reviewable?
+- Are the outputs easy to inspect in `/review`?
+- Should the run happen in a dedicated worktree?
+- Is the human approval point explicit?
+- Would failure create inconvenience, or real operational risk?
+
+If the last answer is “real operational risk,” keep the automation narrow and keep the human gate obvious.
+
 ## Final operating checklist
 
 Before you automate or productionize a workflow, ask:
@@ -172,3 +400,14 @@ Before you automate or productionize a workflow, ask:
 
 The teams that use Codex well over time are not the teams with the broadest permissions.
 They are the teams that keep reviewable, repeatable boundaries.
+
+## Sharp operating advice
+
+If you only remember six things, remember these:
+
+1. **Use `/review` with the scope that matches the question you are asking.**
+2. **Treat worktrees as both isolation and parallelism tools.**
+3. **Automate only after the manual workflow is stable and boring.**
+4. **Keep human gates for merge, deploy, migration, and other high-blast-radius decisions.**
+5. **Use skill + automation + worktree + `/review` together when you want repeatable leverage without losing trust.**
+6. **The best CI/CD Codex workflows accelerate judgment—they do not replace it.**

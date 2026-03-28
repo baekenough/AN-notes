@@ -20,7 +20,7 @@ connections:
   type: compare
 featured: false
 order: 7
-date: '2026-03-24'
+date: "2026-03-28"
 ---
 
 > **Official References**: [MCP](https://developers.openai.com/codex/mcp) · [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [Sandboxing](https://developers.openai.com/codex/concepts/sandboxing)
@@ -55,6 +55,32 @@ That works once or twice, but it breaks down quickly:
 
 MCP matters because it lets Codex **connect to external context structurally instead of carrying it around manually**.
 
+In practice, that changes the workflow in two ways:
+
+1. **You keep the prompt focused on the task.** Instead of pasting fifty lines of background, you tell Codex which connected source to read.
+2. **You make context retrieval repeatable.** The next person—or the next automation run—can use the same server and the same operating pattern.
+
+## When to reach for MCP instead of just prompting harder
+
+A simple rule:
+
+- use a plain prompt when the context already lives in the repository
+- use `AGENTS.md` for durable repo rules
+- use a skill for repeated procedure
+- use MCP when the missing information lives **outside** the repository and you want Codex to fetch it directly
+
+That means MCP is not “advanced prompting.”
+It is an access layer.
+
+Good signals that MCP is the right move:
+
+- the work depends on an issue tracker state that changes daily
+- the authoritative docs live in a wiki or internal portal
+- the repo only contains code, but the decision depends on a policy, runbook, or incident note
+- the same external system is consulted over and over again
+
+If you are repeatedly telling Codex, “Use this outside system before doing the work,” MCP is usually the right surface.
+
 ## Where MCP pays off most
 
 - internal documentation portals
@@ -67,8 +93,12 @@ If code alone is not enough context, MCP is often the next surface to reach for.
 
 ## Basic setup flow
 
-The MCP docs explain that Codex stores MCP configuration alongside other config, usually in `~/.codex/config.toml`.
-The CLI and IDE extension share that configuration. In trusted projects, you can also scope MCP setup inside `.codex/config.toml`.
+The MCP docs explain that Codex stores MCP configuration in `config.toml`, shared by the CLI and IDE extension. In trusted projects, you can also scope MCP setup inside project-level config such as `.codex/config.toml`.
+
+That gives you two practical patterns:
+
+- **personal/global MCP config** for tools you use across many repositories
+- **project-scoped MCP config** for servers that only make sense inside one trusted codebase
 
 A basic CLI example looks like this:
 
@@ -77,6 +107,35 @@ codex mcp add context7 -- npx -y @upstash/context7-mcp
 ```
 
 And inside a session, `/mcp` shows the currently configured MCP tools.
+
+### A safe first-day loop
+
+1. Add one useful read-only server with `codex mcp add ...`
+2. Start Codex in the target project
+3. Run `/mcp` and confirm the server is visible
+4. Give Codex an explicit instruction to read from that source before changing code
+5. Review the summary before trusting downstream edits
+
+This is intentionally boring.
+A boring setup loop is usually a safe setup loop.
+
+## Project-scoped vs personal MCP configuration
+
+A useful rule of thumb is to scope by **trust boundary** and **reuse frequency**.
+
+### Put it in personal config when:
+
+- the server is broadly useful across many repos
+- the access policy is tied to you, not the project
+- the tool is part of your normal personal workflow
+
+### Put it in project config when:
+
+- the server is specific to one team or codebase
+- the server should only appear in trusted projects
+- you want the rest of the team to share the same local default
+
+Project scoping lowers the chance of dragging the wrong external tools into the wrong repository. It also makes onboarding easier: clone the trusted repo, inherit the expected context surface.
 
 ## Your prompts should change once MCP exists
 
@@ -94,6 +153,49 @@ then map the likely code impact.
 The key is not just “use external context.”
 It is **tell Codex what outside context to consult and in what order.**
 
+## Prompt patterns that work well with MCP
+
+### Pattern 1: Read, summarize, then act
+
+```text
+Read the connected onboarding runbook,
+list the required configuration changes,
+then update the local setup guide to match it.
+```
+
+Use this when correctness depends on first understanding a source.
+
+### Pattern 2: Compare repository reality against external policy
+
+```text
+Check the connected security standard for session timeout rules,
+compare it with the current auth implementation,
+and flag any mismatches before proposing code changes.
+```
+
+Use this when the task is partly audit and partly implementation.
+
+### Pattern 3: Gather external context before triage
+
+```text
+Read the linked bug ticket history,
+extract the latest reproduction details,
+then inspect the matching module and suggest likely failure points.
+```
+
+Use this when the bug report evolves outside the repo.
+
+### Pattern 4: Ask for provenance in the answer
+
+```text
+Use the connected docs server to answer this.
+Quote the key rule in your own words,
+name the source you relied on,
+then recommend the smallest code change.
+```
+
+Use this when you want the output to stay anchored to a visible source.
+
 ## Good MCP operating rules
 
 ### 1. Start read-only
@@ -108,16 +210,74 @@ That helps the whole team understand which external systems are expected and saf
 ### 4. Minimize secrets and permissions
 MCP is another boundary crossing surface. Least privilege still applies.
 
+### 5. Treat `/mcp` as a preflight check
+Before a complicated task, use `/mcp` to confirm the expected tools are actually present.
+This avoids the common mistake of writing a prompt that assumes access which is not configured.
+
+### 6. Ask for fetch order, not just fetch intent
+“Use MCP if needed” is weak.
+“Read the connected spec first, then compare it with the local implementation” is much stronger.
+
+## What a good team rollout looks like
+
+A healthy rollout usually looks like this:
+
+1. pick one high-value server category, usually docs or issue tracking
+2. make access read-only first
+3. document when the team expects Codex to use it
+4. add prompt examples to your internal playbook or `AGENTS.md`
+5. only later add more servers if the first one is clearly paying off
+
+Teams get into trouble when they connect everything at once. The goal is not maximum connectivity, but **reliable, reviewable context access**.
+
 ## MCP plus skills is a strong combination
 
-MCP fetches context. Skills package procedure.
-Together they can create powerful repeatable workflows.
+MCP fetches context. Skills package procedure. Together they create repeatable workflows.
 
 Examples:
 
 - a release-note skill reads MCP-backed issues and PR metadata
 - a bug triage skill looks at incident docs plus current ticket state
 - a docs update skill checks official references through MCP before editing copy
+
+A useful mental model is:
+
+- **MCP answers “where does the outside context come from?”**
+- **skills answer “what sequence should Codex follow once it has that context?”**
+
+Add automations and the same procedure can run on a schedule without asking a human to reassemble the context each time.
+
+## Three practical MCP workflows
+
+### Ticket-first bug fixing
+
+Use when the current issue state matters more than old commit history.
+
+1. ask Codex to read the connected ticket
+2. extract reproduction steps and latest comments
+3. compare that against the current code
+4. make the smallest fix
+5. summarize what changed and what ticket context drove the change
+
+### Runbook-backed operations change
+
+Use when repo code alone is insufficient.
+
+1. read the connected runbook
+2. identify the authoritative operational rule
+3. compare it to scripts or docs in the repo
+4. update local docs or scripts
+5. include the external rule in the rationale
+
+### Spec-to-code verification
+
+Use when implementation drift is likely.
+
+1. read the connected product or API spec
+2. list the relevant acceptance rules
+3. inspect the current implementation
+4. mark matches, mismatches, and unknowns
+5. only then propose edits
 
 ## Common failure modes
 
@@ -130,12 +290,35 @@ Usually the server set needs to be smaller and more intentional.
 ### “Now that we have MCP, sandboxing matters less”
 Usually the opposite. More external access means boundary design matters more.
 
-## Quick checklist
+### “The model keeps reading the wrong source first”
+This is often a prompt-shaping problem. Tell Codex the fetch order explicitly.
 
-- Is outside-repo information truly required?
-- Is connection better than copy-paste here?
+### “The team cannot tell which external systems are approved”
+This is usually an operating-rules problem. Write down the approved servers and their purpose.
+
+## Quick checklist before you add a server
+
+- Is the missing context truly outside the repo?
+- Will this source stay useful across multiple tasks?
 - Can you begin read-only?
-- Does the team agree on which servers are trusted?
-- Does the prompt specify when and why Codex should use the MCP surface?
+- Is the trust boundary clear?
+- Should this live in your personal config or only in a trusted project?
+
+## Quick checklist before you prompt with MCP
+
+- Did you confirm the server with `/mcp`?
+- Did you name the external source Codex should consult?
+- Did you specify the order of operations?
+- Did you ask for a summary before major edits?
+- Did you keep the requested permissions narrower than the task?
+
+## Sharp operational advice
+
+If you only remember four things, remember these:
+
+1. **Use MCP for outside context, not for everything.**
+2. **Start with one read-only server and make it earn its keep.**
+3. **Use `codex mcp add ...` and `/mcp` as your default entry points.**
+4. **Pair MCP with skills when you want the context-fetching pattern to become repeatable.**
 
 MCP is the surface that upgrades Codex from “works on code” to “works with context.”

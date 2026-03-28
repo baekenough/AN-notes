@@ -2,19 +2,23 @@ import type { Metadata } from "next";
 import { hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { locales } from "@/i18n/config";
-import { getTipsByTool, type Tool } from "@/lib/content";
+import { getLatestTipsByTool, getTipsByTool, type Tool } from "@/lib/content";
 import { getToolConfig } from "@/lib/tools";
 import {
   buildLanguageAlternates,
   ensureLocale,
   getLocalePath,
   getOgLocale,
+  getToolSeoCopy,
   siteName,
   toAbsoluteUrl,
 } from "@/lib/seo";
 import { TipCard } from "@/components/tip-card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
 const validTools: Tool[] = ["claude-code", "gpt-codex", "gemini-cli"];
@@ -36,10 +40,14 @@ export async function generateMetadata({
 
   const safeLocale = ensureLocale(locale);
   const typedTool = tool as Tool;
-  const toolConfig = getToolConfig(typedTool);
-  const tipCount = getTipsByTool("en", typedTool).length;
-  const title = `${toolConfig.name} Guides`;
-  const description = `${tipCount} practical ${toolConfig.name} guides and tips for AI-assisted development.`;
+  const tipCount =
+    getTipsByTool(safeLocale, typedTool).length ||
+    getTipsByTool("en", typedTool).length;
+  const { title, description } = getToolSeoCopy(
+    safeLocale,
+    typedTool,
+    tipCount,
+  );
   const toolPath = `/${typedTool}`;
   const localePath = getLocalePath(safeLocale, toolPath);
 
@@ -97,6 +105,12 @@ export default async function ToolPage({
 
   const t = await getTranslations();
   const tips = getTipsByTool(locale, tool as Tool);
+  const orderedTips = [...tips].sort(
+    (a, b) => a.order - b.order || a.title.localeCompare(b.title)
+  );
+  const [starterTip, ...remainingTips] = orderedTips;
+  const nextTips = remainingTips.slice(0, 3);
+  const recentTips = getLatestTipsByTool(locale, tool as Tool, 3);
 
   const beginnerTips = tips.filter(tip => tip.difficulty === "beginner");
   const intermediateTips = tips.filter(
@@ -157,6 +171,97 @@ export default async function ToolPage({
           </a>
         </div>
       </div>
+
+      {starterTip && (
+        <Card className="mb-12 border-primary/10 bg-gradient-to-br from-primary/5 via-transparent to-transparent">
+          <CardContent className="p-6 md:p-7">
+            <div className="grid gap-6 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] md:items-start">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-3">
+                  {t("learningPath.toolTitle")}
+                </p>
+                <h2 className="text-xl sm:text-2xl font-bold tracking-tight mb-3">
+                  {t("learningPath.startHere")}
+                </h2>
+                <p className="text-muted-foreground leading-relaxed mb-5">
+                  {t("learningPath.toolDescription", { tool: toolConfig.name })}
+                </p>
+                <div className="rounded-xl border border-border/60 bg-background/70 p-4">
+                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2">
+                    1. {t("learningPath.firstGuide")}
+                  </p>
+                  <Link
+                    href={`/${locale}/${starterTip.tool}/${starterTip.slug}`}
+                    className="block group"
+                  >
+                    <p className="font-semibold leading-snug group-hover:text-primary transition-colors">
+                      {starterTip.title}
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+                      {starterTip.description}
+                    </p>
+                  </Link>
+                </div>
+                <div className="mt-5">
+                  <Button asChild>
+                    <Link href={`/${locale}/${starterTip.tool}/${starterTip.slug}`}>
+                      {t("learningPath.openFirstGuide")}
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+
+              {nextTips.length > 0 && (
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-3">
+                    {t("learningPath.nextSteps")}
+                  </p>
+                  <div className="space-y-3">
+                    {nextTips.map((tip, index) => (
+                      <Link
+                        key={tip.slug}
+                        href={`/${locale}/${tip.tool}/${tip.slug}`}
+                        className="block rounded-xl border border-border/60 p-4 hover:border-primary/30 transition-colors"
+                      >
+                        <p className="text-xs text-muted-foreground mb-1">
+                          {index + 2}. {t("learningPath.step")}
+                        </p>
+                        <p className="font-medium leading-snug">{tip.title}</p>
+                        <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+                          {tip.description}
+                        </p>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {recentTips.length > 0 && (
+        <div className="mb-12">
+          <div className="mb-5 max-w-2xl">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+              {t("latestUpdates.toolTitle", { tool: toolConfig.name })}
+            </h2>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {t("latestUpdates.toolDescription", { tool: toolConfig.name })}
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {recentTips.map(tip => (
+              <TipCard
+                key={`${tip.slug}-recent`}
+                tip={tip}
+                locale={locale}
+                difficultyLabels={difficultyLabels}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Tips by difficulty */}
       {sections.map((section, idx) => (

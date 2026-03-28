@@ -18,72 +18,147 @@ connections:
     type: "enhances"
 featured: false
 order: 3
-date: "2026-03-24"
+date: "2026-03-28"
 ---
 
-> **Official References**: [Extensions overview](https://geminicli.com/docs/extensions/) · [Extension reference](https://geminicli.com/docs/extensions/reference/) · [Tools](https://geminicli.com/docs/tools/)
+> **Official References**: [Extensions overview](https://geminicli.com/docs/extensions/) · [Extension reference](https://geminicli.com/docs/extensions/reference/) · [Skills](https://geminicli.com/docs/core/skills/) · [Tools](https://geminicli.com/docs/tools/)
 
-## Extensions are broader than "plugins"
+<!-- curriculum:start -->
+## Learning path
 
-Current Gemini CLI docs describe extensions as packages that can include:
-- prompts
-- MCP servers
-- custom commands
-- hooks
+1. [Getting Started with Gemini CLI](./getting-started) — install, auth, memory basics
+2. [The 1M Token Advantage](./million-token-context) — repo-scale analysis without waste
+3. **Gemini Extensions & MCP** — package commands, MCP, and skills ← **You are here**
+4. [Trusted Folders, Sandboxing, and Restore](./trusted-folders-sandboxing) — trust, isolation, and rollback
+5. [Headless Automation with Gemini CLI](./headless-automation) — scripts, CI, structured output
+6. [Sub-agents and Skills Orchestration](./sub-agents-and-skills) — delegation and specialist workflows
+
+### Official docs used in this article
+- **What an extension is allowed to bundle** — [Extensions overview](https://geminicli.com/docs/extensions/)
+- **Manifest fields, commands, policies, and sensitive settings** — [Extension reference](https://geminicli.com/docs/extensions/reference/)
+- **How skills are discovered and activated** — [Skills](https://geminicli.com/docs/core/skills/)
+<!-- curriculum:end -->
+
+## Extensions are workflow bundles, not just plugins
+
+A lot of developers hear "extension" and imagine a tiny add-on that contributes one command. Gemini CLI's extension model is much broader than that.
+
+Per the official docs, an extension can package multiple workflow surfaces together:
+
+- reusable prompts and commands
+- MCP server configuration
+- hooks and policies
 - sub-agents
-- **agent skills**
+- agent skills
+- extension-scoped settings
 
-## The practical layering model
+That matters because teams usually do not need a random bag of features. They need a **repeatable operating system** for common work: review this repo, talk to this internal API, enforce this style guide, and do it safely.
 
-When customizing Gemini CLI, think in layers:
+## Choose the smallest surface that solves the problem
 
-### Layer 1: `GEMINI.md`
-Use this for stable instructions and team rules (e.g., coding standards).
+Before you build an extension, decide whether you even need one.
 
-### Layer 2: MCP servers
-Use MCP when the model needs access to external systems (e.g., databases, internal docs, Jira).
+| Need | Best surface | Why |
+|---|---|---|
+| Stable repo instructions | `GEMINI.md` | Lowest overhead, always on |
+| External system access | MCP | Best for databases, docs, issue trackers |
+| One expert workflow | Skill | Strong behavior override without packaging everything |
+| A reusable tool belt for many repos or many teammates | Extension | Good for shipping commands, hooks, skills, and MCP together |
 
-### Layer 3: Extensions & Skills
-Use extensions when you want to **package and share** workflows across machines. This includes reusable internal commands and powerful **Agent Skills**.
+A good rule of thumb: start with `GEMINI.md`, validate the workflow manually, then graduate it into a skill or extension only after it proves useful two or three times.
 
-## The Power of Agent Skills
+## What a production-minded extension usually contains
 
-One of the most unique features of Gemini CLI is the ability to activate specialized expert modes via the `activate_skill` tool.
+In practice, strong extensions are opinionated. They are not giant “AI everything” bundles.
 
-- **Built-in Skills**: You can summon specialized procedures like `security-review` (hacker mindset for vulnerabilities), `code-review` (senior engineer refactoring), or `web-clone` (visual cloning from URLs).
-- **Skill-Creator**: By activating `skill-creator`, you can interactively teach the agent your team's unique workflow (e.g., "Our custom deployment checklist") and it will generate a `SKILL.md` to be reused permanently.
+A high-quality extension often includes:
 
-## What you can manage today
+1. **A small set of commands** for tasks that repeat often.
+2. **One or two MCP connections** that unlock real context.
+3. **A focused skill** that changes the agent's behavior for a single job family.
+4. **Policies or guardrails** so the extension does not quietly become too powerful.
 
-Inside the interactive CLI:
-```text
-/extensions list
-```
+The reference docs are useful here because they expose fields like tool exclusions, sensitive settings, policies, and custom context file names. Those details are what separate a safe internal workflow from a brittle demo.
 
-From the terminal:
-```bash
-gemini extensions list
-# Install from GitHub
-gemini extensions install https://github.com/gemini-cli-extensions/workspace
-```
+## Skills are often the best entry point
 
-## A strong team pattern
+For many teams, the fastest win is not shipping a full extension. It is shipping a **skill**.
 
-1. Define repo rules in `GEMINI.md`.
-2. Add one or two essential MCP servers.
-3. Use `skill-creator` to formalize repetitive internal processes into skills.
-4. Once the workflow stabilizes, package it all as an extension to share with the team.
+Why skills are such a strong starting point:
 
-## Recommendation for this project
+- they are narrow enough to reason about
+- they encode procedure, not just prose
+- they are easy to invoke repeatedly
+- they force you to decide what “done” actually means
 
-If AI Native Notes keeps growing, a good Gemini CLI package would likely bundle:
-- content parity review commands
-- MDX frontmatter validation helpers
-- a custom `locale-reviewer` Agent Skill
-- maybe one MCP integration for docs or CMS systems later
+Examples of good internal skills:
+
+- `locale-review` for translation parity checks
+- `release-note-drafter` for changelog formatting
+- `docs-qa` for MDX frontmatter and broken-link review
+- `security-review` style clones for a company-specific threat model
+
+If the skill proves useful, you can later wrap it into an extension alongside commands, hooks, and MCP settings.
+
+## Extension design should follow the same trust model as the repo
+
+One subtle but important point from the docs: extensions live inside the same trust and safety world as the CLI itself.
+
+That means you should design them as if another engineer will inspect them cold:
+
+- keep dangerous commands explicit, not hidden
+- prefer read-only helpers first
+- treat secrets and environment access as sensitive
+- document what the extension changes in the repo workflow
+- avoid surprising auto-approval behavior
+
+An extension is successful when a teammate can answer: "What does this thing add, what tools does it touch, and what could go wrong if I install it?"
+
+## A healthy lifecycle for extension adoption
+
+A practical rollout path looks like this:
+
+### 1. Prove the workflow manually
+
+Use plain prompts, `GEMINI.md`, and one or two copied commands. Do not package early.
+
+### 2. Turn the repeated behavior into a skill
+
+This is where `skill-creator` or a hand-written `SKILL.md` shines. Capture the procedure, constraints, and review criteria.
+
+### 3. Add MCP only when copy-paste becomes the bottleneck
+
+If the model repeatedly needs Jira tickets, CMS data, or internal docs, give it a structured connection instead of pasting context into prompts.
+
+### 4. Package the winning workflow as an extension
+
+Now the extension has a real purpose: distribution, consistency, and speed.
+
+## What I would package for AI Native Notes
+
+If this repository keeps growing, a good Gemini extension would probably contain:
+
+- a command that checks slug parity across `ko`, `en`, and `es`
+- a content-audit skill that reviews frontmatter quality and link drift
+- an MCP connector for a CMS or docs inventory later
+- a narrow hook or policy that blocks obviously unsafe content automation
+
+Notice the pattern: every item is about **editorial operations that already exist**. That is the right direction. Extensions should codify proven workflows, not invent new chaos.
+
+## A shipping checklist for Gemini extensions
+
+Before publishing or sharing an extension, review this list:
+
+- Is the workflow already useful without the extension?
+- Is the scope narrow enough that another engineer can audit it quickly?
+- Are risky tools opt-in rather than silently enabled?
+- Do teammates understand which MCP servers or settings are introduced?
+- Could the same job be solved more simply with `GEMINI.md` or a standalone skill?
+
+If you can answer yes to the first four and no to the last one, the extension is probably justified.
 
 ## Recommended next reads
 
-- Mastering delegation: [Sub-agents and Skills](/gemini-cli/sub-agents-and-skills)
-- [Trusted Folders, Sandboxing, and Restore](/gemini-cli/trusted-folders-sandboxing)
-- [MCP Power Tools for Claude Code](/claude-code/mcp-power-tools)
+- Learn the safe operating model in [Trusted Folders, Sandboxing, and Restore](/gemini-cli/trusted-folders-sandboxing)
+- Learn when to delegate with [Sub-agents and Skills](/gemini-cli/sub-agents-and-skills)
+- Compare the external-context story with [MCP Power Tools](/claude-code/mcp-power-tools)

@@ -1,4 +1,5 @@
 import { defaultLocale, locales, type Locale } from "@/i18n/config";
+import type { Tool } from "@/lib/content";
 
 const FALLBACK_SITE_URL = "https://annotes.baekenough.com";
 
@@ -42,17 +43,36 @@ const homeSeoCopy: Record<Locale, { title: string; description: string }> = {
 const whatsNewSeoCopy: Record<Locale, { title: string; description: string }> = {
   ko: {
     title: "새 소식",
-    description: "Claude Code, GPT Codex, Gemini CLI의 최신 기능 업데이트 요약.",
+    description:
+      "Claude Code, GPT Codex, Gemini CLI의 주요 기능 변화와 최근 가이드 업데이트를 한 번에 살펴보세요.",
   },
   en: {
     title: "What's New",
     description:
-      "A curated roundup of the latest high-impact updates from Claude Code, GPT Codex, and Gemini CLI.",
+      "A curated roundup of major product updates and freshly updated guides for Claude Code, GPT Codex, and Gemini CLI.",
   },
   es: {
     title: "Novedades",
     description:
-      "Resumen curado de las novedades más importantes de Claude Code, GPT Codex y Gemini CLI.",
+      "Resumen curado de cambios importantes del producto y guías recién actualizadas de Claude Code, GPT Codex y Gemini CLI.",
+  },
+};
+
+const toolSeoTitles: Record<Locale, Record<Tool, string>> = {
+  ko: {
+    "claude-code": "Claude Code 가이드",
+    "gpt-codex": "GPT Codex 가이드",
+    "gemini-cli": "Gemini CLI 가이드",
+  },
+  en: {
+    "claude-code": "Claude Code Guides",
+    "gpt-codex": "GPT Codex Guides",
+    "gemini-cli": "Gemini CLI Guides",
+  },
+  es: {
+    "claude-code": "Guías de Claude Code",
+    "gpt-codex": "Guías de GPT Codex",
+    "gemini-cli": "Guías de Gemini CLI",
   },
 };
 
@@ -79,6 +99,39 @@ export function getWhatsNewSeoCopy(locale: Locale): {
   description: string;
 } {
   return whatsNewSeoCopy[locale];
+}
+
+export function getToolSeoCopy(
+  locale: Locale,
+  tool: Tool,
+  tipCount: number,
+): { title: string; description: string } {
+  const title = toolSeoTitles[locale][tool];
+
+  switch (locale) {
+    case "ko":
+      return {
+        title,
+        description: `${title.replace(" 가이드", "")}를 실무에 활용하기 위한 ${tipCount}개의 실전 가이드와 팁.`,
+      };
+    case "es":
+      return {
+        title,
+        description: `${tipCount} guías y tips prácticos de ${title.replace(
+          "Guías de ",
+          "",
+        )} para trabajar mejor con IA.`,
+      };
+    case "en":
+    default:
+      return {
+        title,
+        description: `${tipCount} practical ${title.replace(
+          " Guides",
+          "",
+        )} guides and tips for AI-assisted development.`,
+      };
+  }
 }
 
 export function getOgLocale(locale: Locale): string {

@@ -15,10 +15,10 @@ connections:
     type: "compare"
 featured: false
 order: 4
-date: "2026-03-21"
+date: "2026-03-28"
 ---
 
-> **공식 참고 자료**: [Sub-agents](https://docs.anthropic.com/en/docs/claude-code/sub-agents) · [Agent SDK](https://docs.anthropic.com/en/docs/agents-and-tools/agent-sdk) · [CLI usage](https://docs.anthropic.com/en/docs/claude-code/cli-usage)
+> **공식 참고 자료**: [Sub-agents](https://docs.anthropic.com/en/docs/claude-code/sub-agents) · [Agent Teams](https://docs.anthropic.com/en/docs/claude-code/agent-teams) · [Agent SDK](https://platform.claude.com/docs/en/agent-sdk/overview) · [CLI usage](https://docs.anthropic.com/en/docs/claude-code/cli-usage)
 
 <!-- curriculum:start -->
 ## 커리큘럼 흐름
@@ -32,279 +32,431 @@ date: "2026-03-21"
 
 ### 이 문서에서 참고한 공식 문서
 - **subagent와 위임 모델** — [Sub-agents](https://docs.anthropic.com/en/docs/claude-code/sub-agents)
-- **프로그래밍 가능한 오케스트레이션 개념** — [Agent SDK](https://docs.anthropic.com/en/docs/agents-and-tools/agent-sdk)
+- **에이전트 간 팀형 오케스트레이션** — [Agent Teams](https://docs.anthropic.com/en/docs/claude-code/agent-teams)
+- **프로그래밍 가능한 오케스트레이션 개념** — [Agent SDK](https://platform.claude.com/docs/en/agent-sdk/overview)
 - **CLI 실행 패턴** — [CLI usage](https://docs.anthropic.com/en/docs/claude-code/cli-usage)
 <!-- curriculum:end -->
 
-## 서브에이전트란?
+## 핵심 원칙: 멀티 에이전트의 진짜 이득은 속도보다 분리다
 
-Claude Code는 전문화된 서브에이전트를 생성할 수 있습니다 — 집중된 작업을 병렬로 처리하는 별도의 Claude 인스턴스입니다. Claude가 팀에 작업을 위임하는 것으로 생각하세요.
+서브에이전트를 생각할 때 가장 흔한 오해는 “병렬이라서 빨라진다”입니다. 물론 맞는 말이지만, Anthropic 문서가 더 강조하는 포인트는 **컨텍스트 분리, 역할 분리, 권한 분리**입니다.
 
-## 서브에이전트 사용 시점
+서브에이전트는 각각:
 
-| 시나리오 | 단일 에이전트 | 서브에이전트 |
-|---------|------------|------------|
-| 오타 수정 | ✅ | 과도함 |
-| 파일 3개 리뷰 | ✅ | ✅ (더 빠름) |
-| 파일 20개 리팩토링 | 너무 느림 | ✅ |
-| 리서치 + 구현 | ✅ | ✅ (병렬) |
-| 크로스 모듈 디버깅 | 컨텍스트 손실 | ✅ |
+- **자기만의 컨텍스트 윈도우**를 갖고
+- **자기만의 시스템 프롬프트**를 쓰고
+- **자기만의 도구/권한 제한**을 가질 수 있습니다.
 
-## 오케스트레이터 패턴
+핵심 가치는 “한 번에 여러 명이 일한다”보다 **메인 대화를 깨끗하게 유지하면서, 특정 종류의 일을 별도 맥락에서 처리하게 하는 것**에 있습니다.
 
-메인 대화가 오케스트레이터 역할을 합니다 — 작업을 계획하고 전문가에게 위임합니다:
+## 먼저 결정해야 할 것: 어떤 멀티 에이전트 표면을 쓸 것인가
 
-```
-사용자: "인증 모듈의 보안 문제를 리뷰해줘"
+Claude 쪽 오케스트레이션은 하나가 아닙니다. 목적에 따라 맞는 표면이 다릅니다.
 
-Claude (오케스트레이터):
-  → 에이전트 1 생성: auth/login.ts의 인젝션 위험 리뷰
-  → 에이전트 2 생성: auth/session.ts의 토큰 처리 리뷰
-  → 에이전트 3 생성: auth/middleware.ts의 우회 위험 리뷰
-  → 결과를 단일 보고서로 집계
-```
+| 상황 | 가장 잘 맞는 표면 | 이유 |
+|---|---|---|
+| 빠른 수정, 빈번한 왕복 | 메인 대화 | 같은 맥락을 계속 쓰는 편이 빠름 |
+| 조사/검색/테스트처럼 출력이 많은 일 | 서브에이전트 | verbose한 컨텍스트를 메인에서 분리 |
+| 독립 실험, 병렬 작업, fresh review | 여러 Claude 세션 | 각 세션이 별도 worktree/맥락을 가질 수 있음 |
+| 지속적인 병렬 실행과 worker 간 조정 | Agent teams | 별도 세션들 사이를 체계적으로 조정 |
+| 대량 반복 배치 처리 | `claude -p` 기반 headless fan-out | 스크립트로 대량 자동화하기 좋음 |
 
-## 실용 예시: 대규모 리팩토링
+즉, **모든 병렬 작업이 서브에이전트로 해결되는 것은 아닙니다.**
 
-```
-모든 API 라우트를 Express 미들웨어 패턴에서 Next.js Route Handler로 마이그레이션해줘.
+## 서브에이전트는 언제 쓰는가
 
-src/api/에 15개 라우트가 있어. 병렬 에이전트 사용해 —
-라우트 그룹별로 하나씩 (auth, users, products, orders, analytics).
+공식 docs를 실무 감각으로 번역하면, 서브에이전트는 아래 상황에서 특히 강합니다.
 
-src/api/utils/의 공유 유틸리티 함수는 수정하지 마.
-```
+### 1) 조사 출력이 많을 때
 
-Claude가 수행할 작업:
-1. 라우트 그룹 분석
-2. 5개 병렬 에이전트 생성
-3. 각 에이전트가 3개 라우트 처리
-4. 결과 집계 및 충돌 해결
+테스트 전체 로그, 긴 문서 조사, 대형 코드 검색 결과는 메인 대화를 빠르게 오염시킵니다.
 
-## Agent Teams (실험적)
-
-Claude Code의 Agent Teams 기능은 에이전트 간 P2P 통신을 가능하게 합니다. 모든 것이 오케스트레이터를 통하지 않고:
-
-```
-리뷰어 에이전트 ←→ 구현자 에이전트
-     ↕                    ↕
-  테스터 에이전트 ←→ 문서화 에이전트
+```text
+테스트 전체를 메인 컨텍스트에 쏟아붓지 말고,
+서브에이전트로 실행해서 실패한 테스트와 핵심 에러만 요약해줘.
 ```
 
-다음에 적합:
-- 코드 리뷰 → 수정 → 재리뷰 사이클
-- 크로스 모듈 복잡한 디버깅
-- 토론과 종합이 필요한 리서치
+### 2) 병렬 research가 가능할 때
 
-## 백그라운드 에이전트
-
-에이전트를 백그라운드로 실행하면 기다리지 않고 다른 작업을 계속할 수 있어요. 시간이 오래 걸리는 작업에 특히 유용해요.
-
-```
-대규모 리팩토링을 백그라운드로 실행해줘.
-완료되면 알려줘. 그동안 나는 다른 작업을 할게.
+```text
+인증, 데이터베이스, API 모듈을 각각 별도 서브에이전트로 조사하고,
+공통으로 드러나는 위험과 의존성을 마지막에 종합해줘.
 ```
 
-백그라운드 실행이 적합한 경우:
-- **대규모 리팩토링** — 수십 개 파일을 변환하는 작업
-- **긴 테스트 실행** — 전체 테스트 스위트 실행
-- **코드 리뷰** — 대형 PR의 전체 파일 분석
-- **의존성 분석** — 프로젝트 전체 의존성 트리 탐색
+이 패턴은 **research path가 서로 독립적일 때** 가장 잘 맞습니다.
 
-에이전트가 완료되면 결과와 함께 알림을 받을 수 있어요. 다른 작업을 진행하다가 결과를 확인하면 됩니다.
+### 3) 특정 권한/도구 제한이 필요할 때
 
-## Git Worktree를 활용한 격리
+예를 들어 reviewer는 읽기만, debugger는 edit 허용, browser tester는 Playwright MCP만 허용하는 식으로 좁힐 수 있습니다.
 
-각 에이전트가 독립적인 git worktree에서 작업하면 메인 브랜치에 영향 없이 실험할 수 있어요.
+### 4) 역할을 재사용하고 싶을 때
 
-```
-각 에이전트가 별도 worktree에서 작업하도록 해줘:
-- 에이전트 1: feature/auth-refactor 브랜치에서 인증 모듈 리팩토링
-- 에이전트 2: feature/api-migration 브랜치에서 API 마이그레이션
-- 에이전트 3: feature/test-coverage 브랜치에서 테스트 보강
+`.claude/agents/`에 집중된 reviewer, debugger, safe-researcher 같은 역할을 두면, 이후에는 Claude가 설명을 보고 적절히 위임하거나 사용자가 명시적으로 호출할 수 있습니다.
 
-각각 독립적으로 작업하고 결과를 별도 브랜치로 제출해줘.
-```
+## 서브에이전트를 쓰기 전에 먼저 해야 할 설계
 
-Worktree 격리의 장점:
-- **안전한 실험** — 실패해도 worktree만 삭제하면 끝
-- **병렬 브랜치 작업** — 여러 기능을 동시에 개발
-- **충돌 없는 협업** — 에이전트들이 서로 간섭하지 않음
-- **쉬운 롤백** — 마음에 들지 않으면 브랜치 삭제
+병렬성은 공짜가 아닙니다. 병렬 실행 전에 **공유 계약**을 먼저 고정하지 않으면 속도 대신 충돌만 늘어납니다.
 
-## 에이전트 전문화 패턴
+### 1. 공통 계약부터 정의
 
-에이전트에게 특정 전문 역할을 부여하면 훨씬 깊이 있는 분석이 가능해요.
+병렬 작업 전에 먼저 정할 것:
 
-```
-프로젝트 전체 분석을 해줘. 다음 전문 에이전트를 사용해:
+- 공유 타입/인터페이스
+- 수정 가능한 파일 범위
+- 완료 기준
+- 병합 순서
 
-보안 전문 에이전트:
-  - OWASP Top 10 기준으로 취약점 점검
-  - SQL 인젝션, XSS, CSRF 위험 탐지
-  - 인증/인가 로직 검토
+예를 들어 풀스택 기능에서는 먼저 `types/notification.ts` 같은 공유 계약을 고정해야 합니다. 그다음 프론트엔드/백엔드/UI 테스트를 병렬화해야 충돌이 줄어듭니다.
 
-성능 전문 에이전트:
-  - N+1 쿼리 패턴 탐지
-  - 메모리 누수 가능성 분석
-  - 불필요한 재렌더링 및 무거운 연산 탐지
+### 2. 읽기 범위와 쓰기 범위를 분리
 
-테스트 전문 에이전트:
-  - 현재 코드 커버리지 측정
-  - 누락된 엣지 케이스 식별
-  - 통합 테스트가 부족한 모듈 목록화
-```
+좋은 할당:
 
-각 에이전트가 자신의 전문 영역에 집중하기 때문에 단일 에이전트보다 훨씬 상세한 결과를 얻을 수 있어요.
+- 에이전트 A: `src/api/notifications/`만 수정
+- 에이전트 B: `src/components/notifications/`만 수정
+- 에이전트 C: 로그 분석 전용, read-only
 
-## 실전 시나리오: 프론트엔드 + 백엔드 동시 작업
+나쁜 할당:
 
-새 기능을 추가할 때 프론트엔드, 백엔드, DB를 동시에 작업할 수 있어요:
+- 셋 다 `src/types/notification.ts`를 동시에 편집
+- 셋 다 같은 router file을 만짐
 
-```
-"사용자 프로필" 기능을 추가해줘. 세 에이전트가 동시에 작업해:
+### 3. 의존관계를 먼저 선언
 
-에이전트 1 (백엔드): GET/PUT /api/users/:id 엔드포인트 구현
-에이전트 2 (프론트엔드): ProfilePage, ProfileForm React 컴포넌트 구현
-에이전트 3 (DB): users 테이블에 bio, avatar_url 컬럼 추가 마이그레이션
+모든 일을 병렬로 던지는 게 능사는 아닙니다.
 
-공유 타입 정의는 src/types/user.ts를 참고해.
-완료 후 각 결과를 조합해서 통합 계획을 제안해줘.
+- 독립 research → 병렬
+- 구현 3개 → 병렬 가능
+- 통합 테스트 → 구현 완료 후 순차
+- 최종 리뷰 → 모든 diff가 모인 뒤 순차
+
+멀티 에이전트의 기본 문법은 **병렬로 가능한 것만 병렬화하고, 순서가 필요한 것은 명시적으로 직렬화하는 것**입니다.
+
+## 실전 오케스트레이션 패턴 1: Research fan-out
+
+가장 안전하고 자주 쓰이는 패턴입니다.
+
+```text
+다음 세 가지를 서브에이전트로 병렬 조사해줘.
+
+1. auth/session 흐름
+2. refresh token 저장 위치
+3. API middleware의 인증 우회 가능성
+
+각 에이전트는 수정하지 말고,
+핵심 파일, 확인한 패턴, 위험 요소만 bullet로 요약해줘.
+마지막에 내가 바로 구현에 들어갈 수 있게 종합 결론을 정리해줘.
 ```
 
-세 에이전트가 동시에 작업하기 때문에 순차 작업 대비 시간을 크게 줄일 수 있어요.
+이 패턴의 장점:
+- 메인 컨텍스트가 검색 로그로 더러워지지 않습니다.
+- 탐색 결과가 structured summary로 들어옵니다.
+- 이후 구현은 메인 대화에서 집중해서 할 수 있습니다.
 
-## 에이전트 사용 시 주의사항
+주의점은 하나입니다. 서브에이전트가 상세 결과를 너무 많이 돌려보내면 메인 컨텍스트를 다시 압박합니다. 그래서 **"파일 경로 + 결론 + 리스크" 정도만 요약해 달라**고 지시하는 것이 중요합니다.
 
-에이전트가 항상 더 좋은 건 아니에요. 몇 가지를 고려해야 해요:
+## 실전 오케스트레이션 패턴 2: Writer / Reviewer 분리
 
-- **단순 작업은 오히려 느려져요** — 오타 수정, 파일 하나 편집 같은 작업은 단일 에이전트가 빨라요. 에이전트 생성 오버헤드가 있거든요.
-- **컨텍스트가 분리돼요** — 각 에이전트는 별도 컨텍스트를 가져요. 에이전트 간 공유가 필요하면 파일이나 태스크 목록을 통해야 해요.
-- **비용이 늘어나요** — 에이전트 수 × API 호출 = 비용 증가. 꼭 필요할 때만 사용하는 게 좋아요.
-- **4개 이상은 효율이 떨어질 수 있어요** — Claude Code는 최대 4개 동시 실행을 권장해요. 그 이상은 관리 오버헤드가 커져요.
+Anthropic best practices는 fresh context를 가진 reviewer 패턴을 추천합니다. 코드를 쓴 같은 맥락에서 자기 코드를 다시 검토하면 편향이 생기기 쉽기 때문입니다.
 
-## Claude Code SDK로 프로그래밍 오케스트레이션
+```text
+세션 A: rate limiter 구현
+세션 B: 방금 구현된 diff를 리뷰
 
-Claude Code를 npm 패키지(`@anthropic-ai/claude-code`)로 사용하면 TypeScript/JavaScript에서 커스텀 오케스트레이션 워크플로우를 구축할 수 있어요.
-
-기본 사용법:
-
-```typescript
-import { claude } from "@anthropic-ai/claude-code";
-
-// 간단한 프롬프트 실행
-const result = await claude({
-  prompt: "Analyze src/auth/ for security vulnerabilities",
-  options: {
-    maxTurns: 10,
-    allowedTools: ["Read", "Glob", "Grep"],
-  }
-});
-
-console.log(result.text);
+리뷰 세션에는 아래처럼 요청:
+@src/middleware/rateLimiter.ts 를 리뷰해줘.
+edge case, race condition, 기존 middleware 패턴과의 일관성을 중심으로 봐줘.
 ```
 
-멀티 에이전트 오케스트레이션 예시:
+이 패턴이 좋은 이유:
+- reviewer가 작성 맥락에 덜 끌립니다.
+- “왜 이렇게 짰는지”보다 “실제로 위험한가”를 더 잘 봅니다.
+- 구현/리뷰를 병렬에 가깝게 굴릴 수 있습니다.
 
-```typescript
-// 모듈별 병렬 코드 리뷰
-const modules = ["src/auth/", "src/api/", "src/database/"];
+문서 작업에서도 그대로 쓸 수 있습니다.
 
-const reviews = await Promise.all(
-  modules.map(mod =>
-    claude({
-      prompt: `Review ${mod} for security issues. Focus on injection risks and auth bypasses.`,
-      options: { allowedTools: ["Read", "Glob", "Grep"] }
-    })
-  )
-);
+- Writer: 초안 작성
+- Reviewer: 사실관계, 구조, 누락 포인트 점검
+- Main: 최종 정리
 
-// 결과 집계
-const summary = await claude({
-  prompt: `Synthesize these security reviews into a single report:\n${reviews.map(r => r.text).join("\n---\n")}`,
-});
+## 실전 오케스트레이션 패턴 3: 구현 lane + 검증 lane
+
+병렬 구현은 종종 가능하지만, 검증은 대개 마지막에 한 번 더 모아야 합니다.
+
+```text
+에이전트 1: 백엔드 API 구현
+에이전트 2: 프론트엔드 UI 구현
+에이전트 3: 마이그레이션 초안 작성
+에이전트 4: 위 1~3 완료 후 통합 테스트 작성 및 실행
 ```
 
-SDK를 활용하면 커스텀 CI 파이프라인, 자동 코드 감사, 대량 배치 처리 등 다양한 자동화 시나리오를 구현할 수 있어요.
+핵심은 에이전트 4를 처음부터 병렬로 돌리지 않는 것입니다. 구현 산출물이 아직 없는 상태에서 테스트 lane을 억지로 병렬화하면 오히려 재작업이 커집니다.
 
-## Headless 모드로 자동화 오케스트레이션
+## 실전 오케스트레이션 패턴 4: high-volume 작업 격리
 
-`claude -p "프롬프트"`를 사용하면 대화형 세션 없이 바로 실행할 수 있어요. 셸 스크립트와 결합하면 강력한 자동화가 가능해요.
+공식 sub-agents 문서는 테스트, 문서 수집, 로그 처리처럼 출력이 큰 일을 서브에이전트로 분리하라고 권합니다.
+
+예:
+
+```text
+서브에이전트로 전체 테스트를 실행하고,
+실패한 테스트 이름, 핵심 에러 메시지, 공통 원인 후보만 요약해줘.
+성공 로그는 길게 붙이지 마.
+```
+
+```text
+공식 문서를 읽는 조사 에이전트를 따로 두고,
+최종 구현에 필요한 사실만 요약해서 가져와.
+원문 전체를 길게 복사하지 마.
+```
+
+이 패턴은 **속도 최적화**라기보다 **컨텍스트 위생 관리**에 가깝습니다.
+
+## 실전 오케스트레이션 패턴 5: chain subagents
+
+모든 멀티 에이전트가 병렬일 필요는 없습니다. sub-agents 문서는 순차 체인도 중요한 패턴으로 소개합니다.
+
+예:
+
+```text
+1. code-reviewer 서브에이전트로 성능 이슈를 찾고
+2. 그 결과를 바탕으로 optimizer 서브에이전트가 수정안을 제안하거나 구현하게 해줘
+```
+
+좋은 상황:
+- review → fix
+- investigate → implement
+- schema audit → migration proposal
+- docs inventory → documentation rewrite
+
+중요한 제약:
+- **서브에이전트는 또 다른 서브에이전트를 spawn할 수 없습니다.**
+- 중첩 위임이 필요하면 메인 대화가 계속 coordinator 역할을 해야 합니다.
+
+## 메인 대화에 남겨야 하는 일 vs 서브에이전트로 넘겨야 하는 일
+
+Anthropic docs에는 이 경계가 꽤 분명하게 나옵니다.
+
+### 메인 대화에 남기는 편이 좋은 작업
+
+- 자주 왕복하며 방향을 조정해야 하는 작업
+- planning → implementation → testing이 강하게 이어지는 작업
+- 아주 작은 수정
+- latency가 중요한 작업
+
+즉, 계속 “아니, 이 방향 말고”라고 교정해야 할 일은 메인 대화가 더 낫습니다.
+
+### 서브에이전트로 넘기기 좋은 작업
+
+- verbose output이 많은 조사/실행
+- 요약된 결과만 받아도 되는 self-contained 작업
+- 특정 권한/도구 제약을 강하게 걸고 싶은 작업
+- 같은 역할을 반복적으로 재사용하는 작업
+
+## Agent teams는 언제 올라가야 하나
+
+sub-agents 문서는 “병렬 작업과 상호 통신이 모두 필요하면 agent teams를 보라”고 안내합니다. 이 구분이 중요합니다.
+
+### 서브에이전트로 충분한 경우
+
+- 한 세션 안에서 메인 대화가 coordinator 역할을 잘 할 수 있을 때
+- worker 사이 직접 통신이 꼭 필요하지 않을 때
+- 병렬 research 또는 짧은 역할 분리가 핵심일 때
+
+### Agent teams가 더 잘 맞는 경우
+
+- 병렬 실행이 오래 지속될 때
+- worker끼리 메시지와 shared task coordination이 필요할 때
+- 메인 세션 하나의 컨텍스트로 감당하기 어려울 때
+- 독립적인 세션/작업공간을 유지하면서 협업시켜야 할 때
+
+즉, **subagent는 single-session 분업**, **agent teams는 multi-session 협업**에 가깝다고 보면 됩니다.
+
+## 여러 Claude 세션을 병렬로 굴리는 패턴
+
+Anthropic best practices는 Claude Desktop, Claude on the Web, agent teams를 병렬 세션 전략으로 소개합니다. 여기서 중요한 포인트는 “parallel = faster”뿐 아니라 **fresh context가 주는 품질 향상**입니다.
+
+예:
+
+- 세션 A: 구현
+- 세션 B: 리뷰
+- 세션 C: 문서/릴리즈 노트 정리
+
+좋은 이유:
+- 세션마다 별도 맥락을 유지합니다.
+- 리뷰 세션이 구현 편향에서 자유롭습니다.
+- unrelated context가 섞이지 않습니다.
+
+세션을 브랜치처럼 이름 붙여 두고 `claude --continue`, `claude --resume`으로 이어 쓰면 장기 작업에도 잘 맞습니다.
+
+## headless fan-out은 “많은 작은 독립 태스크”에 강하다
+
+여러 파일에 같은 성격의 조사/변환을 적용할 때는 대화형보다 `claude -p` 기반 스크립트가 더 적합한 경우가 많습니다.
 
 ```bash
-#!/bin/bash
-# 서비스별 병렬 보안 감사
-
-services=("auth-service" "payment-service" "user-service")
-
-for service in "${services[@]}"; do
-  claude -p "Audit $service/ for OWASP Top 10 vulnerabilities. Output as markdown." \
-    --model haiku \
-    --output-format text \
-    > "reports/${service}-audit.md" &
+# 예시: 모듈별 코드 리뷰 리포트 생성
+for module in src/auth src/api src/database; do
+  claude -p "${module}를 리뷰하고 위험 요소를 markdown bullet로 정리해줘"     > "reports/$(basename "$module")-review.md" &
 done
-
 wait
-echo "All audits complete"
 ```
 
-유용한 옵션:
-- `--output-format json` — 기계가 파싱할 수 있는 JSON 출력
-- stdin 파이프: `git diff HEAD~5 | claude -p "이 커밋들의 변경사항을 요약해줘"`
-- CI/CD 환경에서는 `ANTHROPIC_API_KEY` 환경 변수로 인증을 설정할 수 있어요
+이 방식이 맞는 작업:
+- 파일 목록이 이미 있고
+- 각 작업이 서로 거의 독립적이며
+- 결과를 나중에 합쳐도 되는 경우
 
-Headless 모드는 GitHub Actions, Jenkins 등 CI 시스템에서 Claude Code를 자동화 도구로 활용할 때 특히 유용해요.
+반대로 실시간 협의와 교정이 필요한 작업은 headless보다 대화형 세션이 낫습니다.
 
-## 에이전트 비용 최적화
+## context budget 관점에서 멀티 에이전트를 봐야 한다
 
-서브에이전트를 생성할 때마다 새로운 Claude 컨텍스트가 만들어지기 때문에 추가 API 비용이 발생해요. 비용을 최소화하는 전략을 알아봐요.
+멀티 에이전트는 컨텍스트 문제를 완화하지만 공짜는 아닙니다.
 
-| 전략 | 방법 | 절감 효과 |
-|------|------|----------|
-| 모델 혼합 | 검색/읽기는 haiku, 구현은 sonnet | 읽기 중심 작업에서 ~60% |
-| 작업 범위 제한 | 좁은 범위 = 적은 턴 = 적은 비용 | 에이전트당 ~40% |
-| 결과 캐싱 | 출력을 저장하고 여러 실행에서 재사용 | 가변적 |
-| 병렬 배치 처리 | 관련 파일을 적은 수의 에이전트로 묶기 | 파일별 에이전트 대비 ~30% |
+### 좋은 점
 
-안티패턴: 50개 파일을 하나씩 에이전트에 맡기는 것 — 대신 모듈 단위로 에이전트를 만드세요.
+- 조사 로그가 메인 대화에 덜 쌓입니다.
+- 각 worker가 자기 일에 집중합니다.
+- 빠른 모델과 강한 모델을 역할별로 나누기 쉽습니다.
 
-비용과 효율성의 최적 지점: 대부분의 작업에서 2~4개 에이전트가 적절하고, 각각이 논리적 그룹을 담당하는 게 좋아요.
+### 나쁜 점
 
-## 실전: 풀스택 기능 스프린트
+- 결과 요약이 많아지면 메인 대화가 다시 부풀어 오릅니다.
+- 너무 많은 worker를 돌리면 coordinator가 결과를 읽는 비용이 커집니다.
+- 서로 다른 맥락에서 나온 판단이 충돌할 수 있습니다.
 
-실제 멀티 에이전트 시나리오를 살펴보겠습니다:
+그래서 실무에서는 이렇게 생각하는 편이 좋습니다.
 
+> 병렬성은 공짜 compute가 아니라 **오케스트레이션 부채**를 함께 만든다.
+
+질문은 “몇 개까지 돌릴 수 있나?”가 아니라 **“내가 결과를 다시 흡수하고 통합할 수 있나?”**입니다.
+
+## 병렬화를 하지 말아야 하는 경우
+
+Anthropic 문서를 실무에 적용하면, 아래 상황에서는 병렬성이 오히려 해롭습니다.
+
+### 1) 작업이 너무 작을 때
+
+오타 수정, 단일 파일 작은 편집, 명확한 rename은 메인 대화 하나가 가장 빠릅니다.
+
+### 2) 같은 파일을 여러 lane이 동시에 건드릴 때
+
+공유 hotspot 파일이 있으면 병렬성보다 충돌 비용이 더 커집니다.
+
+예:
+- 같은 router file
+- 같은 shared type file
+- 같은 migration file
+
+### 3) 작업 순서가 강하게 직렬일 때
+
+- DB schema 확정 전 API 구현
+- API shape 확정 전 UI 구현
+- 구현 전 통합 테스트 lane 확정
+
+이 경우 억지 병렬화는 재작업만 늘립니다.
+
+### 4) 메인 대화와 강한 상호작용이 필요한 작업일 때
+
+사용자와 계속 의사결정을 주고받아야 하는 설계 작업은 메인 대화가 더 낫습니다.
+
+### 5) latency가 더 중요할 때
+
+서브에이전트는 fresh context로 시작하므로 준비 시간이 필요합니다. 아주 짧은 작업은 오히려 느립니다.
+
+## subagent 설계 자체가 품질을 좌우한다
+
+Anthropic sub-agents docs의 best practices는 세 가지로 요약됩니다.
+
+### 1. agent는 좁게 설계
+
+한 subagent는 한 가지 일을 잘해야 합니다.
+
+- good: `code-reviewer`, `debugger`, `safe-researcher`
+- bad: “모든 걸 다 하는 만능 엔지니어”
+
+### 2. description을 구체적으로
+
+Claude는 description을 보고 언제 위임할지 판단합니다. 설명이 모호하면 delegation 품질도 떨어집니다.
+
+### 3. tool access는 최소화
+
+reviewer라면 Read/Grep/Glob/Bash 정도로 충분할 수 있고, read-only가 더 안전합니다. edit 권한이 정말 필요한 역할에만 Edit/Write를 줍니다.
+
+## worktree / 격리 전략을 같이 생각하자
+
+여러 세션을 병렬로 돌릴 때는 git worktree 같은 격리 전략이 특히 유용합니다.
+
+좋은 상황:
+- 독립 실험을 병렬 진행할 때
+- 리뷰용 세션을 완전히 분리하고 싶을 때
+- 큰 리팩터링 가지를 여러 방향으로 시험할 때
+
+핵심은 멀티 에이전트의 단위를 “프롬프트”만이 아니라 **작업공간**까지 포함해서 설계하는 것입니다.
+
+## Agent SDK는 언제 생각하면 되나
+
+이 문서의 중심은 interactive Claude Code지만, orchestration 자체를 코드로 만들고 싶다면 Agent SDK 문서가 다음 단계입니다.
+
+Agent SDK를 검토할 만한 상황:
+- 같은 조사/검증 파이프라인을 반복 실행할 때
+- CI에서 구조화된 결과를 수집하고 싶을 때
+- 사용자 입력 없이 batch orchestration을 만들고 싶을 때
+
+즉, 사람 주도 세션을 넘어서 **반복 가능한 멀티 에이전트 운영 로직**이 필요해질 때 올라가면 됩니다.
+
+## 바로 복붙할 수 있는 오케스트레이션 프롬프트
+
+### 패턴 1: 병렬 조사
+
+```text
+다음 세 영역을 병렬로 조사해줘.
+- auth/session
+- auth/middleware
+- auth/token-refresh
+
+각 서브에이전트는 read-only로 조사하고,
+관련 파일, 핵심 흐름, 위험 요소만 요약해줘.
+상세 로그는 생략하고 마지막에 종합 결론만 정리해줘.
 ```
-작업: 풀스택 앱에 "사용자 알림" 기능 추가
 
-에이전트 오케스트레이션 계획:
-├── 에이전트 1 (백엔드): 알림 스키마 설계, API 엔드포인트 생성
-│   범위: src/api/notifications/, prisma/schema.prisma
-│
-├── 에이전트 2 (프론트엔드): NotificationBell 컴포넌트, 알림 목록 페이지 구현
-│   범위: src/components/notifications/, src/pages/notifications/
-│
-├── 에이전트 3 (인프라): WebSocket 서버, Redis pub/sub 설정
-│   범위: src/services/websocket/, docker-compose.yml
-│
-└── 에이전트 4 (테스트): 알림 흐름의 통합 테스트 작성
-    범위: tests/notifications/
-    의존성: 에이전트 1-3 완료 후 실행
+### 패턴 2: 구현 + 리뷰 분리
 
-실행: 에이전트 1-3 병렬 실행 → 에이전트 4 순차 실행
-총 소요 시간: ~5분 (순차 실행 시 ~15분 대비)
+```text
+먼저 메인 대화에서 기능을 구현해.
+그다음 fresh context의 reviewer 세션/서브에이전트로
+방금 변경한 diff만 리뷰해줘.
+리뷰 항목은 edge case, race condition, 기존 패턴 일관성이다.
 ```
 
-핵심 인사이트: 에이전트를 생성하기 전에 공유 인터페이스(`types/notification.ts`)를 먼저 정의하세요. 각 에이전트는 공유 타입에 대한 읽기 권한은 있지만 자신의 범위에만 쓰기를 수행해요.
+### 패턴 3: lane 분업
 
-## Codex 비교
+```text
+"사용자 프로필" 기능을 다음 lane으로 나눠줘.
+- Lane A: 백엔드 API
+- Lane B: 프론트엔드 UI
+- Lane C: 테스트 계획
 
-GPT Codex는 각 작업을 단일 샌드박스 에이전트로 실행합니다. 멀티 에이전트 오케스트레이션은 없지만, 샌드박스 모델이 태스크별 전체 컨테이너 격리를 제공합니다.
+먼저 공유 타입과 의존관계를 정의하고,
+병렬 가능한 lane만 동시에 진행해줘.
+검증은 마지막에 통합해서 수행해줘.
+```
 
-| 기능 | Claude Code 서브에이전트 | Codex 태스크 |
-|-----|----------------------|------------|
-| 병렬성 | 최대 4개 동시 | 동시 태스크 가능 |
-| 통신 | 공유 컨텍스트, 메시징 | 독립적, 격리됨 |
-| 상태 공유 | 파일과 태스크 목록 | 커밋된 코드 |
-| 적합한 작업 | 복잡하게 연결된 작업 | 독립적, 잘 정의된 작업 |
+### 패턴 4: high-volume 격리
 
+```text
+전체 테스트 스위트는 서브에이전트로 돌리고,
+실패한 테스트 이름, 핵심 에러, 공통 원인만 요약해서 가져와.
+성공 로그와 장황한 출력은 메인 컨텍스트로 가져오지 마.
+```
+
+## 최종 체크리스트
+
+멀티 에이전트로 가기 전에 아래를 확인하면 실패가 크게 줄어듭니다.
+
+- **정말 병렬화할 수 있는 독립 작업인가?**
+- **공유 타입/인터페이스를 먼저 고정했는가?**
+- **각 lane의 쓰기 범위가 겹치지 않는가?**
+- **요약 결과가 메인 컨텍스트를 다시 오염시키지 않는가?**
+- **메인 대화, subagent, 여러 세션, agent teams 중 어떤 표면이 맞는지 선택했는가?**
+
+잘 설계된 멀티 에이전트 워크플로는 “에이전트를 많이 돌리는 것”이 아닙니다. **무엇을 함께 생각해야 하고, 무엇을 분리해야 하는지 명확히 나누는 것**이 진짜 오케스트레이션입니다.

@@ -1,8 +1,8 @@
 ---
 title: "Headless Automation con Gemini CLI"
-description: "Cómo ejecutar Gemini CLI en scripts, GitHub Actions y pipelines CI con salida estructurada JSON."
+description: "Cómo ejecutar Gemini CLI en scripts, pipelines CI/CD y herramientas internas con salida estructurada y reutilizable."
 difficulty: intermediate
-tags: ["automatizacion", "headless", "json", "ci-cd", "github-actions"]
+tags: ["automatización", "headless", "json", "ci-cd", "github-actions"]
 connections:
   - slug: "codex-sandbox"
     tool: "gpt-codex"
@@ -15,92 +15,173 @@ connections:
     type: "enhances"
 featured: true
 order: 5
-date: "2026-03-24"
+date: "2026-03-28"
 ---
 
-> **Referencias oficiales**: [Headless mode](https://geminicli.com/docs/cli/headless/) · [Authentication](https://geminicli.com/docs/get-started/authentication/)
+> **Referencias oficiales**: [Headless mode](https://geminicli.com/docs/cli/headless/) · [Authentication](https://geminicli.com/docs/get-started/authentication/) · [Token caching](https://geminicli.com/docs/cli/token-caching/) · [Sandboxing](https://geminicli.com/docs/cli/sandbox/)
 
-## Por qué importa el modo headless
+<!-- curriculum:start -->
+## Ruta de aprendizaje
 
-El chat interactivo es solo la mitad de Gemini CLI. La automatización lo lleva a pipelines CI/CD, scripts de bash y tooling.
-La documentación define el modo headless como una ejecución que devuelve JSON o texto estructurado sin terminal interactiva.
+1. [Primeros pasos con Gemini CLI](./getting-started) — instalación, autenticación y memoria
+2. [La ventaja de 1M tokens](./million-token-context) — análisis de repos sin derroche
+3. [Gemini Extensions & MCP](./gemini-extensions) — empaquetar comandos, MCP y skills
+4. [Trusted Folders, Sandboxing y Restore](./trusted-folders-sandboxing) — confianza, aislamiento y rollback
+5. **Headless Automation con Gemini CLI** — scripts, CI y salida estructurada ← **Estás aquí**
+6. [Sub-agentes y Orquestación de Skills](./sub-agents-and-skills) — delegación y flujos especialistas
 
-## Cómo se activa
+### Documentación oficial usada en este artículo
+- **Cuándo entra headless mode y qué formatos devuelve** — [Headless mode](https://geminicli.com/docs/cli/headless/)
+- **Autenticación recomendada para ejecución no interactiva** — [Authentication](https://geminicli.com/docs/get-started/authentication/)
+- **Por qué API key / Vertex cambia la economía vía caching** — [Token caching](https://geminicli.com/docs/cli/token-caching/)
+<!-- curriculum:end -->
 
-Se activa cuando:
-- Corre en un entorno **non-TTY** (como GitHub Actions).
-- Se pasa un prompt directo con `-p` / `--prompt`.
+## Headless mode convierte la CLI en parte de tu sistema
 
-Ejemplo:
+La sesión interactiva es excelente para explorar. Headless mode es lo que convierte Gemini CLI en infraestructura reutilizable.
+
+Úsalo cuando quieras integrarlo en:
+
+- QA de contenido en CI
+- revisión automática de PR o commits
+- generación de release notes
+- auditorías nocturnas de drift o enlaces rotos
+- scripts o wrappers que necesitan salida estructurada
+
+La documentación oficial lo describe como ejecución no interactiva que devuelve texto, JSON o JSONL en lugar de la UI completa del terminal.
+
+## En automatización importa más el contrato de salida que la prosa del prompt
+
+El error típico es escribir un prompt muy bonito y olvidar que otra máquina debe consumir la respuesta.
+
+Un prompt sano para automatización debería fijar:
+
+1. **alcance de entrada** — qué archivos o carpetas debe leer
+2. **esquema de salida** — qué claves deben existir
+3. **comportamiento ante falta de evidencia** — qué devolver si no encuentra nada
+4. **handoff humano** — si la salida es final o un borrador para revisión
+
+Los mejores prompts de automatización suelen ser un poco aburridos. Eso es buena señal.
+
+## Mejor un prompt acotado que "revisa todo"
+
+Malo:
+
+```text
+Revisa todo el repo y dime qué importa.
+```
+
+Mejor:
+
+```text
+@content @messages
+Compara las guías de Gemini CLI en ko, en y es.
+Devuelve JSON con estas claves:
+- missingSlugs
+- frontmatterDrift
+- brokenRelativeLinks
+- suggestedFixes
+Si no hay evidencia, devuelve arrays vacíos.
+```
+
+El segundo prompt es mucho más fácil de parsear, diffear y mantener.
+
+## `json` y `jsonl` sirven para cosas distintas
+
+### `--output-format json`
+
+Úsalo cuando quieres un único resultado estructurado:
+
+- artifact de CI
+- resumen de revisión
+- scripts posteriores que lean `.response`
+- informes de auditoría
+
+### `--output-format jsonl`
+
+Úsalo cuando lo importante sea el stream de eventos:
+
+- trazas de tools
+- progreso incremental
+- wrappers o paneles en vivo
+- depurar por qué una automatización se comportó raro
+
+Si tienes dudas, empieza por `json`. Sube a `jsonl` solo cuando el stream en sí aporte valor.
+
+## La autenticación no interactiva también es parte del diseño
+
+Para headless mode, la documentación recomienda pensar en:
+
+- `GEMINI_API_KEY`
+- credenciales de Vertex AI
+
+No es solo comodidad. También abre la puerta a **token caching**, algo importante cuando ejecutas auditorías repetidas sobre el mismo repo.
+
+Un pipeline sólido suele juntar:
+
+- prompt determinista
+- alcance de archivos estable
+- API key o Vertex
+- salida estructurada
+
+## Patrones útiles para este repo
+
+### 1. Revisar paridad entre idiomas
+
 ```bash
-gemini -p "Resume la arquitectura de este repositorio" --output-format json
+gemini -p "@content compara ko, en y es en busca de slugs faltantes y frontmatter drift" --output-format json
 ```
-Con `--output-format json`, obtienes un objeto parseable con `response`, `stats` y `error`.
 
-## La autenticación correcta ahorra costos
+### 2. Revisar calidad MDX
 
-En automatización, la documentación aconseja evitar el login de navegador y usar:
-- **Gemini API key** (`GEMINI_API_KEY`)
-- **Vertex AI**
-
-Usar estos métodos habilita automáticamente el **Token Caching**, haciendo que los pipelines repetitivos sean extremadamente baratos.
-
-## Patrones prácticos de automatización
-
-### 1) QA de contenido en script
 ```bash
-gemini -p "@content compara los artículos entre ko, en y es y reporta slugs faltantes" --output-format json
+gemini -p "@content/en detecta descriptions débiles, ejemplos repetidos y broken relative links; devuelve JSON" --output-format json
 ```
 
-### 2) Integración con jq
+### 3. Redactar release notes
+
 ```bash
-gemini -p "Enumera vulnerabilidades desde @src" --output-format json | jq -r '.response'
+gemini -p "@git diff --staged redacta release notes en markdown con headings, bullets y riesgos" \
+  --output-format text
 ```
 
-### 3) JSONL en streaming
-```bash
-gemini -p "Revisa @content/en/gemini-cli" --output-format jsonl
-```
-Ideal para mostrar progreso de herramientas (`tool_use`) en interfaces propias.
+Todos estos ejemplos tienen algo en común: el resultado sigue siendo fácil de revisar por una persona.
 
-### 4) Ejemplo Real: GitHub Actions (Review automático)
+## Si hay shell o instalaciones, mira headless + sandbox juntos
 
-Un pipeline clásico donde Gemini analiza los Pull Requests en busca de fallos o faltas al `GEMINI.md`.
+Headless te da estructura. Sandbox te da contención.
 
-```yaml
-name: Gemini CLI Code Review
-on: [pull_request]
+La combinación vale especialmente cuando:
 
-jobs:
-  gemini-review:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Necesario para entender los diffs
+- la automatización instala dependencias
+- el repo es de terceros o poco confiable
+- los scripts pueden ejecutar comandos arbitrarios
+- todavía estás validando el workflow por primera vez
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
+## En CI empieza por review-first, no por auto-merge
 
-      - name: Install Gemini CLI
-        run: npm install -g @google/gemini-cli
+Una forma sensata de estructurar GitHub Actions es:
 
-      - name: Run Headless Review
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: |
-          gemini -p "Revisa los archivos modificados y comprueba que cumplan las reglas de GEMINI.md. Devuelve un reporte JSON." --output-format json > review.json
-          cat review.json
-```
+1. hacer checkout
+2. reducir el alcance al mínimo
+3. ejecutar Gemini en JSON
+4. transformar la salida en artifacts, anotaciones o resúmenes
+5. mantener revisión humana para cambios de impacto
 
-## Un buen uso dentro de este proyecto
+La mejor automatización temprana no fusiona sola: **prepara el trabajo para que una persona decida mejor**.
 
-Descubre un flujo útil en modo interactivo (ej: validar frontmatter de MDX), y luego empaquétalo usando el código superior en tus GitHub Actions.
+## Reglas operativas para que headless siga siendo fiable
 
-## Qué leer después
+- mantener prompts deterministas
+- limitar el alcance de entrada
+- pedir esquemas explícitos
+- tratar la salida de Gemini como draft o evidencia, no como autoridad final
+- guardar artifacts también cuando falla
+- promover a CI solo workflows ya probados en modo interactivo
 
-- [Primeros pasos con Gemini CLI](/gemini-cli/getting-started)
-- [Trusted Folders, Sandboxing y Restore](/gemini-cli/trusted-folders-sandboxing)
+Si haces eso, headless mode se comporta como un compañero útil. Si no, termina siendo un generador de JSON que nadie termina de confiar.
+
+## Siguientes lecturas recomendadas
+
+- Modelo seguro de ejecución: [Trusted Folders, Sandboxing y Restore](/gemini-cli/trusted-folders-sandboxing)
+- Cómo sacar investigaciones grandes fuera del hilo principal: [Sub-agentes y Orquestación de Skills](/gemini-cli/sub-agents-and-skills)

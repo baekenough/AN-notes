@@ -15,10 +15,10 @@ connections:
     type: "compare"
 featured: false
 order: 4
-date: "2026-03-21"
+date: "2026-03-28"
 ---
 
-> **Referencias Oficiales**: [Sub-agents](https://docs.anthropic.com/en/docs/claude-code/sub-agents) · [Agent SDK](https://docs.anthropic.com/en/docs/agents-and-tools/agent-sdk) · [CLI usage](https://docs.anthropic.com/en/docs/claude-code/cli-usage)
+> **Referencias Oficiales**: [Sub-agents](https://docs.anthropic.com/en/docs/claude-code/sub-agents) · [Agent Teams](https://docs.anthropic.com/en/docs/claude-code/agent-teams) · [Agent SDK](https://platform.claude.com/docs/en/agent-sdk/overview) · [CLI usage](https://docs.anthropic.com/en/docs/claude-code/cli-usage)
 
 <!-- curriculum:start -->
 ## Ruta del currículo
@@ -31,265 +31,425 @@ date: "2026-03-21"
 6. [GitHub Actions Workflows](/claude-code/github-actions-workflows) — mover trabajo repetible a automatización de equipo
 
 ### Documentación oficial usada en esta guía
-- **Subagents y modelo de delegación** — [Sub-agents](https://docs.anthropic.com/en/docs/claude-code/sub-agents)
-- **Conceptos de orquestación programática** — [Agent SDK](https://docs.anthropic.com/en/docs/agents-and-tools/agent-sdk)
+- **Subagentes y modelo de delegación** — [Sub-agents](https://docs.anthropic.com/en/docs/claude-code/sub-agents)
+- **Orquestación entre sesiones y compañeros de equipo** — [Agent Teams](https://docs.anthropic.com/en/docs/claude-code/agent-teams)
+- **Conceptos de orquestación programática** — [Agent SDK](https://platform.claude.com/docs/en/agent-sdk/overview)
 - **Patrones de uso del CLI** — [CLI usage](https://docs.anthropic.com/en/docs/claude-code/cli-usage)
 <!-- curriculum:end -->
 
-## ¿Qué Son los Subagentes?
+## Qué resuelven realmente los subagentes
 
-Claude Code puede generar subagentes especializados — instancias separadas de Claude que trabajan en tareas enfocadas en paralelo. Piénsalo como Claude delegando trabajo a un equipo.
+Los subagentes de Claude Code sirven para delegar trabajo especializado sin ensuciar el contexto principal. Cada uno opera con su propia ventana de contexto, un prompt del sistema dedicado, herramientas acotadas y permisos independientes. Claude delega cuando la tarea encaja con la descripción del subagente y luego resume los resultados en la sesión principal.
 
-## Cuándo Usar Subagentes
+La regla mental es simple:
 
-| Escenario | Agente Único | Subagentes |
-|-----------|-------------|-----------|
-| Corregir un typo | ✅ | Excesivo |
-| Revisar 3 archivos | ✅ | ✅ (más rápido) |
-| Refactorizar 20 archivos | Muy lento | ✅ |
-| Investigar + implementar | ✅ | ✅ (paralelo) |
-| Depuración entre módulos | Pierde contexto | ✅ |
+- **Conversación principal** — decide, sintetiza y mantiene la dirección
+- **Subagentes** — exploran, analizan o ejecutan partes concretas
+- **Equipos de agentes** — coordinan varias sesiones cuando los trabajadores necesitan hablar entre sí
+- **Worktrees** — aíslan cambios de archivo cuando varias sesiones editan en paralelo
 
-## El Patrón Orquestador
+## Cómo pensar la decisión antes de paralelizar
 
-La conversación principal actúa como orquestador — planifica el trabajo y delega a especialistas:
+No todo trabajo merece más agentes. Antes de dividir una tarea, pregúntate:
 
-```
-Tú: "Revisa el módulo de autenticación por problemas de seguridad"
+1. ¿La tarea se puede partir en piezas independientes?
+2. ¿Cada pieza tiene un boundary claro de lectura y escritura?
+3. ¿El resultado de cada pieza cabe en un resumen corto?
+4. ¿Los workers necesitan coordinarse entre sí o solo reportar a un líder?
+5. ¿La coordinación extra compensa el coste de contexto y tokens?
 
-Claude (orquestador):
-  → Genera Agente 1: Revisar auth/login.ts por riesgos de inyección
-  → Genera Agente 2: Revisar auth/session.ts por manejo de tokens
-  → Genera Agente 3: Revisar auth/middleware.ts por riesgos de bypass
-  → Agrega hallazgos en un único reporte
-```
+Si respondes “no” a varias de estas preguntas, probablemente te conviene una sola sesión bien dirigida.
 
-## Ejemplo Práctico: Refactorización Grande
+## Subagentes integrados y subagentes personalizados
 
-```
-Migra todas las rutas API del patrón Express middleware a Next.js Route Handlers.
+Claude Code incluye subagentes integrados como **Explore**, **Plan** y **General-purpose**. Además, puedes crear subagentes personalizados para tareas específicas de tu proyecto.
 
-Hay 15 rutas en src/api/. Usa agentes paralelos —
-uno por grupo de rutas (auth, users, products, orders, analytics).
+### Qué conviene definir al crear un subagente
 
-No modifiques las funciones utilitarias compartidas en src/api/utils/.
-```
+- **Descripción clara** — Claude la usa para decidir cuándo delegar
+- **Alcance concreto** — un dominio, carpeta o tipo de tarea
+- **Herramientas permitidas** — solo las necesarias para ese trabajo
+- **Modelo apropiado** — usa uno más rápido o económico cuando el trabajo sea de exploración o lectura
+- **Formato de salida** — pide resúmenes, listas o decisiones explícitas
 
-## Agent Teams (Experimental)
+### Qué más puedes ajustar
 
-La función Agent Teams de Claude Code habilita comunicación peer-to-peer entre agentes, ideal para:
-- Ciclos de revisión de código → corrección → re-revisión
-- Depuración compleja entre módulos
-- Investigación que requiere discusión y síntesis
+La documentación oficial de subagentes también expone controles que cambian bastante el comportamiento:
 
-## Agentes en Segundo Plano
+- **`/agents`** — la interfaz recomendada para crear, editar y administrar subagentes
+- **Ámbito** — proyecto, usuario o sesión actual, según dónde lo definas
+- **`permissionMode`** — desde modo estándar hasta lectura, aprobación limitada o plan mode
+- **`skills`** — puedes precargar skills dentro del subagente para darle conocimiento de dominio desde el inicio
+- **`memory`** — puedes habilitar memoria persistente para que un subagente acumule aprendizajes entre conversaciones
 
-Ejecutar agentes en segundo plano te permite seguir trabajando en otras cosas sin esperar. Es especialmente útil para tareas largas.
+Dos límites importantes:
 
-```
-Ejecuta la refactorización grande en segundo plano.
-Avísame cuando termine — seguiré con otras cosas mientras tanto.
-```
+- los subagentes no heredan skills de la conversación principal
+- los subagentes no pueden generar otros subagentes; si necesitas delegación anidada, encadena desde la conversación principal o usa Skills
 
-Casos ideales para ejecución en segundo plano:
-- **Refactorización a gran escala** — convertir decenas de archivos
-- **Ejecución de tests largos** — correr la suite de tests completa
-- **Revisión de código** — analizar todos los archivos de un PR grande
-- **Análisis de dependencias** — recorrer el árbol de dependencias del proyecto
+### Dónde viven los subagentes
 
-Cuando el agente termina, recibes una notificación con los resultados. Puedes retomar tu trabajo cuando quieras.
+Según la documentación oficial, puedes guardarlos en:
 
-## Aislamiento con Git Worktrees
+- `.claude/agents/` — subagentes del proyecto
+- `~/.claude/agents/` — subagentes de usuario
 
-Que cada agente trabaje en su propio git worktree permite experimentar sin tocar la rama principal.
+Eso hace que la configuración sea reutilizable sin copiar prompts por todas partes.
 
-```
-Haz que cada agente trabaje en su propio worktree:
-- Agente 1: Refactorizar módulo de auth en la rama feature/auth-refactor
-- Agente 2: Migrar APIs en la rama feature/api-migration
-- Agente 3: Mejorar cobertura de tests en la rama feature/test-coverage
+### Cuándo dejarlos actuar solos y cuándo llamarlos explícitamente
 
-Cada uno trabaja de forma independiente y entrega resultados en su propia rama.
+Claude puede delegar automáticamente cuando la tarea coincide con la descripción del subagente. Si quieres forzar una ruta concreta, invócalo de forma explícita.
+
+```text
+Usa el subagente code-reviewer para revisar el módulo de autenticación.
 ```
 
-Ventajas del aislamiento con worktrees:
-- **Experimentación segura** — si falla, solo borras el worktree
-- **Trabajo en ramas en paralelo** — desarrolla varias funcionalidades a la vez
-- **Sin interferencias** — los agentes no se pisan entre sí
-- **Rollback sencillo** — descarta una rama si el resultado no convence
-
-## Patrones de Especialización de Agentes
-
-Asignar a cada agente un rol experto específico produce análisis mucho más profundos que un único agente generalista.
-
-```
-Analiza el proyecto completo con tres agentes especializados:
-
-Agente de Seguridad:
-  - Verificar contra OWASP Top 10
-  - Detectar riesgos de SQL injection, XSS y CSRF
-  - Revisar lógica de autenticación y autorización
-
-Agente de Rendimiento:
-  - Detectar patrones de consultas N+1
-  - Identificar posibles fugas de memoria
-  - Detectar re-renders innecesarios y cálculos costosos
-
-Agente de Cobertura de Tests:
-  - Medir la cobertura de código actual
-  - Identificar casos límite no cubiertos
-  - Listar módulos sin tests de integración
+```text
+Haz que el subagente debugger investigue por qué falla el login.
 ```
 
-Cada agente se centra en su dominio y produce resultados que un único agente repartido entre las tres áreas no alcanzaría.
+En ambos casos, la clave es la misma: dale un objetivo estrecho y un resultado verificable.
 
-## Escenario Real: Frontend + Backend al Mismo Tiempo
+### Skills, subagentes y reutilización
 
-Al añadir una nueva funcionalidad, puedes construir el frontend, el backend y la base de datos a la vez:
+Usa **Skills** cuando quieras reutilizar un procedimiento dentro del contexto principal. Usa **subagentes** cuando quieras separar contexto, herramientas y permisos. Si necesitas que un subagente arranque con conocimiento de dominio, precárgalo con `skills` en lugar de esperar que “aprenda” durante la ejecución.
 
-```
-Añade la funcionalidad "Perfil de Usuario". Que tres agentes trabajen a la vez:
+## El patrón orquestador
 
-Agente 1 (Backend): Implementar endpoints GET/PUT /api/users/:id
-Agente 2 (Frontend): Construir componentes React ProfilePage y ProfileForm
-Agente 3 (Base de datos): Migración para añadir columnas bio y avatar_url a la tabla users
+La conversación principal debe comportarse como un orquestador, no como un ejecutor disperso. Su trabajo es dividir, dirigir y recomponer.
 
-Los tipos compartidos están en src/types/user.ts.
-Cuando los tres terminen, propón un plan de integración.
-```
+Un patrón útil es este:
 
-Con tres agentes en paralelo, el tiempo total se acerca al del agente más lento, en lugar de ser la suma de los tres.
+```text
+Objetivo: revisar y estabilizar el módulo de autenticación.
 
-## Cuándo los Agentes No Valen la Pena
+Divide el trabajo así:
+- Agente 1: explorar auth/login.ts por riesgos de seguridad
+- Agente 2: revisar auth/session.ts por manejo de tokens
+- Agente 3: revisar auth/middleware.ts por bypasses de autorización
 
-Más agentes no siempre es mejor. Ten en cuenta estos puntos:
-
-- **Las tareas simples se vuelven más lentas** — corregir un typo o editar un archivo es más rápido con un solo agente. Crear agentes tiene su coste de arranque.
-- **El contexto es independiente** — cada agente tiene su propia ventana de contexto. Compartir estado entre agentes requiere archivos o una lista de tareas compartida.
-- **El coste se multiplica** — número de agentes × llamadas a la API = mayor gasto. Úsalos cuando el paralelismo realmente lo justifique.
-- **Más de 4 agentes puede perder eficiencia** — Claude Code recomienda un máximo de 4 agentes simultáneos. Por encima de eso, la sobrecarga de coordinación crece.
-
-## Claude Code SDK para Orquestación Programática
-
-Claude Code se puede usar como paquete npm (`@anthropic-ai/claude-code`), lo que permite construir flujos de orquestación personalizados en TypeScript/JavaScript.
-
-Uso básico:
-
-```typescript
-import { claude } from "@anthropic-ai/claude-code";
-
-// Ejecución simple de prompt
-const result = await claude({
-  prompt: "Analyze src/auth/ for security vulnerabilities",
-  options: {
-    maxTurns: 10,
-    allowedTools: ["Read", "Glob", "Grep"],
-  }
-});
-
-console.log(result.text);
+Cada agente debe devolver:
+- hallazgos priorizados
+- archivos afectados
+- una recomendación concreta
+- cualquier duda bloqueante
 ```
 
-Ejemplo de orquestación multi-agente:
+Ese formato funciona porque cada subagente sabe qué mirar, qué no tocar y qué debe devolver.
 
-```typescript
-// Revisión de código en paralelo por módulos
-const modules = ["src/auth/", "src/api/", "src/database/"];
+## Patrones de orquestación que sí funcionan
 
-const reviews = await Promise.all(
-  modules.map(mod =>
-    claude({
-      prompt: `Review ${mod} for security issues. Focus on injection risks and auth bypasses.`,
-      options: { allowedTools: ["Read", "Glob", "Grep"] }
-    })
-  )
-);
+### 1. Investigación paralela
 
-// Agregar resultados
-const summary = await claude({
-  prompt: `Synthesize these security reviews into a single report:\n${reviews.map(r => r.text).join("\n---\n")}`,
-});
+Usa varios subagentes cuando quieras explorar ángulos distintos de un mismo problema.
+
+```text
+Investiga en paralelo el backend, el frontend y las pruebas del flujo de notificaciones.
+Devuelve un resumen breve por área y una conclusión final.
 ```
 
-Casos de uso: pipelines de CI personalizados, auditorías de código automatizadas, procesamiento por lotes en bases de código grandes.
+Esto funciona mejor cuando las rutas de investigación no dependen unas de otras.
 
-## Modo Headless para Automatización
+### 2. Encadenado de subagentes
 
-`claude -p "prompt"` se ejecuta sin conversación interactiva. Combinado con scripts de shell, permite una automatización potente:
+Cuando el trabajo es secuencial, encadena subagentes desde la conversación principal.
 
-```bash
-#!/bin/bash
-# Auditoría de seguridad en paralelo por servicio
-
-services=("auth-service" "payment-service" "user-service")
-
-for service in "${services[@]}"; do
-  claude -p "Audit $service/ for OWASP Top 10 vulnerabilities. Output as markdown." \
-    --model haiku \
-    --output-format text \
-    > "reports/${service}-audit.md" &
-done
-
-wait
-echo "All audits complete"
+```text
+Primero usa un subagente para encontrar problemas de rendimiento.
+Después usa otro subagente para proponer correcciones.
+Luego sintetiza qué cambio es más seguro y pequeño.
 ```
 
-Opciones útiles:
-- `--output-format json` para salida parseable por máquinas
-- Piping por stdin: `git diff HEAD~5 | claude -p "Summarize the changes in these commits"`
-- Variable de entorno `ANTHROPIC_API_KEY` para sistemas CI/CD
+La idea es que cada paso herede solo el contexto que necesita, no todo el ruido intermedio.
 
-El modo headless es especialmente útil para integrar Claude Code como herramienta de automatización en GitHub Actions, Jenkins y otros sistemas de CI.
+### 3. Aislar operaciones de alto volumen
 
-## Estrategias de Optimización de Costos
+Si una tarea produce mucha salida —tests largos, logs, documentación generada, análisis de archivos grandes— conviene mandarla a un subagente para que el detalle se quede allí y solo vuelva el resumen útil.
 
-Cada subagente crea un nuevo contexto de Claude, lo que implica costos adicionales de API. Estas son las estrategias para minimizar el gasto:
-
-| Estrategia | Cómo | Ahorro |
-|------------|------|--------|
-| Mezcla de modelos | haiku para búsqueda/lectura, sonnet para implementación | ~60% en tareas de lectura intensiva |
-| Alcance limitado | Alcance reducido = menos turnos = menos costo | ~40% por agente |
-| Caché de resultados | Almacenar salidas, reutilizar entre ejecuciones | Variable |
-| Agrupación en lotes | Agrupar archivos relacionados en menos agentes | ~30% vs un agente por archivo |
-
-Anti-patrón: crear un agente por archivo para 50 archivos. En su lugar, crea agentes por módulo.
-
-Punto óptimo: 2-4 agentes para la mayoría de tareas, cada uno manejando un grupo lógico de archivos relacionados.
-
-## Escenario Real: Sprint de Funcionalidad Full-Stack
-
-Recorramos un escenario multi-agente realista:
-
-```
-Tarea: Añadir funcionalidad de "notificaciones de usuario" a una app full-stack
-
-Plan de orquestación de agentes:
-├── Agente 1 (Backend): Diseñar esquema de notificaciones, crear endpoints API
-│   Alcance: src/api/notifications/, prisma/schema.prisma
-│
-├── Agente 2 (Frontend): Construir componente NotificationBell, página de lista de notificaciones
-│   Alcance: src/components/notifications/, src/pages/notifications/
-│
-├── Agente 3 (Infraestructura): Configurar servidor WebSocket, Redis pub/sub
-│   Alcance: src/services/websocket/, docker-compose.yml
-│
-└── Agente 4 (Testing): Escribir tests de integración para el flujo de notificaciones
-    Alcance: tests/notifications/
-    Dependencias: Espera a que los Agentes 1-3 completen
-
-Ejecución: Agentes 1-3 en paralelo → Agente 4 después
-Tiempo total: ~5 min (vs ~15 min secuencial)
+```text
+Ejecuta la suite de tests y reporta solo:
+- fallos
+- archivos implicados
+- mensajes de error relevantes
 ```
 
-Punto clave: define las interfaces compartidas (`types/notification.ts`) antes de generar los agentes. Cada agente tiene acceso de lectura a los tipos compartidos pero solo escribe en su propio alcance.
+### 4. Dividir por módulos o capas
 
-## Comparación con Codex
+Para cambios grandes, reparte el sistema por responsabilidad.
 
-GPT Codex ejecuta cada tarea como un único agente en sandbox. No hay orquestación multi-agente, pero el modelo de sandbox da aislamiento completo de contenedor por tarea.
+- un subagente para auth
+- otro para API
+- otro para UI
+- otro para pruebas o validación
 
-| Característica | Subagentes Claude Code | Tareas Codex |
-|---------------|----------------------|-------------|
-| Paralelismo | Hasta 4 concurrentes | Tareas concurrentes posibles |
-| Comunicación | Contexto compartido, mensajería | Independiente, aislado |
-| Mejor para | Trabajo complejo e interconectado | Tareas independientes bien definidas |
+Este patrón es especialmente útil cuando cada área tiene boundaries de archivos claros y bajo solapamiento.
 
+### 5. Explorar antes de implementar
+
+Si el codebase es desconocido, usa primero un subagente de exploración o Plan Mode para mapear el terreno y solo después delega la implementación.
+
+Ese orden reduce trabajo duplicado y evita que varios workers arranquen con hipótesis equivocadas.
+
+## Subagentes vs conversación principal
+
+La documentación oficial recomienda usar conversación principal cuando necesitas ida y vuelta frecuente, refinamiento iterativo o latencia baja. Usa subagentes cuando el trabajo pueda hacerse de forma autónoma y devolver un resumen.
+
+| Caso | Conversación principal | Subagentes |
+|------|------------------------|-----------|
+| Cambio rápido y directo | ✅ | ❌ innecesario |
+| Mucha ida y vuelta | ✅ | ❌ |
+| Exploración paralela | ❌ | ✅ |
+| Salida detallada que no quieres cargar en el hilo principal | ❌ | ✅ |
+| Restricciones de herramientas o permisos | ❌ | ✅ |
+| Flujo secuencial con fases compartidas | ✅ | ⚠️ solo si el corte es claro |
+
+Regla práctica: si el siguiente paso depende mucho del anterior, mantén la sesión principal en control. Si el trabajo puede devolver un resumen limpio, delega.
+
+## Subagentes vs equipos de agentes
+
+Aquí está el tradeoff importante de “workers”:
+
+- **Subagentes** — trabajan dentro de una sola sesión y reportan al llamador
+- **Equipos de agentes** — coordinan sesiones separadas y permiten comunicación directa entre compañeros de equipo
+
+La página oficial de equipos de agentes los describe como experimentales y deshabilitados por defecto. También señala que los equipos agregan sobrecarga de coordinación y consumen más tokens que una sola sesión.
+
+| Aspecto | Subagentes | Equipos de agentes |
+|----------|------------|--------------------|
+| Contexto | Ventana propia, pero dentro de una sesión | Ventana propia e independiente |
+| Comunicación | Reportan al agente principal | Los compañeros de equipo pueden hablar entre sí |
+| Mejor para | Tareas enfocadas y resúmenes | Investigación colaborativa, discusión y coordinación |
+| Coste | Menor que un equipo completo | Mayor, por sesión separada |
+| Complejidad operativa | Baja | Más alta |
+
+Usa subagentes cuando necesitas foco. Usa equipos de agentes cuando los workers necesiten desafiarse, coordinarse o dividir propiedad real entre varias sesiones.
+
+### Qué te da un equipo de agentes que un subagente no te da
+
+La documentación de equipos de agentes añade varias capacidades útiles cuando el trabajo ya no cabe en un solo hilo:
+
+- una **lista de tareas compartida** con estados y dependencias
+- **mensajería directa** entre compañeros de equipo sin pasar siempre por el líder
+- **modos de visualización** distintos para trabajar en una sola terminal o en paneles divididos
+- **aprobación de plan** antes de implementar cuando el trabajo es riesgoso o complejo
+- **hooks de calidad** para frenar o redirigir el flujo si una tarea termina demasiado pronto
+- **reclamo de tareas con dependencias** para que una tarea bloqueada no se tome antes de tiempo
+- **asignación explícita o auto-reclamo** según quieras dirigir el equipo desde el líder o dejar que avance por sí mismo
+
+Eso convierte al líder en coordinador y a los compañeros de equipo en sesiones realmente independientes. Úsalo cuando la colaboración entre workers sea tan importante como la ejecución.
+
+## Presupuesto de contexto: piensa antes de llenar el hilo
+
+Cada subagente tiene su propia ventana de contexto, pero sus resultados vuelven a la conversación principal. El coste no está solo en correr el agente, sino también en cuánto texto devuelves y cuánto contexto arrastras después.
+
+### Reglas simples que ayudan
+
+- pide salidas cortas y estructuradas
+- evita logs crudos si basta un resumen
+- devuelve solo archivos, decisiones y errores relevantes
+- si una tarea va a vivir mucho tiempo, reanúdala en lugar de recrearla
+- no hagas que varios agentes vuelvan con el mismo detalle innecesario
+
+### Primer plano o fondo
+
+La documentación oficial distingue dos modos de ejecución para subagentes:
+
+- **Primer plano** — bloquea la conversación principal hasta que el subagente termina
+- **Fondo** — corre concurrentemente mientras sigues trabajando en otra cosa
+
+En fondo, Claude Code pide por adelantado los permisos que el subagente necesitará. Si luego necesita una aclaración interactiva, la llamada falla y el subagente sigue adelante. Si ese intento falla por permisos faltantes, puedes repetir la misma tarea en primer plano para responder preguntas en vivo.
+
+Ese modo encaja bien cuando quieres seguir trabajando mientras se ejecuta un análisis largo, una suite de tests o una recopilación de contexto pesada.
+
+### Señales de que estás gastando contexto de más
+
+- cada subagente devuelve páginas de texto sin filtro
+- la conversación principal repite hallazgos ya resumidos
+- vuelves a pedir a otro worker que lea lo mismo desde cero
+- los resultados tardan más en sintetizarse que en producirse
+
+Una buena orquestación protege el contexto principal como el recurso escaso que es.
+
+## Boundaries y ownership
+
+El paralelismo funciona mejor cuando cada worker tiene ownership claro.
+
+### Define boundaries antes de lanzar agentes
+
+- un módulo por subagente
+- una carpeta por subagente
+- una capa por subagente
+- una pregunta por subagente
+
+Si dos workers van a tocar el mismo archivo, el paralelismo deja de ser una ventaja y empieza a parecer coordinación manual disfrazada.
+
+### Reglas prácticas de ownership
+
+- **Un dueño por área** — evita que dos workers escriban en la misma superficie a la vez
+- **Contratos compartidos primero** — define tipos, interfaces o schemas antes de implementar
+- **Lectura compartida, escritura aislada** — los contratos se pueden leer; las implementaciones deben estar separadas
+- **Síntesis centralizada** — una sola sesión decide cómo se integra todo
+
+### Qué pasa cuando el boundary es malo
+
+- aparecen conflictos de archivos
+- se duplican decisiones arquitectónicas
+- el merge final se vuelve el trabajo más caro del flujo
+- los workers se bloquean por dependencias invisibles
+
+## Git worktrees: el aislamiento correcto cuando varias sesiones escriben
+
+Si tienes varias sesiones de Claude Code que realmente van a escribir en paralelo, usa worktrees. La documentación oficial los presenta como la forma de ejecutar sesiones paralelas con aislamiento completo de archivos.
+
+### Cuándo aportan valor
+
+- cada worker necesita tocar archivos distintos sin pisarse
+- vas a mantener varias sesiones activas durante bastante tiempo
+- quieres revisar ramas distintas con independencia real
+- necesitas aislar experimentos o refactors grandes
+
+### Cuándo no son necesarios
+
+- solo estás investigando o leyendo
+- el trabajo sigue siendo secuencial
+- una sola sesión puede sintetizar el resultado sin problemas
+
+### Flujo práctico
+
+```text
+1. Crea un worktree por tarea o por sesión.
+2. Inicia Claude Code dentro de cada worktree.
+3. Mantén una sola pieza de ownership por worktree.
+4. Inicializa el entorno de desarrollo en cada uno.
+5. Limpia el worktree cuando termines.
+```
+
+### Regla operativa
+
+Usa worktrees para aislar cambios de archivo. Usa subagentes para aislar razonamiento dentro de una sola sesión. Usa equipos de agentes cuando necesites coordinación entre sesiones.
+
+## Cuándo no usar paralelismo
+
+Más agentes no siempre significa más velocidad. Evita paralelizar cuando veas alguno de estos casos:
+
+- **Dependencias secuenciales** — el paso B depende de la salida del paso A
+- **Un solo archivo caliente** — varios workers editarían lo mismo
+- **Tarea muy pequeña** — el overhead supera el beneficio
+- **Scope borroso** — nadie sabe qué parte le pertenece a quién
+- **Necesidad de refinamiento constante** — la conversación humana sigue cambiando el objetivo
+- **Resultado único y delicado** — quieres una sola síntesis, no tres opiniones competidoras
+
+Regla práctica: si el trabajo no se puede resumir claramente en tareas independientes, no lo dividas.
+
+## Integración práctica: un loop que no pierde el hilo
+
+Un loop sano suele verse así:
+
+### 1. Explora
+
+Usa un subagente de exploración o Plan Mode para entender el terreno.
+
+### 2. Divide
+
+Separa el trabajo por módulos, capas o responsabilidades.
+
+### 3. Delegar
+
+Lanza subagentes con boundaries claros y con el formato de salida que necesitas.
+
+### 4. Sintetiza
+
+Reúne los hallazgos en la conversación principal y decide qué hacer.
+
+### 5. Implementa
+
+Si el cambio toca varios archivos y varias sesiones, pasa a worktrees o a equipos de agentes. Si el trabajo aún cabe dentro de una sola sesión, quédate con subagentes y evita moverlo a una coordinación más pesada de la necesaria.
+
+### 6. Verifica
+
+Pide que se ejecuten tests, revisiones o validaciones, pero devuelve solo el resultado necesario.
+
+### 7. Reanuda o cierra
+
+Si el trabajo continúa, reanuda el subagente adecuado. Si terminó, limpia el contexto y los worktrees.
+
+Ese loop reduce desorden porque cada fase tiene un propósito claro.
+
+## Ejemplo práctico: revisión, corrección y verificación
+
+```text
+Necesito estabilizar el módulo de autenticación.
+
+Paso 1: usa un subagente para revisar riesgos de seguridad.
+Paso 2: usa otro subagente para identificar puntos de refactor mínimo.
+Paso 3: sintetiza ambos resultados y elige una sola dirección.
+Paso 4: ejecuta la corrección en un boundary claro.
+Paso 5: valida el cambio con tests.
+```
+
+Lo importante aquí no es la cantidad de agentes, sino que cada uno tenga una función distinta en la cadena.
+
+## Cómo escribir mejores instrucciones para delegar
+
+Un buen prompt de delegación tiene cinco partes:
+
+1. **Objetivo** — qué quieres lograr
+2. **Boundary** — qué área o archivos puede tocar
+3. **Restricción** — qué no debe cambiar
+4. **Formato de salida** — qué debe devolverte
+5. **Criterio de cierre** — cuándo consideras que terminó
+
+### Plantilla breve
+
+```text
+Objetivo: ...
+Boundary: ...
+No cambies: ...
+Devuelve: ...
+Termina cuando: ...
+```
+
+Cuanto mejor acotes la tarea, menos contexto desperdicia el subagente y más fácil es integrar su salida.
+
+### Cuándo conviene reanudar en vez de recrear
+
+Reanuda un subagente cuando la tarea necesita continuidad real: ya tiene historial útil, decisiones previas, resultados de herramientas o un razonamiento que no quieres reconstruir. Crea uno nuevo solo cuando quieres una mirada fresca o cuando el scope cambió de verdad.
+
+## Errores comunes
+
+### “Voy a lanzar más workers y listo”
+
+Sin boundaries claros, el paralelismo crea ruido, no velocidad.
+
+### “Cada worker puede decidir su propio scope”
+
+Eso suele terminar en archivos solapados, decisiones duplicadas y merges más caros.
+
+### “Que todo lo que encuentren vuelva completo”
+
+Demasiado detalle en el retorno mata el beneficio del contexto separado.
+
+### “Si una investigación ya empezó, recreo otro worker”
+
+Primero intenta reanudar el mismo subagente si el trabajo necesita continuidad.
+
+### “Un worktree resuelve la coordinación”
+
+No. Worktrees aíslan archivos; no reemplazan la necesidad de buena orquestación.
+
+## Resumen operativo
+
+Usa esta heurística simple:
+
+- **Subagentes** cuando quieres foco y resúmenes
+- **Equipos de agentes** cuando los workers necesitan comunicarse y coordinarse entre sesiones
+- **Worktrees** cuando varios workers van a escribir a la vez con aislamiento Git
+- **Una sola sesión** cuando la tarea es pequeña, secuencial o necesita mucha ida y vuelta
+
+En la práctica, la mejor orquestación es la que reduce contexto perdido, evita solapamientos y mantiene una sola fuente de decisión clara.
+
+## Comparación con flujos de agente único
+
+Si vienes de un flujo de agente único, la diferencia clave es esta: no intentes que una sola conversación haga todo. Divide cuando el trabajo sea realmente paralelizable, pero conserva el control central de la síntesis, la verificación y la decisión final.
+
+Ese equilibrio es lo que hace útil el sistema multi-agente sin volverlo caótico.

@@ -28,8 +28,27 @@
     "comingSoon": "준비 중",
     "viewGuide": "가이드 보기"
   },
+  "learningPath": {
+    "sectionTitle": "추천 학습 경로",
+    "sectionDescription": "각 도구별로 가장 빠르게 감을 잡을 수 있는 순서를 먼저 골라두었습니다.",
+    "toolTitle": "추천 시작 순서",
+    "toolDescription": "{tool}를 처음 보거나 오랜만에 다시 볼 때, 이 순서로 읽으면 빠르게 맥락을 잡을 수 있습니다.",
+    "startHere": "여기서 시작",
+    "firstGuide": "첫 문서",
+    "openFirstGuide": "첫 문서 열기",
+    "nextSteps": "다음 단계",
+    "step": "단계",
+    "viewToolGuides": "{tool} 전체 가이드 보기"
+  },
+  "latestUpdates": {
+    "sectionTitle": "최근 업데이트",
+    "sectionDescription": "가장 최근에 손본 가이드들을 먼저 확인해 보세요.",
+    "toolTitle": "{tool} 최근 업데이트",
+    "toolDescription": "{tool}에서 최근에 다듬은 문서들입니다."
+  },
   "tip": {
     "readingTime": "{minutes}분 소요",
+    "updatedOn": "{date} 업데이트",
     "difficulty": {
       "beginner": "입문",
       "intermediate": "중급",
@@ -56,6 +75,7 @@
   "whatsNew": {
     "title": "새 소식",
     "subtitle": "알아야 할 혁신적인 기능들",
+    "recentGuidesTitle": "최근 가이드 업데이트",
     "updated": "{date} 업데이트",
     "claudeCode": {
       "title": "Claude Code",

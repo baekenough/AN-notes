@@ -15,78 +15,143 @@ connections:
     type: "enhances"
 featured: false
 order: 4
-date: "2026-03-24"
+date: "2026-03-28"
 ---
 
-> **Official References**: [Trusted folders](https://geminicli.com/docs/cli/trusted-folders/) · [Sandboxing](https://geminicli.com/docs/cli/sandbox/) · [Checkpointing](https://geminicli.com/docs/cli/checkpointing/)
+> **Official References**: [Trusted folders](https://geminicli.com/docs/cli/trusted-folders/) · [Sandboxing](https://geminicli.com/docs/cli/sandbox/) · [Checkpointing](https://geminicli.com/docs/cli/checkpointing/) · [Plan Mode](https://geminicli.com/docs/core/tools/)
 
-## Gemini CLI has a real safety model now
+<!-- curriculum:start -->
+## Learning path
 
-If you are worried about an AI agent wrecking your codebase, you must understand its multi-layered defense system:
+1. [Getting Started with Gemini CLI](./getting-started) — install, auth, memory basics
+2. [The 1M Token Advantage](./million-token-context) — repo-scale analysis without waste
+3. [Gemini Extensions & MCP](./gemini-extensions) — package commands, MCP, and skills
+4. **Trusted Folders, Sandboxing, and Restore** — trust, isolation, and rollback ← **You are here**
+5. [Headless Automation with Gemini CLI](./headless-automation) — scripts, CI, structured output
+6. [Sub-agents and Skills Orchestration](./sub-agents-and-skills) — delegation and specialist workflows
 
-1. **Trusted Folders**: Controls workspace-level permissions.
-2. **Plan Mode**: A strict read-only mode for designing before acting.
-3. **Sandboxing**: Isolates risky shell executions.
-4. **Checkpointing**: Creates automated rollback points before writing files.
+### Official docs used in this article
+- **What changes in trusted vs untrusted workspaces** — [Trusted folders](https://geminicli.com/docs/cli/trusted-folders/)
+- **How sandbox execution is configured and why it exists** — [Sandboxing](https://geminicli.com/docs/cli/sandbox/)
+- **Shadow Git checkpoints and restore flow** — [Checkpointing](https://geminicli.com/docs/cli/checkpointing/)
+<!-- curriculum:end -->
 
-## Plan Mode: Safe Design Before Execution (Read-Only)
+## Gemini CLI safety is a stack, not one switch
 
-For large refactors or exploring unfamiliar repositories, **Plan Mode** (`/plan` or `enter_plan_mode`) is your ultimate safety net.
+When people ask whether Gemini CLI is safe, they usually want one answer. The real answer is a stack of protections that solve different failure modes.
 
-- While in Plan Mode, the agent is **strictly prohibited from modifying files or running destructive shell commands**. It can only use read-only tools to map the codebase and write design documents.
-- Only when the plan is thoroughly reviewed and approved do you manually switch back to the default mode to apply the changes (Execution).
+1. **Trusted folders** protect you from unknown repo-local configuration.
+2. **Plan Mode** protects you from acting too early.
+3. **Sandboxing** protects your machine from risky execution.
+4. **Checkpointing + restore** protects your work when an edit goes sideways.
 
-## Trusted folders: protect yourself from risky workspaces
+If you combine all four, Gemini CLI feels much less like “YOLO automation” and much more like a controlled engineering tool.
 
-Trusted folders are **disabled by default**. Once enabled, Gemini CLI asks whether a folder should be trusted before loading project-specific configuration.
+## Trusted folders define whether a repo gets to influence the session
 
-Enable it in your user settings:
-```json
-{
-  "security": {
-    "folderTrust": {
-      "enabled": true
-    }
-  }
-}
-```
+Trusted folders are the first gate. They determine whether Gemini CLI should treat a workspace as something that can safely provide project-specific behavior.
 
-In an untrusted workspace, sensitive actions like loading `.env`, connecting to MCP servers, or auto-accepting tools are blocked. This is critical for client code or random open-source repositories.
+In an **untrusted** workspace, the CLI intentionally limits what repo-local configuration can do. That is exactly what you want when opening:
 
-## Sandboxing: isolate risky actions
+- a customer repository you do not control
+- a random open-source project
+- a vendor sample app with unknown scripts
+- a security incident branch that you want to inspect cautiously
 
-Gemini CLI can execute file modifications and shell actions inside an isolated container sandbox instead of your host OS.
+The trust prompt is not ceremony. It is the moment you decide whether the repo is allowed to shape the agent's behavior.
 
-```bash
-gemini --sandbox
-```
+## A practical rule: inspect first, trust second
 
-If a project needs extra binaries, you can provide a custom Dockerfile at `.gemini/sandbox.Dockerfile`. This keeps your local machine perfectly clean.
+My preferred default is:
 
-## Checkpointing: rollback before AI writes files
+1. open unfamiliar repos as untrusted
+2. inspect the file tree, lockfiles, scripts, and config
+3. trust only after I understand what local instructions and tooling are about to load
 
-If the agent makes a mistake, checkpointing (disabled by default) is your undo button. Enable it in `settings.json`:
-```json
-{
-  "general": {
-    "checkpointing": {
-      "enabled": true
-    }
-  }
-}
-```
-When enabled, it creates a shadow Git snapshot and conversation backup right before writing files.
-Restore instantly with:
-```text
-/restore
-```
+That one habit dramatically lowers the odds of getting surprised by project-specific commands, settings, or tool access.
 
-## How I would use this in practice
+## Plan Mode prevents premature action
 
-- **Unfamiliar client repo**: Enable trusted folders globally -> Do NOT trust -> Use **Plan Mode** to explore -> Use **Sandboxing** for running code.
-- **Trusted repo you own**: Trust the folder -> Normal interactive mode -> Enable **Checkpointing** during heavy edit bursts.
+Trusted folders answer “Should this repo influence the session?”
+Plan Mode answers “Should the agent be allowed to change anything yet?”
+
+For complex requests, the safest flow is:
+
+- enter Plan Mode
+- map architecture and risks
+- decide the edit boundary
+- leave Plan Mode only after the change strategy is solid
+
+This is especially useful in multilingual content repos like AI Native Notes. It is easy to accidentally change slugs, frontmatter, or locale parity if you jump into mutation too early.
+
+## Sandboxing is about execution risk, not editorial judgment
+
+Sandboxing is the next layer. It is for moments when the agent needs to run shell commands, install dependencies, or execute code that you do not fully trust yet.
+
+Use sandboxing when the task includes things like:
+
+- running package managers with unknown postinstall scripts
+- executing test suites in unfamiliar repos
+- trying build commands from third-party samples
+- validating automation steps that could touch the wider machine
+
+A useful mental model:
+
+- **Plan Mode** controls *whether* the agent may act.
+- **Sandboxing** controls *where* risky actions happen.
+
+Those are different controls, and you often want both.
+
+## Checkpointing is the safety net you feel only after you need it
+
+Checkpointing creates rollback points before write operations. That means the agent can move faster without turning every session into a disaster-recovery event.
+
+This is most valuable when:
+
+- a task touches many files
+- you are testing prompt variants
+- the repository has strict formatting or generated artifacts
+- you are doing cleanup and want a fast “undo” button
+
+The restore flow is not a replacement for Git discipline, but it is excellent for recovering from “the agent technically did the task, but this diff is not what I wanted.”
+
+## Match the guardrail to the repo type
+
+Here is a practical playbook:
+
+| Situation | Trust | Plan Mode | Sandbox | Checkpointing |
+|---|---|---|---|---|
+| Unknown external repo | Start untrusted | Yes | Usually yes | Optional |
+| Your own production repo | Trust selectively | Yes for broad tasks | For risky commands | Yes for heavy edits |
+| Fast local copy edits | Trusted | Optional | Usually no | Optional |
+| Automation or CI experiments | Trusted runner image | Pre-plan locally | Yes | Use Git + artifacts |
+
+The point is not to maximize friction. It is to spend safety budget where the risk actually lives.
+
+## Safety also improves thinking quality
+
+There is a second-order effect here: safety features improve reasoning.
+
+When the agent is operating in a constrained mode, prompts tend to get sharper:
+
+- “Investigate only, no edits yet.”
+- “Run this inside a sandbox.”
+- “Create a checkpoint before changing content.”
+
+Those constraints are not just guardrails. They also force better task design.
+
+## A good working routine for this repo
+
+For AI Native Notes specifically, I would use this pattern:
+
+1. **Open unfamiliar content areas untrusted** if they came from external contributors.
+2. **Plan first** when changing shared navigation, locale structure, or slugs.
+3. **Enable checkpointing** before sweeping MDX edits.
+4. **Use sandboxing** only when the task truly requires command execution or installs.
+
+That keeps the content workflow fast without pretending every change is harmless.
 
 ## Recommended next reads
 
-- [Headless Automation](/gemini-cli/headless-automation)
-- [Sub-agents and Skills](/gemini-cli/sub-agents-and-skills)
+- Move from safe exploration to automation with [Headless Automation](/gemini-cli/headless-automation)
+- Learn how delegation fits on top of these guardrails in [Sub-agents and Skills](/gemini-cli/sub-agents-and-skills)

@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
 import { hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import Link from "next/link";
+import { TipCard } from "@/components/tip-card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { locales } from "@/i18n/config";
+import { getLatestTipsByTool } from "@/lib/content";
 import { getToolConfig } from "@/lib/tools";
 import type { Tool } from "@/lib/content";
 import {
@@ -24,17 +28,24 @@ const tagStyles: Record<string, string> = {
   "REVOLUTIONARY": "bg-red-500/10 text-red-400 border-red-500/20",
   "MASSIVE": "bg-amber-500/10 text-amber-400 border-amber-500/20",
   "POWERFUL": "bg-blue-500/10 text-blue-400 border-blue-500/20",
+  "SAFE": "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+  "EFFICIENT": "bg-cyan-500/10 text-cyan-400 border-cyan-500/20",
   // Korean
   "혁신": "bg-orange-500/10 text-orange-400 border-orange-500/20",
   "혁명적": "bg-red-500/10 text-red-400 border-red-500/20",
   "충격적": "bg-purple-500/10 text-purple-400 border-purple-500/20",
   "강력": "bg-blue-500/10 text-blue-400 border-blue-500/20",
+  "강력함": "bg-blue-500/10 text-blue-400 border-blue-500/20",
   "실용적": "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+  "안전함": "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+  "생산성": "bg-cyan-500/10 text-cyan-400 border-cyan-500/20",
   // Spanish
   "REVOLUCIONARIO": "bg-red-500/10 text-red-400 border-red-500/20",
   "IMPRESIONANTE": "bg-purple-500/10 text-purple-400 border-purple-500/20",
   "CAMBIO TOTAL": "bg-orange-500/10 text-orange-400 border-orange-500/20",
   "PODEROSO": "bg-blue-500/10 text-blue-400 border-blue-500/20",
+  "SEGURO": "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+  "EFICIENTE": "bg-cyan-500/10 text-cyan-400 border-cyan-500/20",
 };
 
 const toolKeys = ["claudeCode", "gptCodex", "geminiCli"] as const;
@@ -94,7 +105,13 @@ export default async function WhatsNewPage({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  const t = await getTranslations("whatsNew");
+  const t = await getTranslations();
+  const currentYear = new Date().getUTCFullYear();
+  const difficultyLabels = {
+    beginner: t("tip.difficulty.beginner"),
+    intermediate: t("tip.difficulty.intermediate"),
+    advanced: t("tip.difficulty.advanced"),
+  };
 
   return (
     <div className="container mx-auto max-w-5xl px-4 py-12">
@@ -103,16 +120,17 @@ export default async function WhatsNewPage({
           variant="outline"
           className="mb-4 bg-orange-500/10 text-orange-400 border-orange-500/20"
         >
-          2026
+          {currentYear}
         </Badge>
         <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-3">
-          {t("title")}
+          {t("whatsNew.title")}
         </h1>
-        <p className="text-lg text-muted-foreground">{t("subtitle")}</p>
+        <p className="text-lg text-muted-foreground">{t("whatsNew.subtitle")}</p>
       </div>
 
       {toolKeys.map((toolKey, idx) => {
         const toolConfig = getToolConfig(toolIdMap[toolKey]);
+        const recentTips = getLatestTipsByTool(locale, toolIdMap[toolKey], 2);
 
         return (
           <div key={toolKey}>
@@ -126,13 +144,13 @@ export default async function WhatsNewPage({
                   {toolConfig.icon}
                 </span>
                 <h2 className="text-2xl font-bold">
-                  {t(`${toolKey}.title`)}
+                  {t(`whatsNew.${toolKey}.title`)}
                 </h2>
               </div>
 
               <div className="grid gap-4">
                 {featureIndices.map((i) => {
-                  const tag = t(`${toolKey}.features.${i}.tag`);
+                  const tag = t(`whatsNew.${toolKey}.features.${i}.tag`);
                   const tagStyle =
                     tagStyles[tag] ??
                     "bg-secondary text-secondary-foreground border-secondary";
@@ -150,16 +168,43 @@ export default async function WhatsNewPage({
                           {tag}
                         </Badge>
                         <h3 className="text-lg font-bold mb-2">
-                          {t(`${toolKey}.features.${i}.title`)}
+                          {t(`whatsNew.${toolKey}.features.${i}.title`)}
                         </h3>
                         <p className="text-muted-foreground leading-relaxed">
-                          {t(`${toolKey}.features.${i}.description`)}
+                          {t(`whatsNew.${toolKey}.features.${i}.description`)}
                         </p>
                       </CardContent>
                     </Card>
                   );
                 })}
               </div>
+
+              {recentTips.length > 0 && (
+                <div className="mt-8">
+                  <div className="flex items-center justify-between gap-3 mb-4">
+                    <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                      {t("whatsNew.recentGuidesTitle")}
+                    </h3>
+                    <Button asChild variant="ghost" size="sm">
+                      <Link href={`/${locale}/${toolIdMap[toolKey]}`}>
+                        {t("learningPath.viewToolGuides", {
+                          tool: toolConfig.name,
+                        })}
+                      </Link>
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {recentTips.map(tip => (
+                      <TipCard
+                        key={`${toolKey}-${tip.slug}-whats-new`}
+                        tip={tip}
+                        locale={locale}
+                        difficultyLabels={difficultyLabels}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         );

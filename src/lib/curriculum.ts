@@ -51,6 +51,44 @@ const curriculumConfig: Record<string, Record<string, CurriculumLocaleConfig>> =
       },
     },
   },
+  'gemini-cli': {
+    en: {
+      heading: 'Learning path',
+      hereMarker: 'You are here',
+      descriptions: {
+        'getting-started': 'install, auth, memory basics',
+        'million-token-context': 'repo-scale analysis without waste',
+        'gemini-extensions': 'package commands, MCP, and skills',
+        'trusted-folders-sandboxing': 'trust, isolation, and rollback',
+        'headless-automation': 'scripts, CI, and structured output',
+        'sub-agents-and-skills': 'delegation and specialist workflows',
+      },
+    },
+    ko: {
+      heading: '학습 경로',
+      hereMarker: '현재 문서',
+      descriptions: {
+        'getting-started': '설치, 인증, 메모리 기초',
+        'million-token-context': '저장소 단위 분석을 낭비 없이',
+        'gemini-extensions': '명령, MCP, 스킬 패키징',
+        'trusted-folders-sandboxing': '신뢰, 격리, 복구',
+        'headless-automation': '스크립트, CI, 구조화 출력',
+        'sub-agents-and-skills': '위임과 전문가 워크플로',
+      },
+    },
+    es: {
+      heading: 'Ruta de aprendizaje',
+      hereMarker: 'Estás aquí',
+      descriptions: {
+        'getting-started': 'instalación, autenticación y memoria',
+        'million-token-context': 'análisis de repos sin derroche',
+        'gemini-extensions': 'empaquetar comandos, MCP y skills',
+        'trusted-folders-sandboxing': 'confianza, aislamiento y rollback',
+        'headless-automation': 'scripts, CI y salida estructurada',
+        'sub-agents-and-skills': 'delegación y flujos especialistas',
+      },
+    },
+  },
 };
 
 export function generateCurriculumNav(

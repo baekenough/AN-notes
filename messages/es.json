@@ -28,8 +28,27 @@
     "comingSoon": "Próximamente",
     "viewGuide": "Ver Guía"
   },
+  "learningPath": {
+    "sectionTitle": "Rutas recomendadas",
+    "sectionDescription": "Elegimos la secuencia más rápida para ganar contexto útil con cada herramienta.",
+    "toolTitle": "Ruta recomendada",
+    "toolDescription": "Si estás empezando con {tool} o vuelves después de un tiempo, este orden te da el panorama útil más rápido.",
+    "startHere": "Empieza aquí",
+    "firstGuide": "Primera guía",
+    "openFirstGuide": "Abrir primera guía",
+    "nextSteps": "Siguientes pasos",
+    "step": "Paso",
+    "viewToolGuides": "Ver todas las guías de {tool}"
+  },
+  "latestUpdates": {
+    "sectionTitle": "Últimas actualizaciones",
+    "sectionDescription": "Empieza por las guías que se actualizaron más recientemente.",
+    "toolTitle": "Reciente en {tool}",
+    "toolDescription": "Las guías que se actualizaron más recientemente dentro de {tool}."
+  },
   "tip": {
     "readingTime": "{minutes} min de lectura",
+    "updatedOn": "Actualizado {date}",
     "difficulty": {
       "beginner": "Principiante",
       "intermediate": "Intermedio",
@@ -56,6 +75,7 @@
   "whatsNew": {
     "title": "Novedades",
     "subtitle": "Funciones revolucionarias que debes conocer",
+    "recentGuidesTitle": "Actualizaciones recientes de guías",
     "updated": "Actualizado {date}",
     "claudeCode": {
       "title": "Claude Code",

@@ -20,7 +20,7 @@ connections:
   type: compare
 featured: true
 order: 5
-date: '2026-03-24'
+date: "2026-03-28"
 ---
 
 > **Referencias Oficiales**: [Skills](https://developers.openai.com/codex/skills) · [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [Automations](https://developers.openai.com/codex/app/automations)
@@ -45,8 +45,7 @@ date: '2026-03-24'
 
 ## ¿Cuándo un prompt debería convertirse en skill?
 
-Si repites el mismo setup y las mismas expectativas varias veces, ya no tienes un problema de prompting.
-Tienes una skill faltante.
+Si repites el mismo setup y las mismas expectativas varias veces, ya no tienes un problema de prompting. Tienes una skill faltante.
 
 Buenos candidatos:
 
@@ -55,8 +54,28 @@ Buenos candidatos:
 - hacer triage de un error recurrente
 - limpiar frontmatter de documentos
 - follow-ups de una migración de framework
+- resumir cambios recientes antes de una release semanal
 
-Las skills brillan cuando el patrón de entrada y la forma esperada de salida se repiten.
+Las skills brillan cuando el patrón de entrada y la forma esperada de salida se repiten. No hace falta que el trabajo sea enorme; basta con que sea **repetido, reconocible y relativamente estable**.
+
+## ¿Qué resuelve una skill y qué no?
+
+Una skill sirve para empaquetar un procedimiento reutilizable.
+Su valor no está en “guardar texto largo”, sino en **hacer portátil una forma de trabajar que ya funcionó varias veces**.
+
+Suele encajar bien cuando quieres:
+
+- fijar un checklist
+- recordar una secuencia de pasos
+- reutilizar comandos o scripts auxiliares
+- estandarizar formato de salida
+- reducir prompts largos que siempre dicen lo mismo
+
+Suele encajar peor cuando el problema sigue siendo demasiado abierto, por ejemplo:
+
+- exploración muy libre del codebase
+- tareas únicas que probablemente no se repitan
+- trabajos que exigen varias líneas paralelas con fuerte coordinación
 
 ## ¿Cómo se ve una skill?
 
@@ -67,46 +86,121 @@ my-skill/
   SKILL.md           # requerido
   scripts/           # opcional
   references/        # opcional
-  agents/openai.yaml # opcional
+  assets/            # opcional
+  agents/openai.yaml # metadata/dependencias opcionales
 ```
 
-Además, deja una condición clara: `SKILL.md` debe incluir **name** y **description**.
+La pieza obligatoria es `SKILL.md`. Ahí debe quedar claro, como mínimo, **name** y **description**. El resto existe para sacar del prompt lo que conviene mantener como artefacto reusable.
+
+## Anatomía práctica de una buena skill
+
+### `SKILL.md`
+Debe explicar:
+
+- cuándo usar la skill
+- qué entradas espera
+- qué pasos sigue
+- qué salida produce
+- qué significa éxito o finalización
+
+### `scripts/`
+Úsalo cuando el workflow repite comandos o transformaciones concretas.
+Si siempre ejecutas la misma mecánica, mejor ponerla en un script que volver a describirla con palabras.
+
+### `references/`
+Útil para ejemplos, plantillas, criterios de estilo o documentación interna que el workflow consulta con frecuencia.
+Eso mantiene la skill más limpia y reduce duplicación.
+
+### `assets/`
+Útil para iconos, plantillas y otros recursos que apoyan el workflow sin meterlos dentro de `SKILL.md`.
+
+### `agents/openai.yaml`
+Sirve como metadata opcional para UI, política de invocación y dependencias de tools o MCP. Es útil cuando quieres que la skill tenga una presentación más cuidada o declare qué recursos externos necesita.
 
 ## Por qué importa el progressive disclosure
 
-El sistema de skills no carga todo de golpe.
-Según los docs, Codex empieza por la metadata de cada skill y solo carga el `SKILL.md` completo cuando decide que la skill es relevante.
+El sistema de skills no carga todo de golpe. Codex primero mira **metadata** para decidir si una skill es relevante, y solo después carga el cuerpo completo de `SKILL.md`.
 
-Eso importa porque:
+Eso importa mucho porque:
 
 - mantiene el contexto más liviano
-- la description se vuelve una superficie de routing
+- convierte la description en superficie real de routing
+- evita que todas las instrucciones largas entren en cada sesión
 
-Si la description es vaga, Codex puede elegir mal o no elegir la skill.
+En otras palabras: si la metadata es ambigua, la skill puede no activarse aunque el contenido interno sea excelente.
+
+## Cómo escribir una description que sí enrute bien
+
+Una buena description suele responder tres preguntas muy deprisa:
+
+1. **qué hace la skill**
+2. **cuándo conviene usarla**
+3. **qué tipo de resultado devuelve**
+
+Una description débil:
+
+```text
+Ayuda con documentación.
+```
+
+Una description más útil:
+
+```text
+Genera y corrige frontmatter de artículos MDX, valida campos comunes y deja un resumen corto de cambios realizados.
+```
+
+La segunda no solo describe el tema; también marca alcance, patrón de entrada y expectativa de salida.
 
 ## Dos maneras en que se usan las skills
 
 ### Invocación explícita
 Menciona la skill con `$skill-name` o navega desde `/skills`.
 
+Eso es ideal cuando ya sabes exactamente qué workflow quieres disparar.
+
 ### Invocación implícita
 Codex puede elegir una skill cuando la tarea coincide con la description.
 
 Eso significa que la description debe dejar claro **qué hace la skill** y **cuándo conviene usarla**.
+No diseñes la metadata como marketing; diseñala como un buen sistema de selección.
 
-## ¿Dónde viven las skills?
+## Dónde viven las skills
 
 Best Practices apunta a dos ubicaciones estándar:
 
 - skills personales → `$HOME/.agents/skills`
 - skills compartidas → `.agents/skills` dentro del repositorio
 
-Las skills compartidas dentro del repo ayudan mucho al onboarding. Codifican “cómo hace este equipo el trabajo repetido”.
+Esa distinción importa más de lo que parece.
+
+## Skills personales vs compartidas por el equipo
+
+### Personales
+Convienen cuando el workflow:
+
+- refleja preferencias tuyas
+- depende de tu entorno local
+- todavía está en fase experimental
+- no quieres imponerlo a todo el repo
+
+### Compartidas en el repo
+Convienen cuando el workflow:
+
+- es útil para onboarding
+- fija una práctica del equipo
+- depende de convenciones del proyecto
+- merece versionado junto con el código
+
+Una heurística simple:
+
+- **si te ayuda a ti**, probablemente puede vivir en tu biblioteca personal
+- **si ayuda a cualquiera que entre al repo**, probablemente debe vivir en `.agents/skills`
 
 ## Reglas para diseñar buenas skills
 
 ### 1. Mantén el scope estrecho
 “Mejorar toda la documentación” es peor que “validar frontmatter y completar campos faltantes”.
+Una skill estrecha se activa mejor, se verifica mejor y se mantiene mejor.
 
 ### 2. Mueve la mecánica repetida a scripts y references
 Si el workflow siempre ejecuta los mismos comandos, ponlos en `scripts/`.
@@ -115,14 +209,46 @@ Si depende de ejemplos o docs estándar, pon eso en `references/`.
 ### 3. Incluye condiciones de inicio y de cierre
 Una buena skill explica cuándo se usa y qué significa éxito.
 
+### 4. Define la salida esperada
+No basta con decir “haz review”.
+Mejor decir si debe devolver hallazgos, checklist, diff propuesto, resumen o estado final.
+
+### 5. Diseña pensando en selección automática
+Como Codex mira la metadata antes del cuerpo completo, el nombre y la description deben ser muy concretos.
+
+### 6. Evita meter políticas permanentes que deberían vivir en `AGENTS.md`
+La skill es procedimiento reutilizable, no el lugar para todas las reglas duraderas del repo.
+
+## Mini ejemplo mental de diseño
+
+Imagina una skill para release notes.
+Un diseño flojo sería una skill enorme que mezcla recopilación, formato, publicación y comunicación interna.
+
+Un diseño mejor sería:
+
+- `SKILL.md` explica cuándo usarla y qué salida produce
+- `scripts/` reúne los comandos para extraer cambios recientes
+- `references/` guarda ejemplos del formato esperado
+- la skill termina con un checklist de verificación antes de publicar
+
+Ese diseño no solo es más limpio; también es más fácil de reutilizar en automations.
+
 ## Skills vs AGENTS vs MCP
+
+Estas superficies funcionan mejor cuando siguen siendo distintas:
 
 - `AGENTS.md` = reglas duraderas del repo
 - skill = workflow reutilizable
 - MCP = acceso a contexto o herramientas externas
 - prompt = la petición de hoy
 
-Estas superficies funcionan mejor cuando siguen siendo distintas.
+Si mezclas todo en una sola superficie, el sistema pierde claridad.
+Un buen stack suele verse así:
+
+- `AGENTS.md` define límites y normas
+- una skill empaqueta el procedimiento repetido
+- MCP aporta contexto externo cuando hace falta
+- el prompt concreta la variante del día
 
 ## A veces un subagent encaja mejor
 
@@ -133,12 +259,11 @@ No siempre son la respuesta correcta para:
 - comparar varias implementaciones
 - ejecutar exploración, implementación y verificación en paralelo
 
-En esos casos, puede encajar mejor un flujo explícito con subagents o con worktrees.
+En esos casos, puede encajar mejor un flujo explícito con subagents o worktrees. La skill puede seguir existiendo, pero como una pieza del flujo, no como la solución completa.
 
 ## Las skills se vuelven más potentes con automations
 
-La documentación de Automations describe ejecuciones recurrentes en background.
-En ese escenario, la skill se convierte en el cuerpo reutilizable de la automatización.
+La documentación de Automations describe ejecuciones recurrentes en background. En ese escenario, la skill se convierte en el cuerpo reutilizable de la automatización.
 
 Ejemplos:
 
@@ -146,17 +271,81 @@ Ejemplos:
 - resúmenes de commits recientes
 - escaneos de docs drift
 - rutinas de lint o triage de bajo riesgo
+- revisiones periódicas de contenido antes de una publicación programada
 
 Ahí es donde las skills dejan de ser solo comodidad y pasan a ser palanca real del sistema.
+Una automation estable suele depender de que la skill tenga:
 
-## Checklist rápido
+- entradas previsibles
+- salida consistente
+- pasos verificables
+- poca ambigüedad operativa
 
-Antes de crear una skill, pregúntate:
+## Skills + MCP + automations: un patrón especialmente útil
+
+Esta combinación aparece mucho en equipos maduros:
+
+- **MCP** trae el contexto externo
+- **skill** fija el procedimiento
+- **automation** ejecuta el flujo cuando toca
+
+Ejemplo mental:
+
+1. una automation semanal se dispara sola
+2. la skill consulta issues o docs conectadas por MCP
+3. genera un borrador con formato estable
+4. deja un resumen breve para revisión humana
+
+Ese patrón evita prompts manuales largos y, al mismo tiempo, mantiene el workflow trazable.
+
+## Errores comunes al crear skills
+
+### “La skill es básicamente un prompt gigante”
+Suele indicar que falta mover mecánica a `scripts/` o material de apoyo a `references/`.
+
+### “La description no permite saber cuándo aplica”
+Si la metadata no enruta bien, Codex puede no usar la skill o elegirla en tareas equivocadas.
+
+### “Todo vive en mi máquina”
+Si una skill es clave para el equipo y sigue solo en tu biblioteca personal, el onboarding y la consistencia sufren.
+
+### “La skill hace demasiadas cosas”
+Eso complica selección, mantenimiento y verificación.
+A menudo conviene partirla en dos workflows más estrechos.
+
+### “La skill no define qué salida debe producir”
+Sin una salida esperada, cada ejecución deriva a un estilo distinto y la reutilización pierde valor.
+
+## Checklist para decidir si crear una skill
+
+Antes de crearla, pregúntate:
 
 - ¿es trabajo verdaderamente repetido?
 - ¿las entradas y salidas son bastante estables?
 - ¿la description basta para saber cuándo aplica?
 - ¿las instrucciones largas pueden dividirse en scripts o references?
+- ¿esto pertenece a mi biblioteca personal o debería vivir con el repo?
+- ¿sería útil también en una automation futura?
 
-Cuando el trabajo repetido empieza a acumularse, el siguiente nivel con Codex no es “hacer mejores prompts one-off”.
-Es construir una buena biblioteca de skills.
+## Checklist para revisar una skill existente
+
+Si ya tienes una skill y quieres mejorarla:
+
+- ¿`SKILL.md` explica claramente cuándo usarla?
+- ¿name y description ayudan a que Codex la seleccione bien?
+- ¿las partes mecánicas están fuera del prompt principal?
+- ¿el workflow termina con una condición de éxito visible?
+- ¿la skill sigue teniendo scope estrecho?
+- ¿debería compartirse con el equipo o quedarse como preferencia personal?
+
+## Consejos operativos rápidos
+
+Si solo quieres recordar cinco cosas, recuerda estas:
+
+1. **Empieza por `SKILL.md` y haz la description muy precisa.**
+2. **Codex ve primero metadata y luego el cuerpo completo.**
+3. **Separa con intención la biblioteca personal y la compartida del repo.**
+4. **Mueve mecánica repetida a `scripts/` y material estable a `references/` o `assets/`.**
+5. **Lleva una skill a automations solo cuando ya funcione bien de forma manual.**
+
+Cuando el trabajo repetido empieza a acumularse, el siguiente nivel con Codex no es “hacer mejores prompts one-off”. Es construir una buena biblioteca de skills: algunas personales para tu forma de trabajar, otras compartidas para que el equipo entero pueda repetir lo que ya funciona.

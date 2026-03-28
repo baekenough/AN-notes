@@ -28,8 +28,27 @@
     "comingSoon": "Coming Soon",
     "viewGuide": "View Guide"
   },
+  "learningPath": {
+    "sectionTitle": "Recommended learning paths",
+    "sectionDescription": "We picked the fastest sequence for getting useful momentum with each tool.",
+    "toolTitle": "Recommended path",
+    "toolDescription": "If you're new to {tool} or coming back after a while, this order gives you the fastest useful overview.",
+    "startHere": "Start here",
+    "firstGuide": "First guide",
+    "openFirstGuide": "Open first guide",
+    "nextSteps": "Next steps",
+    "step": "Step",
+    "viewToolGuides": "View all {tool} guides"
+  },
+  "latestUpdates": {
+    "sectionTitle": "Latest updates",
+    "sectionDescription": "Start with the guides that were refreshed most recently.",
+    "toolTitle": "Recent in {tool}",
+    "toolDescription": "The most recently refreshed guides in {tool}."
+  },
   "tip": {
     "readingTime": "{minutes} min read",
+    "updatedOn": "Updated {date}",
     "difficulty": {
       "beginner": "Beginner",
       "intermediate": "Intermediate",
@@ -56,6 +75,7 @@
   "whatsNew": {
     "title": "What's New",
     "subtitle": "Game-changing features you should know about",
+    "recentGuidesTitle": "Recent guide updates",
     "updated": "Updated {date}",
     "claudeCode": {
       "title": "Claude Code",

@@ -12,56 +12,161 @@ connections:
     type: "prerequisite"
 featured: true
 order: 6
-date: "2026-03-24"
+date: "2026-03-28"
 ---
 
-## 에이전트는 모든 것을 혼자 하지 않는다
+> **공식 레퍼런스**: [Sub-agents](https://geminicli.com/docs/core/subagents/) · [Skills](https://geminicli.com/docs/core/skills/) · [Tools](https://geminicli.com/docs/tools/) · [Extensions 개요](https://geminicli.com/docs/extensions/)
 
-단순한 질문 답변이나 단일 파일 수정은 메인 에이전트가 직접 처리하는 것이 가장 빠릅니다. 하지만 **반복적인 일괄 작업(Batch Tasks)**이나 **방대한 아키텍처 탐색**은 메인 세션의 컨텍스트(대화 기록)를 불필요하게 낭비하게 만듭니다.
+<!-- curriculum:start -->
+## 학습 경로
 
-Gemini CLI의 진정한 힘은 작업을 전문 **서브 에이전트(Sub-agents)**에게 위임(Delegation)하고, **에이전트 스킬(Skills)**을 활용해 고도의 오케스트레이션을 수행하는 데 있습니다.
+1. [Gemini CLI 시작하기](./getting-started) — 설치, 인증, 메모리 기초
+2. [100만 토큰의 장점](./million-token-context) — 저장소 단위 분석을 낭비 없이
+3. [Gemini Extensions & MCP](./gemini-extensions) — 명령, MCP, 스킬 패키징
+4. [Trusted Folders, Sandboxing, 그리고 Restore](./trusted-folders-sandboxing) — 신뢰, 격리, 복구
+5. [Gemini CLI Headless Automation](./headless-automation) — 스크립트, CI, 구조화 출력
+6. **서브 에이전트와 스킬 오케스트레이션** — 위임과 전문가 워크플로 ← **현재 문서**
 
-## 1. 내장 서브 에이전트 (Sub-agents)
+### 이 문서에서 참고한 공식 문서
+- **내장 / 커스텀 sub-agent 모델** — [Sub-agents](https://geminicli.com/docs/core/subagents/)
+- **skills 발견 계층, 활성화, 작성 원리** — [Skills](https://geminicli.com/docs/core/skills/)
+- **extension이 전문가 워크플로를 배포하는 방식** — [Extensions 개요](https://geminicli.com/docs/extensions/)
+<!-- curriculum:end -->
 
-에이전트는 각기 다른 전문성을 가진 하위 에이전트를 도구(Tool)처럼 호출할 수 있습니다. 위임된 작업은 메인 대화 이력을 깔끔하게 유지하면서도 압축된 요약 결과만 반환하므로, 비용과 속도 면에서 극강의 효율을 자랑합니다.
+## Gemini는 메인 스레드에서 모든 걸 다 할 때보다, 덜 할 때 더 강해진다
 
-### Codebase Investigator (코드베이스 수사관)
-저장소 전반의 아키텍처 매핑, 복잡한 시스템 의존성 파악, 깊이 숨겨진 버그의 근본 원인 분석에 특화되어 있습니다.
-- **언제 쓰나요?**: "인증 흐름 전체를 추적해줘", "이 레포지토리의 라우팅 구조를 리포팅해줘" 같이 범위가 넓고 막연한 분석이 필요할 때.
+연구, 탐색, 구현, 리뷰, 정리까지 전부 메인 대화 하나에서 처리하고 싶은 유혹이 있습니다. 작은 작업에서는 괜찮지만, 큰 작업으로 갈수록 이 방식은 비효율적입니다.
 
-### Generalist (제너럴리스트)
-수많은 파일에 동일한 변경을 가하거나 출력이 매우 긴 셸 명령을 실행할 때 유용합니다. 메인 에이전트의 턴(Turn) 소모를 막아주는 최고의 방패막입니다.
-- **언제 쓰나요?**: "src/ 폴더 하위의 모든 파일에 라이선스 헤더를 추가해줘", "린트 에러 50개를 전부 수정해줘" 같은 반복적 노동.
+Gemini CLI를 제대로 쓰려면 두 개념을 분리해서 봐야 합니다.
 
-### CLI Help (도움말 전담)
-Gemini CLI 자체의 기능, 단축키, 런타임 설정 등 시스템 사용법을 질문받았을 때 활용됩니다.
+- **Sub-agent**는 내 대신 일을 해 주는 작업자
+- **Skill**은 현재 에이전트의 행동 규칙을 바꾸는 전문가 모드
 
----
+이 차이를 이해하면 오케스트레이션이 훨씬 명확해집니다.
 
-## 2. Agent Skills: 행동 강령 덮어쓰기
+## sub-agent는 "시끄러운 작업"을 메인 이력 밖으로 밀어낸다
 
-서브 에이전트가 "대신 일해주는 일꾼"이라면, **Skills**은 메인 에이전트의 "뇌를 전문가 모드로 포맷"하는 기능입니다.
+sub-agent가 유용한 경우는 보통 셋 중 하나입니다.
 
-`activate_skill` 도구를 통해 특정 이름의 스킬을 활성화하면, 에이전트는 기존의 일반적인 성향을 버리고 **해당 스킬에 정의된 전문가 절차(Instructions)**를 최우선으로 따르게 됩니다.
+- 범위가 넓다
+- 반복이 많다
+- 메인 컨텍스트를 지나치게 소모할 가능성이 크다
 
-### 실무에서 자주 쓰이는 Built-in Skills
-- `security-review`: 코드의 보안 취약점을 찾는 데만 집중하는 해커 마인드셋 장착.
-- `code-review`: 엄격한 시니어 엔지니어 관점에서 리팩터링 제안과 리뷰 수행.
-- `web-clone`: 제공된 URL을 분석하여 시각적/기능적으로 완벽한 클론 UI를 코딩해 내는 워크플로.
-- `team`: 여러 에이전트가 tmux 기반으로 동시에 협업하는 다중 에이전트 모드.
+공식 문서의 built-in sub-agent 목록만 봐도 의도가 보입니다.
 
-### 나만의 스킬 만들기 (`skill-creator`)
-"우리 팀만의 코드 리뷰 스타일"이나 "우리 회사 API 연동 표준"을 스킬로 만들고 싶다면 `skill-creator` 스킬을 활성화하세요. 에이전트가 사용자와 대화하며 새로운 `SKILL.md`를 작성하고 로컬에 설치해 줍니다. 이후부터는 복잡한 프롬프트 없이 단어 하나로 사내 표준 에이전트를 부를 수 있습니다.
+- **`codebase_investigator`** — 넓은 아키텍처 탐색, 원인 분석
+- **general-purpose / generalist 계열** — 반복적이고 시끄러운 대량 작업
+- **CLI help 계열** — Gemini 사용법 자체를 조사할 때
+- **browser 계열** — 로컬 파일이 아니라 웹 인터랙션이 필요할 때
 
----
+즉 sub-agent는 “이 noisy한 탐색은 밖에서 끝내고, 요약만 가져와”라는 요청에 가깝습니다.
 
-## 3. 오케스트레이션 베스트 프랙티스 (전략적 위임)
+## skill은 "일꾼 추가"가 아니라 "두뇌 포맷 변경"이다
 
-Gemini CLI를 마스터하는 패턴은 다음과 같습니다.
+skill은 별도 작업자를 만드는 것이 아니라, 현재 에이전트가 따라야 할 절차와 판단 기준을 바꿉니다.
 
-1. **Plan Mode로 시작**: `/plan`을 입력하여 안전한 읽기 전용 샌드박스에서 구상을 시작합니다.
-2. **조사 위임**: 아키텍처 파악이 막막하다면 `codebase_investigator`에게 "현재 프로젝트의 핵심 모듈을 파악해줘"라고 위임합니다.
-3. **병렬 실행**: 서로 의존성이 없는 다수의 파일 검색이나 분석은 에이전트가 알아서 **병렬(Concurrent)**로 도구를 호출해 순식간에 끝냅니다.
-4. **스킬 활성화 및 실행**: 조사 결과를 바탕으로 `/mode default`로 돌아온 뒤, 대규모 반복 리팩터링은 `generalist`에게 넘기거나 `activate_skill`로 특수 모드를 켜서 구현을 마무리합니다.
+그래서 skill은 이런 작업에 특히 잘 맞습니다.
 
-이러한 **전략적 오케스트레이션**이야말로 Gemini CLI가 일반 챗봇을 넘어선 진정한 '자율 엔지니어링 에이전트'로 작동하는 핵심 원리입니다.
+- 코드 리뷰
+- 보안 리뷰
+- 마이그레이션 체크리스트 실행
+- release 준비
+- 사내 규정 준수 점검
+
+sub-agent가 계약직 전문가라면, skill은 현재 에이전트에게 새로운 직업 윤리를 입히는 것에 가깝습니다.
+
+## 언제 sub-agent를 쓰고, 언제 skill을 켤까
+
+| 상황 | sub-agent | skill |
+|---|---|---|
+| 작업이 넓고 시끄럽다 | 적합 | 경우에 따라 |
+| 더 엄격한 절차가 필요하다 | 경우에 따라 | 적합 |
+| 메인 컨텍스트를 아끼고 싶다 | 적합 | 아님 |
+| 현재 에이전트가 전문 체크리스트를 따르길 원한다 | 아님 | 적합 |
+
+실전에서는 둘을 같이 쓰는 경우가 많습니다.
+
+1. discovery는 sub-agent에 위임하고
+2. 구현이나 리뷰 단계에서 skill을 활성화하는 방식입니다.
+
+## 실전 오케스트레이션 패턴
+
+### 1) 큰 저장소 조사
+
+- Plan Mode로 시작
+- `codebase_investigator`에게 구조 파악 위임
+- 리스크와 영향 범위를 요약
+- 변경 경계가 명확해졌을 때만 기본 모드로 복귀
+
+### 2) 반복 정리 작업
+
+- 대량 수정은 worker 성격의 sub-agent에 맡기고
+- 메인 세션은 diff 검토와 우선순위 판단에 집중
+
+### 3) 전문 리뷰
+
+- 작업은 메인 세션에 유지
+- `code-review`나 커스텀 skill을 활성화
+- 결과는 일정한 형식으로 보고하게 설계
+
+핵심은 noisy search는 밖으로 보내고, 판단이 중요한 리뷰는 가까이에 두는 것입니다.
+
+## skill 발견 계층은 팀 운영 모델을 만들 수 있게 해 준다
+
+공식 문서는 skills가 여러 계층에서 발견된다고 설명합니다. user-level, workspace-level, extension-provided, built-in처럼 출처가 나뉘기 때문에 팀은 “어디에 어떤 전문성을 둘지”를 설계할 수 있습니다.
+
+예를 들어:
+
+- **user-level** — 개인 습관
+- **workspace-level** — 저장소 공통 규칙
+- **extension-level** — 팀 배포용 전문가 워크플로
+- **built-in** — 일반적인 고급 절차
+
+이 구조는 Gemini CLI의 숨은 강점입니다. ad-hoc prompt 문화에서 벗어나, **문서화된 운영 모델**로 진화할 수 있게 해 주기 때문입니다.
+
+## 커스텀 skill은 체크리스트가 안정됐을 때만 만들자
+
+모든 영리한 프롬프트를 skill로 만들 필요는 없습니다. 아래 조건을 만족할 때가 좋습니다.
+
+- 자주 반복된다
+- 사람마다 빠뜨리기 쉽다
+- 일관되지 않으면 리스크가 생긴다
+- 실행 후 검증이 가능하다
+
+좋은 예:
+
+- locale parity 감사
+- release 체크리스트 강제
+- API contract review
+- localization QA
+- 문서 배포 전 점검
+
+나쁜 skill은 막연하고 추상적입니다. 좋은 skill은 done condition이 반복 가능하게 정의돼 있습니다.
+
+## AI Native Notes에 적용하면 이런 그림이 나온다
+
+이 저장소라면 오케스트레이션을 대략 이렇게 가져갈 수 있습니다.
+
+1. 아키텍처 질문이 생기면 `codebase_investigator`가 routing, i18n, content loading을 먼저 맵핑
+2. `locale-review` 같은 커스텀 skill이 `ko / en / es` 패리티를 점검
+3. `content-release` skill이 배포 전 업데이트 요약, broken link, metadata를 다시 확인
+
+이 조합이면 메인 세션은 전략과 판단에 집중하고, 지루한 검증은 재사용 가능한 전문가 경로로 밀어낼 수 있습니다.
+
+## 가장 흔한 실패는 "보여주기식 오케스트레이션"이다
+
+sub-agent와 skill이 재미있다고 해서 남발하면 오히려 느려집니다.
+
+위험 신호는 이렇습니다.
+
+- 사소한 작업에도 sub-agent를 띄운다
+- 검증 로직 없는 긴 프롬프트를 그냥 skill이라 부른다
+- 메인 스레드가 즉시 알아야 하는 작업까지 밖으로 보낸다
+- 사실 `GEMINI.md` 한 줄이면 되는 규칙에 자산 다섯 개를 만든다
+
+오케스트레이션은 소음을 줄여야지, 의식을 늘리면 안 됩니다.
+
+## 다음에 읽으면 좋은 글
+
+- 큰 컨텍스트 추론이 위임으로 이어지는 흐름은 [100만 토큰의 장점](/gemini-cli/million-token-context)
+- 반복 가능한 전문가 행동을 패키징하는 법은 [Gemini Extensions & MCP](/gemini-cli/gemini-extensions)

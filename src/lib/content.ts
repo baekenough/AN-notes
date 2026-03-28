@@ -146,6 +146,33 @@ export function getAllTips(locale: string): TipMeta[] {
   return tools.flatMap(tool => getTipsByTool(locale, tool));
 }
 
+export function getLearningPathTips(
+  locale: string,
+  tool: Tool,
+  count = 3,
+): TipMeta[] {
+  return getTipsByTool(locale, tool)
+    .slice()
+    .sort((a, b) => a.order - b.order || a.title.localeCompare(b.title))
+    .slice(0, count);
+}
+
+export function getLatestTipsByTool(
+  locale: string,
+  tool: Tool,
+  count = 1,
+): TipMeta[] {
+  return getTipsByTool(locale, tool)
+    .slice()
+    .sort(
+      (a, b) =>
+        b.date.localeCompare(a.date) ||
+        a.order - b.order ||
+        a.title.localeCompare(b.title)
+    )
+    .slice(0, count);
+}
+
 export function getConnectedTips(locale: string, connections: TipConnection[]): TipMeta[] {
   return connections
     .map(conn => {
