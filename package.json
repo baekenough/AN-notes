@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "validate:curriculum": "node scripts/validate-curriculum.mjs"
+    "validate:curriculum": "node scripts/validate-curriculum.mjs",
+    "check:seo-release": "node scripts/check-seo-release.mjs"
   },
   "dependencies": {
     "@mdx-js/loader": "^3.1.1",

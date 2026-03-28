@@ -2,6 +2,25 @@
 
 Use this checklist after shipping SEO/GEO changes to AI Native Notes.
 
+## 0) Fast preflight
+Run the repo-native smoke check before manual console work:
+
+```bash
+npm run check:seo-release
+```
+
+Optional alternate target:
+
+```bash
+npm run check:seo-release -- https://an-con.vercel.app
+```
+
+This script verifies:
+- representative HTML routes
+- JSON-LD presence on landing pages
+- `llms.txt` / `agents.txt` discovery markers
+- `opengraph-image` / `twitter-image` image responses
+
 ## 1) Confirm the production target
 - Primary Vercel deployment: `https://ai-native-notes-h15naf5mf-sangyi-baeks-projects.vercel.app`
 - Current alias used for smoke checks: `https://an-con.vercel.app`
@@ -83,5 +102,6 @@ During the first 24–72 hours after release:
 - Re-run `npm run lint`
 - Re-run `npx tsc --noEmit --pretty false --project tsconfig.json`
 - Re-run `npm run build`
+- Re-run `npm run check:seo-release`
 - Inspect deployment logs with:
   - `vercel inspect ai-native-notes-h15naf5mf-sangyi-baeks-projects.vercel.app --logs`
