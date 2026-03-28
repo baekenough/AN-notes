@@ -20,7 +20,7 @@ connections:
   type: compare
 featured: true
 order: 3
-date: '2026-03-24'
+date: "2026-03-28"
 ---
 
 > **Official References**: [Sandboxing](https://developers.openai.com/codex/concepts/sandboxing) · [Config Basics](https://developers.openai.com/codex/config-basic) · [Cloud Environments](https://developers.openai.com/codex/cloud/environments) · [Review](https://developers.openai.com/codex/app/review)
@@ -51,29 +51,94 @@ If it is too wide, small mistakes become expensive.
 The real goal is simple:
 **let Codex do normal work without stopping constantly, while keeping risky actions inside a human-controlled boundary.**
 
+That means sandboxing is not just a security feature. It changes how often Codex pauses, how much it can touch, and how much review burden shifts back to the human.
+A useful mental model is: **sandbox = execution boundary, approvals = pause behavior, review = damage control, writable roots = exact blast radius**.
+
 ## Keep local and cloud mentally separate
+
+A lot of confusion comes from treating local and cloud as the same environment with different buttons.
+They are not.
+
+| Surface | What you control most | What usually breaks first |
+|------|------|------|
+| Local Codex | sandbox mode, approval policy, writable roots, your existing tools | over-broad write access, approval fatigue, hidden machine state |
+| Cloud Codex | setup script, secrets exposure, internet policy, reproducibility | missing setup steps, assumptions about cached local state, environment drift |
 
 ### Local Codex
 Runs on your machine, under a sandbox and approval policy that you control.
 
+That makes local best for:
+
+- onboarding
+- debugging repo-specific behavior
+- small iterations where you want immediate feedback
+- learning what a healthy prompt / verify / review loop feels like
+
 ### Cloud Codex
 Runs in an OpenAI-managed container, where setup scripts, environment variables, and internet policy matter most.
 
+That makes cloud best for:
+
+- reproducible background work
+- work that should not depend on your laptop state
+- reviewable tasks tied to branches, PRs, or environments
+- automation once your local workflow is already stable
+
 Mixing those two models is one of the fastest ways to get confused.
+If a task succeeds locally because your laptop already has the right SDK, generated files, or shell aliases, that says almost nothing about whether cloud will succeed.
 
 ## The three common local sandbox modes
 
-The Sandboxing docs describe them like this:
+The official sandboxing docs describe three main filesystem modes:
 
-| Mode | Meaning | Best fit |
-|------|---------|----------|
-| `read-only` | inspect files, but edits and commands need approval | audits, exploration, safe review |
-| `workspace-write` | edit inside the workspace and run routine commands there | normal day-to-day development |
-| `danger-full-access` | remove sandbox restrictions | rare, high-trust automation only |
+| Mode | Meaning | Best fit | Common downside |
+|------|---------|----------|-----------------|
+| `read-only` | inspect files, but edits and many commands require approval | audits, exploration, safe review | too much interruption for normal development |
+| `workspace-write` | edit inside the workspace and run routine commands there | normal day-to-day development | still needs approvals for boundary-crossing actions |
+| `danger-full-access` | remove sandbox restrictions | rare, high-trust automation only | mistakes can escape the repo boundary quickly |
 
-OpenAI explicitly describes `workspace-write` as the default low-friction local mode.
+OpenAI explicitly calls out `workspace-write` as the practical default for normal development.
+That recommendation matters because it captures the tradeoff most teams actually want:
+**easy in-repo work without giving the agent your whole machine.**
 
-## Approval policy controls when Codex pauses
+### When `read-only` is the right choice
+
+Use it when the task is intentionally investigative:
+
+- explain the repo
+- trace an error path
+- identify dead code candidates
+- compare two implementations without touching anything
+
+If you are asking Codex to inspect first and edit later, `read-only` can be a feature, not a limitation.
+
+### When `workspace-write` is the right choice
+
+Use it when the task is ordinary engineering work inside one repo:
+
+- fix a bug
+- update docs
+- add a test
+- refactor a bounded module
+
+This is the sweet spot because it removes the most annoying friction while still forcing deliberate escalation for bigger actions.
+
+### When `danger-full-access` is the right choice
+
+Almost never as a starting point.
+Reach for it only when all three are true:
+
+1. the workflow is already trusted
+2. the machine or environment is disposable enough
+3. the review and rollback loop is strong enough to compensate
+
+If you widen to full access just because approvals feel annoying, you are usually solving the wrong problem.
+
+## Approval policy controls how often Codex pauses
+
+Approval policy answers a different question from sandbox mode.
+Sandboxing decides the boundary.
+Approval policy decides when the agent must stop and ask.
 
 The config docs highlight a very common combination:
 
@@ -82,12 +147,45 @@ approval_policy = "on-request"
 sandbox_mode = "workspace-write"
 ```
 
-This works well because:
+This is a good default because:
 
 - normal in-repo work keeps moving
 - boundary-crossing actions still ask first
+- you can widen a specific workflow later instead of starting too loose
 
-For most developers and most teams, this is the practical default.
+The official docs also distinguish `untrusted`, `on-request`, and `never` approval behavior.
+You do not need to memorize them on day one.
+What matters is the practical meaning:
+
+- tighter approval = more pauses, lower surprise
+- looser approval = fewer pauses, higher need for review discipline
+
+## Approval fatigue vs risk is the real tradeoff
+
+Teams often describe the problem as “Codex is too slow” when the deeper issue is “our trust boundary is mismatched to the task.”
+
+### Signals your approvals are too tight
+
+- the agent keeps pausing for normal repo-local edits
+- you repeatedly approve nearly identical safe commands
+- simple docs or test changes feel artificially slow
+
+### Signals your permissions are too loose
+
+- you cannot quickly explain where Codex can write
+- people feel nervous reviewing large diffs after the fact
+- automation got faster, but confidence got worse
+- local and cloud behavior diverge because boundaries are implicit
+
+The fix is usually **not** “give everything full access.”
+It is usually one of these:
+
+- move from `read-only` to `workspace-write`
+- narrow or explicitly add writable roots
+- keep `on-request` and reduce ad hoc exceptions
+- use rules for specific command prefixes instead of broad access
+
+The sandboxing docs explicitly note that if you need access across more than one directory, **writable roots** are the safer tool than removing the sandbox entirely.
 
 ## Writable roots matter more than many people realize
 
@@ -97,51 +195,49 @@ In practice, that is where a lot of accidental risk lives.
 Good defaults:
 
 - the repository itself
-- maybe one temp directory
+- maybe one temp or artifacts directory
+- maybe one sibling path if the workflow truly needs it
 
 Risky defaults:
 
 - your whole home directory
 - multiple unrelated project roots
+- directories that mix source, credentials, and personal data
 
 The question is not just “can Codex write?” but **where exactly can it write?**
 
-## In cloud runs, setup is the contract
+A strong rule of thumb:
+**expand writable roots before you expand sandbox mode.**
+If the task only needs one more directory, do not turn that into a machine-wide trust decision.
 
-The Cloud Environments docs describe a flow like this:
+## Full access is a combination, not just a feeling
 
-1. create a container and check out the repo
-2. run the setup script
-3. apply internet access settings
-4. let the agent edit and verify
+The sandboxing docs make an important point: full local access is the combination of:
 
-Two details matter a lot:
+```toml
+sandbox_mode = "danger-full-access"
+approval_policy = "never"
+```
 
-- **setup scripts run with internet access**
-- **agent-phase internet is off by default**
+By contrast, the lower-risk local automation preset is:
 
-So dependency installation, codegen, and test bootstrapping belong in setup whenever possible.
+```toml
+sandbox_mode = "workspace-write"
+approval_policy = "on-request"
+```
 
-## What belongs in setup?
-
-Good candidates:
-
-- dependency installation
-- runtime/tool version pinning
-- test data setup
-- code generation
-- native build prep
-
-Bad candidates:
-
-- implementing the whole feature
-- steps that require repeated human judgment
-
-Setup should make the environment reproducible, not silently do the task for you.
+That distinction matters because people often widen one knob and mentally treat it as if they widened both.
+They did not.
 
 ## Review and sandboxing should be thought about together
 
-The Review docs say the review pane focuses on **uncommitted changes** by default, and can switch to base-branch diff or last-turn changes.
+The Review docs say the review pane reflects the state of the Git repo, not just what Codex changed.
+By default it focuses on **uncommitted changes**, and you can switch to:
+
+- all branch changes
+- last turn changes
+- staged vs unstaged views when working locally
+
 That matters because broader permissions imply a stronger need for review.
 
 In practice:
@@ -150,36 +246,141 @@ In practice:
 - looser sandbox = fewer interruptions, higher review burden
 
 Those two are always linked.
+If you loosen approvals or widen writable roots, compensate by making review more deliberate:
 
-## A sensible starting configuration
+- review the diff before accept/commit
+- stage only the hunks you want
+- revert individual files or hunks when the scope drifts
+- leave inline comments when the next Codex turn needs precise correction
 
-### Local
+The official review flow supports all of that directly.
+
+## In cloud runs, setup is the contract
+
+The Cloud Environments docs describe a simple but important lifecycle:
+
+1. Codex creates a container and checks out your repo
+2. Codex runs the setup script, plus an optional maintenance script when resuming a cached container
+3. Codex applies internet access settings
+4. the agent edits and verifies inside that environment
+
+Two details matter a lot:
+
+- **setup scripts run with internet access**
+- **agent-phase internet is off by default** unless you explicitly allow limited or unrestricted access
+
+So dependency installation, code generation, package downloads, and environment bootstrapping belong in setup whenever possible.
+
+## What belongs in setup?
+
+Good setup candidates:
+
+- dependency installation
+- runtime and tool version pinning
+- test data bootstrapping
+- code generation
+- native build prep
+- caching or maintenance logic that makes resumed containers healthy again
+
+Bad setup candidates:
+
+- implementing the actual feature
+- silent repo mutations that reviewers will not expect
+- steps that require repeated human judgment
+- anything that makes success depend on hidden side effects instead of explicit verification
+
+Setup should make the environment reproducible, not silently do the task for you.
+
+## Setup-script boundaries: be strict on purpose
+
+A good setup script answers: “What must be true before any task begins?”
+It should not answer: “How can I pre-solve the task so the agent looks fast?”
+
+Keep setup deterministic, rerunnable enough to be safe, explicit about dependencies, and free of surprising repo mutations or hidden access assumptions.
+If cloud runs feel magical when they work and mysterious when they fail, the setup boundary is probably too blurry.
+
+## Common local vs cloud failure modes
+
+### “It keeps asking for approval”
+Often `read-only` is too strict, or the writable boundary is wrong.
+Fix the trust model before blaming the prompt.
+
+### “It works locally but fails in cloud”
+Hidden local state probably was never encoded in setup.
+Common causes:
+
+- globally installed tools
+- generated files that only exist on your laptop
+- auth or env vars not modeled in the cloud environment
+- network-dependent install steps left for the agent phase
+
+### “It got faster, but now I’m nervous”
+Usually permissions were widened without adding stronger review and checkpoint habits.
+
+### “The agent can edit, but not where it needs to”
+That is often a writable-roots problem, not a reason to jump straight to full access.
+
+### “Cloud setup is slow every time”
+That usually points to setup doing too much repeated work, or to missing maintenance/caching strategy for resumed containers.
+
+## Practical starting configurations
+
+### Local default for most people
 
 ```toml
-model = "gpt-5.4"
 approval_policy = "on-request"
 sandbox_mode = "workspace-write"
 ```
 
 Then keep writable roots narrow.
+This is the safest place to learn because it reduces friction without removing the guardrails that teach you what Codex is actually trying to do.
 
-### Cloud
+### Cloud default mindset
+
+Not a single magic config value, but a short discipline list:
 
 - deterministic setup script
-- internet only when needed
+- internet enabled for setup only when needed
 - minimum secrets exposure
-- real verification commands documented in `AGENTS.md`
+- verification commands documented clearly
+- review expected before merge or acceptance
 
-## Common failure modes
+## A practical decision ladder
 
-### “It keeps asking for approval”
-Often `read-only` is too strict, or the writable boundary is wrong.
+When a task feels blocked by permissions, widen the boundary in this order:
 
-### “It works locally but fails in cloud”
-Hidden local state probably was never encoded in setup.
+1. improve the prompt so the task stays bounded
+2. add or narrow writable roots
+3. move from `read-only` to `workspace-write`
+4. add rule-based exceptions for specific commands
+5. only then consider broader approval or sandbox changes
 
-### “It got faster, but now I’m nervous”
-Usually permissions were widened without adding stronger review and checkpoint habits.
+This order keeps risk proportional to the actual problem.
+
+## Quick checklists
+
+### Local sandbox checklist
+
+- Is this a read-only investigation or an edit task?
+- Do I actually need access outside the repo?
+- Are writable roots narrower than my whole machine?
+- Will `on-request` remove enough friction without losing control?
+- Do I know how I will review and revert the diff?
+
+### Cloud environment checklist
+
+- Can setup reproduce the environment from scratch?
+- Are install and codegen steps in setup instead of the agent phase?
+- Does the task need agent-phase internet, or only setup-phase internet?
+- Are secrets minimized and explicit?
+- Are verification commands part of the task contract?
+
+### Before widening permissions
+
+- Am I solving real approval fatigue, or just impatience?
+- Would a narrower writable root fix this instead?
+- Is the review path strong enough for the wider boundary?
+- Could a rule-based exception handle the special case better?
 
 ## Operating rule of thumb
 

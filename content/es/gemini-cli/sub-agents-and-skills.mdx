@@ -1,8 +1,8 @@
 ---
 title: "Sub-agentes y Orquestación de Skills"
-description: "Domina flujos avanzados delegando tareas a sub-agentes (Generalist, Codebase Investigator) y activando Agent Skills expertos."
+description: "Cómo delegar trabajo en sub-agentes de Gemini CLI y activar skills especializadas para procesos repetibles y rigurosos."
 difficulty: advanced
-tags: ["sub-agents", "skills", "orchestration", "parallel-execution", "flujo-de-trabajo"]
+tags: ["sub-agents", "skills", "orchestration", "parallel-execution", "workflow"]
 connections:
   - slug: "million-token-context"
     tool: "gemini-cli"
@@ -12,56 +12,159 @@ connections:
     type: "prerequisite"
 featured: true
 order: 6
-date: "2026-03-24"
+date: "2026-03-28"
 ---
 
-## El agente principal no debe hacerlo todo
+> **Referencias oficiales**: [Sub-agents](https://geminicli.com/docs/core/subagents/) · [Skills](https://geminicli.com/docs/core/skills/) · [Tools](https://geminicli.com/docs/tools/) · [Extensions overview](https://geminicli.com/docs/extensions/)
 
-Para cambios rápidos, el agente principal basta. Pero para **tareas por lotes masivas** o **exploraciones de arquitectura profundas**, forzar al agente ensucia el historial de conversación (contexto) y malgasta tokens.
+<!-- curriculum:start -->
+## Ruta de aprendizaje
 
-El verdadero poder de Gemini CLI reside en la **Delegación** mediante **Sub-agentes** y la orquestación avanzada de comportamientos a través de las **Agent Skills**.
+1. [Primeros pasos con Gemini CLI](./getting-started) — instalación, autenticación y memoria
+2. [La ventaja de 1M tokens](./million-token-context) — análisis de repos sin derroche
+3. [Gemini Extensions & MCP](./gemini-extensions) — empaquetar comandos, MCP y skills
+4. [Trusted Folders, Sandboxing y Restore](./trusted-folders-sandboxing) — confianza, aislamiento y rollback
+5. [Headless Automation con Gemini CLI](./headless-automation) — scripts, CI y salida estructurada
+6. **Sub-agentes y Orquestación de Skills** — delegación y flujos especialistas ← **Estás aquí**
 
-## 1. Sub-agentes integrados
+### Documentación oficial usada en este artículo
+- **Modelo de sub-agentes integrados y personalizados** — [Sub-agents](https://geminicli.com/docs/core/subagents/)
+- **Capas de descubrimiento y activación de skills** — [Skills](https://geminicli.com/docs/core/skills/)
+- **Cómo una extension distribuye flujos especialistas** — [Extensions overview](https://geminicli.com/docs/extensions/)
+<!-- curriculum:end -->
 
-Los sub-agentes son expertos invocados como herramientas. Todo el procesamiento ruidoso que hacen se resume y devuelve a tu historial principal de forma limpia.
+## Gemini mejora cuando no hace todo en el hilo principal
 
-### Codebase Investigator (Investigador de código)
-La mejor herramienta para mapeo arquitectónico y detección de bugs esotéricos.
-- **Cuándo usarlo**: "Rastrea todo el flujo de autenticación", "Encuentra la raíz de este bug" o "Mapea las dependencias del sistema". Analiza todo autónomamente sin agotar el contexto principal.
+La tentación natural es hacer investigación, implementación, revisión y limpieza dentro de una sola conversación. Para tareas pequeñas funciona. Para trabajo grande, degrada rápido.
 
-### Generalist (Generalista)
-Tu obrero de alto rendimiento. Perfecto para tareas repetitivas y masivas.
-- **Cuándo usarlo**: "Agrega headers de licencia a los 200 archivos en src/", o "Corrige todos los errores de lint". Protege los turnos valiosos de tu agente central.
+La clave es separar dos conceptos:
 
-### CLI Help
-Sub-agente experto únicamente en la documentación del propio Gemini CLI.
+- **sub-agent**: un trabajador al que delegas
+- **skill**: un cambio de comportamiento para el agente actual
 
----
+Entender esa diferencia vuelve mucho más claro el diseño del workflow.
 
-## 2. Agent Skills: Formateando la mente del Agente
+## Los sub-agentes absorben el trabajo ruidoso
 
-Mientras los sub-agentes son "obreros", las **Skills** son "modos expertos" que sobreescriben la personalidad y lógica de tu agente.
+Un sub-agent es útil cuando el trabajo:
 
-Con la herramienta `activate_skill`, fuerzas al agente a abandonar su estilo generalista y seguir al pie de la letra el protocolo del experto.
+- tiene alcance amplio
+- es repetitivo
+- amenaza con llenar el contexto principal
 
-### Skills prácticas de fábrica
-- `security-review`: Mentalidad de hacker para auditar vulnerabilidades.
-- `code-review`: Adopta el rol de Ingeniero Senior estricto para refactorizar.
-- `web-clone`: Flujo automático para clonar sitios web desde URLs de forma precisa.
-- `team`: Orquesta múltiples agentes para que cooperen vía tmux.
+Los built-in sub-agents muestran bien la intención:
 
-### Crea el tuyo propio (`skill-creator`)
-¿Tu equipo tiene estándares únicos de APIs o revisión? Activa `skill-creator`. El agente te hará una entrevista, redactará el archivo `SKILL.md` oficial y lo instalará. Desde entonces, todo el equipo puede invocar al "Experto Interno" en un segundo.
+- **`codebase_investigator`** para arquitectura amplia y root-cause analysis
+- agentes generalistas para tareas repetitivas o voluminosas
+- ayudantes centrados en CLI para dudas de uso
+- agentes orientados a navegador cuando hace falta interacción web
 
----
+La idea es simple: “haz fuera la parte ruidosa y devuélveme un resumen limpio”.
 
-## 3. Mejores prácticas de Orquestación
+## Las skills no añaden mano de obra: cambian la mentalidad
 
-Para usar Gemini CLI al máximo nivel, aplica este flujo estratégico:
+Una skill no crea otro agente. Lo que hace es imponer un procedimiento especializado al agente actual.
 
-1. **Inicia en Plan Mode**: Entra con `/plan` a la caja de arena de solo lectura para pensar.
-2. **Delega el descubrimiento**: Pide al `codebase_investigator` que analice las áreas oscuras del proyecto.
-3. **Ejecución Paralela**: Permite que el agente lance búsquedas (`grep_search`) en **paralelo** para procesar todo al instante.
-4. **Activa e Implementa**: Vuelve a `/mode default`. Pasa el trabajo masivo al `generalist` o usa `activate_skill` para aplicar revisiones con calidad de experto.
+Por eso son tan útiles para:
 
-Esta **Orquestación Estratégica** es lo que convierte a Gemini CLI en una verdadera tubería de ingeniería autónoma.
+- code review
+- security review
+- checklists de migración
+- preparación de releases
+- procesos internos de compliance
+
+Si el sub-agent es un contratista, la skill es un modo profesional nuevo para el mismo operador.
+
+## Cuándo usar cada cosa
+
+| Situación | Sub-agent | Skill |
+|---|---|---|
+| Trabajo grande y ruidoso | Sí | A veces |
+| Necesitas un procedimiento más estricto | A veces | Sí |
+| Quieres conservar el contexto principal | Sí | No |
+| Quieres que el agente siga una checklist especializada | No | Sí |
+
+En workflows avanzados se combinan:
+
+1. delegas discovery a un sub-agent
+2. activas una skill para implementación o revisión
+
+## Recetas prácticas de orquestación
+
+### 1. Investigar un repo grande
+
+- empieza en Plan Mode
+- pide a `codebase_investigator` que mapee el sistema
+- resume riesgos
+- vuelve al modo normal solo cuando el borde del cambio esté claro
+
+### 2. Limpieza repetitiva en muchos archivos
+
+- manda la parte repetitiva a un sub-agent generalista
+- deja que la sesión principal se concentre en revisar diffs y decidir tradeoffs
+
+### 3. Revisión especializada
+
+- mantén el trabajo en el hilo principal
+- activa una skill como `code-review` o una skill propia del equipo
+- pide hallazgos en un formato estable
+
+La regla útil es: búsqueda ruidosa fuera, juicio delicado cerca.
+
+## Las capas de descubrimiento de skills son un multiplicador real
+
+La documentación explica que las skills pueden venir de varios niveles: usuario, workspace, extensiones e integradas. Eso permite decidir dónde vivirán las especialidades del equipo.
+
+Una distribución razonable sería:
+
+- **nivel usuario** para hábitos personales
+- **nivel workspace** para convenciones del repo
+- **nivel extension** para distribución compartible
+- **built-in** para procedimientos generales
+
+Ese modelo ayuda a pasar de prompts improvisados a un sistema operativo documentado para el equipo.
+
+## Convierte un prompt en skill solo cuando el checklist ya es estable
+
+No todo prompt inteligente merece convertirse en skill. Hazlo solo si el flujo:
+
+- se repite mucho
+- es fácil de olvidar o ejecutar mal
+- tiene riesgo cuando se hace de forma inconsistente
+- puede verificarse después
+
+Buenos candidatos:
+
+- auditoría de paridad entre idiomas
+- checklist de release
+- revisión de contratos API
+- QA de localización
+- revisión de preparación de publicación
+
+Una mala skill es vaga. Una buena skill tiene definición de done repetible.
+
+## Cómo lo aplicaría en AI Native Notes
+
+1. `codebase_investigator` mapea routing, i18n y carga de contenido cuando aparece una duda arquitectónica
+2. una skill `locale-review` verifica paridad entre `ko`, `en` y `es`
+3. una skill `content-release` repasa metadata, enlaces y resumen de cambios antes de desplegar
+
+Así el hilo principal se queda con estrategia y criterio, mientras la validación aburrida se mueve a rutas especialistas reutilizables.
+
+## El fallo más común: orquestar por espectáculo
+
+Sub-agents y skills son potentes, así que es fácil abusar.
+
+Señales de alerta:
+
+- lanzar sub-agents para tareas triviales
+- llamar skill a un prompt largo sin verificación real
+- delegar algo que el hilo principal necesita inmediatamente
+- crear cinco activos donde una línea en `GEMINI.md` bastaba
+
+La orquestación buena quita ruido. No añade teatro.
+
+## Siguientes lecturas recomendadas
+
+- Cómo el contexto grande alimenta la delegación: [La ventaja de 1M tokens](/gemini-cli/million-token-context)
+- Cómo empaquetar comportamientos repetibles: [Gemini Extensions & MCP](/gemini-cli/gemini-extensions)

@@ -20,7 +20,7 @@ connections:
   type: enhances
 featured: false
 order: 4
-date: '2026-03-24'
+date: "2026-03-28"
 ---
 
 > **Referencias Oficiales**: [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [How OpenAI uses Codex](https://openai.com/business/guides-and-resources/how-openai-uses-codex/) · [Subagents](https://developers.openai.com/codex/subagents)
@@ -46,30 +46,85 @@ date: '2026-03-24'
 ## La regla central: quitar adivinanza
 
 Codex es fuerte ejecutando.
-Se vuelve más débil cuando lo obligas a inferir qué significa éxito.
+Se vuelve más débil cuando lo obligas a inferir qué significa éxito, qué límites importan y qué evidencia debe producir.
 
-Un buen prompt no tiene que ser elegante; tiene que ser lo bastante específico para que el modelo invente menos.
+Un buen prompt no tiene que sonar brillante.
+Tiene que sonar como una tarea que otro ingeniero podría tomar sin abrir una reunión extra.
 
-## La estructura mínima útil
+La referencia útil no es “prompting creativo”.
+Es **escribir una issue operable**.
 
-Las best practices de Codex recomiendan prompts con forma de issue.
+## La estructura mínima útil: Goal / Context / Constraints / Done when
+
+Las best practices de Codex recomiendan dar estructura explícita al trabajo. Una plantilla mínima y muy reusable es esta:
 
 ```text
 Goal:
 ¿Qué debe cambiar?
 
 Context:
-¿Qué archivos, errores o patrones importan?
+¿Qué archivos, errores, ejemplos locales o docs importan?
 
 Constraints:
-¿Qué no debe romperse o cambiar?
+¿Qué no debe romperse, ampliarse o reescribirse?
 
 Done when:
 ¿Qué demuestra que la tarea terminó?
 ```
 
-Parece simple, pero funciona.
-Sin Goal no hay blanco. Sin Done when no hay línea de llegada.
+Parece simple, pero elimina la mayor parte del retrabajo:
+
+- **Goal** evita que Codex optimice hacia un objetivo distinto.
+- **Context** reduce exploración innecesaria y malas suposiciones.
+- **Constraints** baja el riesgo de diff excesivo.
+- **Done when** convierte “parece bien” en un cierre verificable.
+
+## Qué poner realmente en Goal, Context, Constraints y Done when
+
+### Goal
+Describe el estado final que quieres conseguir, no solo el área del producto.
+
+Mejor:
+
+- mostrar un error claro si falla el checkout
+- agregar una nueva sección de Codex al sidebar
+- hacer que el cambio de cantidad se vea inmediato
+
+Peor:
+
+- mejorar checkout
+- ordenar docs
+- arreglar el carrito
+
+### Context
+Piensa en contexto como punto de arranque, no como ensayo.
+
+Buen contexto suele incluir:
+
+- archivo o carpeta por donde empezar
+- patrón local que conviene copiar
+- test roto, log o comando de reproducción
+- riesgo conocido que deba influir en la implementación
+
+### Constraints
+Escribe las fronteras que de verdad cambian la decisión.
+
+Ejemplos:
+
+- no cambies el shape del API público
+- no agregues dependencias
+- mantén el diff dentro de una carpeta
+- no toques archivos generados
+
+### Done when
+Haz que el cierre sea revisable.
+
+Mejor:
+
+- el comportamiento deseado es visible
+- el caso de rollback queda cubierto
+- los tests relevantes pasan
+- lint o build siguen sanos
 
 ## Prompt malo vs prompt mejor
 
@@ -88,104 +143,274 @@ Agregar optimistic updates al control de cantidad del cart drawer.
 Context:
 - La UI vive en src/components/cart/
 - La server action vive en src/app/actions/cart.ts
-- Sigue el patrón de loading ya usado en wishlist
+- Sigue el patrón de loading ya usado en src/components/wishlist/
+- El bug actual: la cantidad tarda ~700 ms en reflejarse y parece que el click no hizo nada
 
 Constraints:
 - no cambies el shape del API público
 - no agregues una nueva librería de estado
+- deja el diff dentro de src/components/cart/ y src/app/actions/cart.ts salvo que sea estrictamente necesario
 
 Done when:
 - los cambios de cantidad se sienten inmediatos
 - hay rollback limpio si falla
 - pasan lint, build y los tests relevantes
+- el diff queda listo para review sin tocar flujos no relacionados
 ```
 
-## Dimensiona la tarea alrededor de un loop de verificación
+La segunda versión no solo pide una mejora.
+También fija frontera, patrón local, riesgo aceptable y prueba de cierre.
 
-Una regla práctica no es “una feature”, sino **un loop de verificación revisable**.
+## Usa anclas locales, no consejos abstractos
 
-Buenas tareas:
+Codex responde mucho mejor a referencias concretas del repo que a frases como “hazlo siguiendo nuestra arquitectura”.
+La documentación oficial incluso recomienda incluir rutas y ejemplos locales en el prompt.
 
-- un refactor acotado en una carpeta
-- un bug reproducible
-- updates de docs ligados a un cambio puntual de API
+Buenas anclas:
 
-Malas tareas:
+- `sigue el patrón de src/features/profile/actions.ts`
+- `usa el formato ya presente en docs/releases/`
+- `reutiliza la convención de variantes de Button.tsx`
+- `mira el error reproducible en src/routes/payments.test.ts`
 
-- rediseñar auth, onboarding y billing juntos
-- modernizar toda la app
-- limpiar toda la deuda técnica
+Cuando la herramienta o interfaz lo permita, las referencias de archivo explícitas (`@ruta/al/archivo`, carpetas, nombres de módulos, tests o errores pegados tal cual) reducen muchísimo la ambigüedad.
 
-Si un solo loop de lint/build/test no puede decirte si la tarea está sana, probablemente es demasiado grande.
+## El contexto útil suele ser específico y pequeño
 
-## Algunos trabajos deben empezar solo con plan
+No hace falta pegar medio repo. Basta con nombrar lo mínimo que cambia la decisión:
 
-Conviene pedir plan primero cuando:
+- archivos o carpetas relevantes
+- errores exactos
+- test roto o snapshot esperado
+- módulo local que sirve de ejemplo
+- doc oficial o interna que manda sobre la implementación
 
-- el cambio cruza varios dominios
-- pesan más las decisiones de arquitectura que la velocidad de coding
-- el rollback sería costoso
-- hay varias implementaciones razonables
+Un buen `Context` debería contestar: **“si yo tomara esta tarea ahora, dónde miraría primero?”**
 
-Un buen arranque es:
+## Constraints: la parte más infravalorada del prompt
 
-```text
-No implementes todavía. Propón primero un plan.
-Incluye riesgos, archivos tocados y pasos de verificación.
-```
-
-## Los ejemplos locales ganan a los consejos abstractos
-
-Codex responde mejor a “sigue este archivo” que a “usa nuestra arquitectura habitual”.
-
-Mejores anclas:
-
-- “sigue el patrón de src/features/profile/actions.ts”
-- “usa el formato ya presente en docs/releases/”
-- “reutiliza el patrón de nombres de variantes del Button”
-
-Cuanto más concreto sea el punto de referencia, menos tendrá que adivinar Codex.
-
-## Las restricciones son una herramienta de calidad
-
-Las restricciones no son fricción. Son dirección.
+Las restricciones no son burocracia.
+Son la manera más barata de convertir autonomía en trabajo revisable.
 
 Restricciones de alto valor:
 
 - no agregar dependencias
 - preservar el shape del API público
-- quedarse dentro de un directorio
+- quedarse dentro de un directorio o conjunto de archivos
 - no tocar archivos generados
-- mantener el diff pequeño
+- mantener el diff pequeño y reversible
+- no mezclar refactor y feature en la misma tarea
+- no desactivar tests para “hacer pasar” el cambio
 
-## Cuándo ir más allá de un prompt simple
+Una heurística práctica: si te molestaría descubrir esa decisión en review, escríbela en `Constraints` antes.
 
-Si el mismo tipo de tarea se repite, quizá exista una superficie mejor:
+## `Done when` debe describir evidencia, no intención
 
-- workflow repetido → [Skills](./codex-skills)
-- hace falta contexto externo → [MCP](./codex-mcp)
-- la exploración o implementación paralela ayuda → pedir subagents explícitamente
+Un error común es cerrar con algo como “deja el código mejor” o “que quede limpio”.
+Eso no se verifica.
 
-La documentación de Subagents aclara que Codex solo los lanza cuando lo pides, y que heredan la sandbox policy actual. El paralelismo ayuda, pero no es gratis.
+Mejor:
 
-## Usa Best-of-N cuando haya incertidumbre
+- “el bug ya no reproduce con este caso”
+- “pasan `npm test -- cart` y `npm run build`”
+- “el diff no toca archivos fuera de `src/payments/`”
+- “queda documentado el nuevo flag en `docs/flags.md`”
+- “la review local muestra solo cambios del flujo X”
 
-OpenAI destaca Best-of-N para trabajos más difíciles.
-Sirve cuando:
+Cuanto más observable sea el `Done when`, más fácil será saber si la tarea terminó o si solo avanzó.
 
-- el naming o la estructura importan mucho
-- varias soluciones parecen razonables
-- quieres comparar opciones antes de mergear
+## Dimensiona la tarea alrededor de un loop de verificación
 
-## Checklist rápido antes de lanzar la tarea
+La unidad útil no es “una feature”.
+La unidad útil es **un loop de verificación que cabe en una revisión humana razonable**.
+
+### Sizing práctico
+
+| Tamaño de tarea | Qué suele incluir | Verificación mínima razonable |
+| --- | --- | --- |
+| Pequeña | bug puntual, docs acotadas, ajuste local | test o diff review focalizada |
+| Media | feature acotada, refactor en una zona, integración local | tests relevantes + lint/build del área |
+| Grande | cruza dominios, cambia contratos, toca arquitectura o despliegue | plan primero + implementación en fases + verificación por etapa |
+
+Una regla simple: si un solo loop de verificación no puede decirte si el trabajo está sano, la tarea es demasiado grande para un prompt único.
+
+## Plan primero cuando la decisión pese más que el typing
+
+OpenAI recomienda empezar con plan para cambios grandes.
+Hazlo también cuando:
+
+- el cambio cruza varios dominios
+- hay varias implementaciones razonables
+- rollback o migración serían costosos
+- la tarea toca contratos, seguridad o arquitectura
+- todavía no sabes si conviene skill, MCP, subagentes o un solo agente
+
+Prompt de arranque útil:
+
+```text
+No implementes todavía. Propón primero un plan.
+Incluye:
+- archivos o zonas que tocarías
+- riesgos principales
+- qué validaría antes de editar
+- cómo dividirías la implementación
+- qué verificación demostraría que terminó
+```
+
+Eso no enlentece: evita que la primera ejecución sea ya una apuesta arquitectónica.
+
+## Dos plantillas que sí vale la pena guardar
+
+### 1. Implementación directa
+
+```text
+Goal:
+Corregir el bug de expiración silenciosa en el refresh token.
+
+Context:
+- src/auth/session.ts maneja el refresh
+- src/auth/session.test.ts tiene los casos existentes
+- sigue el patrón de errores usado en src/billing/retry.ts
+
+Constraints:
+- no cambies la firma pública de createSession
+- no agregues dependencias
+- no toques código fuera de src/auth/ salvo tests relacionados
+
+Done when:
+- el caso de token expirado deja de cerrar sesión silenciosamente
+- pasan los tests de src/auth/session.test.ts
+- build y lint siguen sanos
+```
+
+### 2. Plan primero
+
+```text
+Goal:
+Reducir el tiempo de build del monorepo en CI.
+
+Context:
+- el cuello de botella probable está entre packages/web, packages/ui y scripts/build
+- hay caches existentes en .github/workflows/ci.yml
+- el historial muestra varios intentos parciales
+
+Constraints:
+- no implementes todavía
+- no propongas herramientas nuevas sin justificar tradeoffs
+- prioriza cambios reversibles y medibles
+
+Done when:
+- entregas un plan por fases
+- indicas archivos probables a tocar
+- incluyes riesgos, métricas y verificación por fase
+```
+
+## Cuándo escalar de prompt simple a skill, MCP o subagentes
+
+No todo problema se resuelve mejor con más texto en un solo prompt; a veces cambia la superficie correcta.
+
+### Usa una skill cuando…
+
+- el procedimiento se repite mucho
+- la secuencia de pasos es estable
+- quieres evitar reescribir siempre el mismo checklist
+- la salida esperada es bastante consistente
+
+Ejemplo: una skill para release notes, bug triage o validación de frontmatter.
+
+### Usa MCP cuando…
+
+- el repo por sí solo no alcanza
+- necesitas tickets, runbooks, docs o sistemas externos
+- importa saber de dónde salió la información
+- quieres pedir “consulta la fuente X, resume y recién después implementa”
+
+Ejemplo: extraer criterios de aceptación desde el issue tracker antes de tocar código.
+
+### Usa subagentes cuando…
+
+- el trabajo es genuinamente paralelizable
+- quieres comparar enfoques en paralelo
+- necesitas explorar varias zonas del codebase a la vez
+- quieres separar exploración, implementación y verificación en ramas independientes de trabajo
+
+La documentación de Subagents deja claro que Codex los lanza cuando se lo pides explícitamente. Úsalos para trabajo paralelo real, no como reflejo automático.
+
+## Tabla rápida de decisión
+
+| Si el problema es… | Superficie más útil |
+| --- | --- |
+| una edición enfocada con contexto claro | prompt simple bien diseñado |
+| una secuencia repetida de pasos | [Skills](./codex-skills) |
+| falta información fuera del repo | [MCP](./codex-mcp) |
+| varias exploraciones o verificaciones independientes | [Subagentes](./codex-subagents) |
+| demasiado grande o incierto para ejecutar ya | plan primero |
+
+## Best-of-N sirve para elegir, no para esconder indecisión
+
+OpenAI destaca Best-of-N cuando varias soluciones parecen razonables.
+Úsalo cuando quieres comparar opciones de naming, estructura o enfoque antes de mergear.
+
+Pide comparación explícita:
+
+```text
+Explora dos enfoques para este refactor.
+Para cada uno, resume:
+- diff esperado
+- riesgo principal
+- dependencias nuevas o no
+- compatibilidad con tests existentes
+```
+
+Eso convierte “dame ideas” en una comparación útil para decidir.
+
+## Errores de task design que producen diffs caros
+
+### “Hazlo como creas mejor”
+Suele equivaler a: faltan restricciones.
+
+### “Arregla todo esto”
+Suele equivaler a: no hay una unidad de verificación clara.
+
+### “No sé dónde está, investígalo y corrígelo y optimiza de paso”
+Suele equivaler a: mezclaste exploración, implementación y refactor en una sola corrida.
+
+### “Pasa todos los tests” como único `Done when`
+Es insuficiente si no dices qué comportamiento debía cambiar.
+Los tests son evidencia, no la especificación completa.
+
+## Checklist de preflight antes de lanzar una tarea
 
 Antes de mandar una tarea no trivial, revisa esto:
 
-- ¿el objetivo es singular?
-- ¿nombraste archivos o carpetas relevantes?
-- ¿listaste restricciones importantes?
+- ¿el objetivo es singular y entendible?
+- ¿nombraste archivos, carpetas o ejemplos locales?
+- ¿listaste restricciones que de verdad importan?
 - ¿definiste éxito en términos observables?
-- ¿el cambio cabe en un loop de review?
+- ¿la tarea cabe en un loop de verificación razonable?
+- ¿debería empezar con plan en vez de implementación?
+- ¿un prompt simple basta o conviene skill, MCP o subagentes?
+
+## Consejos operativos rápidos
+
+Si solo quieres recordar cinco cosas, recuerda estas:
+
+1. **Escribe la tarea para que otra persona pueda revisarla sin contexto extra.**
+2. **Nombra archivos y patrones locales siempre que puedas.**
+3. **Usa constraints para que el diff no se expanda por accidente.**
+4. **Dimensiona el trabajo alrededor de un loop de verificación.**
+5. **Escala a skills, MCP o subagentes solo cuando el shape de la tarea lo pida de verdad.**
+
+## Un buen prompt se parece a una buena issue
 
 El gran task design en Codex no es un truco oculto de prompting.
-Es la disciplina de dejar la tarea clara incluso para otro ingeniero.
+Es la disciplina de dejar el trabajo lo bastante claro como para que otro ingeniero —humano o agente— pueda ejecutarlo sin adivinar.
+
+Cuando Goal, Context, Constraints y Done when están bien escritos:
+
+- el diff suele ser más pequeño
+- la review es más rápida
+- la verificación es más obvia
+- la delegación a skills, MCP o subagentes se vuelve más fácil
+
+Ese es el objetivo real: menos magia, menos adivinanza y más trabajo operable.

@@ -15,10 +15,10 @@ connections:
     type: "compare"
 featured: true
 order: 3
-date: "2026-03-21"
+date: "2026-03-28"
 ---
 
-> **Referencias Oficiales**: [Overview](https://docs.anthropic.com/en/docs/claude-code/overview) · [Best practices](https://docs.anthropic.com/en/docs/claude-code/best-practices) · [Prompt engineering](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering)
+> **Referencias Oficiales**: [Overview](https://docs.anthropic.com/en/docs/claude-code/overview) · [Best practices](https://docs.anthropic.com/en/docs/claude-code/best-practices) · [Prompt engineering](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/overview) · [CLI usage](https://docs.anthropic.com/en/docs/claude-code/cli-usage)
 
 <!-- curriculum:start -->
 ## Ruta del currículo
@@ -32,188 +32,419 @@ date: "2026-03-21"
 
 ### Documentación oficial usada en esta guía
 - **Patrones de prompting y buenas prácticas** — [Best practices](https://docs.anthropic.com/en/docs/claude-code/best-practices)
-- **Conceptos generales de prompt engineering** — [Prompt engineering](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering)
+- **Conceptos generales de prompt engineering** — [Prompt engineering](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/overview)
 - **Modelo de uso de Claude Code** — [Overview](https://docs.anthropic.com/en/docs/claude-code/overview)
+- **Comandos CLI y patrones de sesión** — [CLI usage](https://docs.anthropic.com/en/docs/claude-code/cli-usage)
 <!-- curriculum:end -->
 
 ## La Idea Clave
 
-Claude Code no es un chatbot — es un ingeniero junior con memoria perfecta y paciencia infinita. Los mejores prompts son las mismas instrucciones que darías a un compañero de equipo competente.
+Claude Code funciona mejor cuando el prompt se parece a una buena issue: objetivo claro, contexto suficiente, restricciones explícitas y una forma de verificar el resultado.
 
-## Niveles de Prompting
+No hace falta escribir prompts brillantes; hace falta escribir instrucciones que otra persona del equipo podría seguir sin adivinar nada.
 
-### Nivel 1: Comandos Directos
+## Anatomía de un Prompt Útil
 
-Bueno para tareas simples y bien definidas:
+Piensa en el prompt como una plantilla con cinco piezas: cuanto más claras estén, menos tendrá que improvisar Claude.
 
+| Pieza | Qué debe decir | Ejemplo útil |
+|---|---|---|
+| Objetivo | Qué resultado quieres | "Corrige el error de TypeScript en `src/auth/login.ts`" |
+| Contexto | Para qué sirve el cambio | "Este login alimenta el onboarding" |
+| Restricciones | Qué no debe tocar | "No cambies el schema de la base de datos" |
+| Verificación | Cómo sabremos que quedó bien | "Asegúrate de que los tests relevantes sigan pasando" |
+| Formato de salida | Cómo quieres la respuesta | "Devuélveme el diff y un resumen corto" |
+
+Cuando falta una de esas piezas, Claude tiene que improvisar parte del trabajo, y esa improvisación suele ir en la dirección menos útil.
+
+### Plantilla reutilizable
+
+```text
+Quiero [resultado concreto].
+
+Contexto:
+- [para qué se usa]
+- [qué archivo, módulo o flujo está implicado]
+
+Restricciones:
+- [qué no cambiar]
+- [qué no asumir]
+
+Verificación:
+- [qué pruebas, checks o señales deben pasar]
+
+Entrega:
+- [qué formato debe tener la respuesta]
 ```
-Corrige el error de TypeScript en src/auth/login.ts
+
+Si el prompt empieza a crecer, prueba a rellenar esta plantilla. Si no puedes completarla con claridad, todavía te falta definir la tarea.
+
+## Patrones de Prompting que Sí Funcionan
+
+### 1) Comandos directos
+
+Úsalos cuando el problema es pequeño y bien acotado.
+
+```text
+Corrige el error de TypeScript en `src/auth/login.ts`.
 ```
 
-### Nivel 2: Contexto + Intención
-
-Mejor para tareas que requieren juicio:
-
+```text
+Añade validación de entrada al formulario de registro: formato de email y contraseña mínima de 8 caracteres.
 ```
-El endpoint /api/users es lento (~2s). Haz un perfil y sugiere optimizaciones.
+
+Este tipo de prompt funciona porque no deja espacio para interpretar la intención.
+
+### 2) Contexto + intención
+
+Úsalo cuando importa el juicio técnico.
+
+```text
+El endpoint `/api/users` es lento (~2s). Perfílalo y sugiere optimizaciones.
 No cambies el schema de la base de datos — estamos en medio de una migración.
 ```
 
-La restricción ("no cambiar schema") evita que Claude tome el camino equivocado.
+El contexto evita que Claude proponga una solución válida pero equivocada para tu momento real.
 
-### Nivel 3: Delegación Arquitectónica
+### 3) Tarea con pasos
 
-Para trabajo complejo de múltiples pasos:
+Úsalo en refactors o cambios que tienen dependencias internas.
 
-```
+```text
 Refactoriza el módulo de pagos de callbacks a async/await.
-1. Empieza con la integración de stripe (src/payments/stripe.ts)
-2. Actualiza el procesador de órdenes que depende de él
-3. Asegúrate que los tests existentes siguen pasando
-4. No toques la integración de PayPal — eso es el próximo sprint
+1. Empieza por la integración con Stripe (`src/payments/stripe.ts`)
+2. Actualiza el procesador de órdenes que depende de ella
+3. Comprueba que los tests existentes siguen pasando
+4. No toques la integración de PayPal — eso va en el próximo sprint
 ```
 
-## Anti-Patrones
+Los pasos reducen la posibilidad de que Claude salte al resultado sin respetar el orden real del trabajo.
 
-### La Petición Vaga
+### 4) Un objetivo por turno
 
+Cuando mezclas varias tareas en un solo prompt, la calidad cae rápido.
+
+```text
+❌ "Reescribe todo el sistema de auth, añade OAuth, implementa RBAC y agrega 2FA"
+✅ "Añade Google OAuth al sistema de auth existente. Mantén la gestión actual de sesiones."
 ```
-❌ "Mejora el código"
-✅ "Reduce la complejidad ciclomática de processOrder() — tiene 12 ramas"
+
+Si luego necesitas RBAC o 2FA, trátalos como tareas separadas. Un prompt más corto y más preciso suele producir mejor trabajo que una lista interminable de deseos.
+
+## Framing que Reduce Errores
+
+Claude responde mucho mejor cuando sabe:
+
+- qué problema estás resolviendo
+- para quién es la salida
+- en qué parte del flujo encaja
+- cuál es el criterio mínimo de éxito
+- qué líneas rojas no puede cruzar
+
+Esto importa especialmente cuando el prompt pide cambios en código real y no solo una explicación.
+
+### Buenas preguntas para completar el framing
+
+Antes de enviar el prompt, pregúntate:
+
+- ¿Qué resultado final voy a usar?
+- ¿Qué archivos o carpetas son realmente relevantes?
+- ¿Qué no debe tocar Claude?
+- ¿Cómo sabré si la solución es aceptable?
+- ¿Qué parte del trabajo debería quedar para un turno posterior?
+
+Si esas respuestas no están claras para ti, tampoco lo estarán para Claude.
+
+## Prompts Orientados a Verificación
+
+Claude Code es más útil cuando el prompt incorpora la verificación desde el inicio. No la dejes para el final.
+
+### Pide diagnóstico + evidencia + acción
+
+```text
+Investiga por qué este test falla, corrige la causa raíz y dime qué validaste para confirmar la solución.
 ```
 
-### El Patrón "Plan Primero"
-
-Para tareas no triviales, pide a Claude que planifique antes de ejecutar:
-
+```text
+Analiza el sistema de autenticación y corrige cualquier vulnerabilidad que encuentres.
+Después, resume los archivos tocados y las comprobaciones que hiciste.
 ```
+
+```text
+Haz profiling de esta API, encuentra el cuello de botella y corrige lo que puedas ahora mismo.
+Si algo queda fuera de alcance, explícame por qué.
+```
+
+### Pide señales de cierre
+
+La definición de "terminado" debe aparecer en el prompt, no solo en tu cabeza.
+
+```text
+Objetivo: reducir la complejidad de `processOrder()`.
+Verificación: que el comportamiento actual siga igual y que el cambio quede cubierto por tests relevantes.
+Entrega: explica brevemente el riesgo restante si hay alguno.
+```
+
+### Pide que Claude se detenga si no hay confianza suficiente
+
+Esto evita cambios sobre construcciones frágiles o mal entendidas.
+
+```text
+Si detectas una dependencia oculta o un riesgo alto, para y explícame el bloqueo antes de seguir.
+```
+
+Ese tipo de instrucción es útil cuando prefieres una pausa bien explicada antes que una corrección improvisada.
+
+## El Patrón "Plan Primero"
+
+Para tareas no triviales, pide primero una propuesta de enfoque y luego la ejecución.
+
+```text
 Quiero agregar notificaciones en tiempo real usando WebSockets.
 Antes de escribir código, describe tu enfoque:
-- ¿Qué librería?
-- ¿Dónde vive el servidor WebSocket?
+- ¿Qué librería usarías?
+- ¿Dónde viviría el servidor WebSocket?
 - ¿Cómo se integra con nuestra autenticación existente?
+- ¿Qué riesgos o trade-offs ves?
 ```
 
-## Modo de Pensamiento Extendido
+Ese pequeño paso extra evita que Claude empiece a escribir en la dirección equivocada.
 
-Claude Code te permite ajustar la profundidad de razonamiento según la complejidad de la tarea:
+### Úsalo especialmente cuando:
 
-| Situación | Expresión |
-|-----------|-----------|
-| Trabajo rutinario | El modo por defecto es suficiente |
-| Problemas complejos | "piensa profundo", "think hard" |
-| Decisiones de arquitectura | "ultrathink", "analiza lo más profundo posible" |
+- la tarea toca varias capas del sistema
+- hay más de una solución razonable
+- la decisión de arquitectura importa más que la velocidad
+- el cambio podría abrir un refactor más grande que todavía no quieres hacer
 
+## Encadena Trabajo Complejo en Turnos Más Pequeños
+
+Anthropic recomienda descomponer los problemas complejos en piezas manejables. En Claude Code eso suele significar conversación iterativa, no un prompt gigante.
+
+Un patrón útil es este:
+
+1. **Explorar** — entender el estado actual
+2. **Aterrizar** — proponer un plan concreto
+3. **Ejecutar** — hacer el cambio pequeño y acotado
+4. **Verificar** — comprobar el resultado
+5. **Ajustar** — corregir lo que quedó corto
+
+### Ejemplo de encadenado
+
+```text
+Turno 1: inspecciona este módulo y dime dónde están los riesgos.
+Turno 2: con ese contexto, propón un plan de refactor por pasos.
+Turno 3: aplica solo el primer paso y no avances al siguiente sin decirme qué cambió.
+Turno 4: resume qué validaste y qué quedaría pendiente.
 ```
-❌ "¿Cómo debería reestructurar la capa de autenticación?"
-✅ "Usa ultrathink para analizar la migración de nuestra autenticación basada en sesiones a JWT.
-   Incluye trade-offs de seguridad, estrategia de rollback y un plan de migración por fases."
+
+La ventaja no es solo claridad. También preserva contexto para que cada paso tenga una meta visible.
+
+## El Bucle de Iteración Es la Ventaja Real
+
+Claude Code brilla cuando lo usas como un ciclo de trabajo, no como una caja negra.
+
+```text
+Ronda 1: "Agrega la funcionalidad de login"
+→ Revisa el resultado
+
+Ronda 2: "Bien. Ahora haz que los errores sean más claros. En vez de 'Invalid credentials', usa 'Email o contraseña incorrectos'"
+→ Revisa el resultado
+
+Ronda 3: "Último paso: añade rate limiting — bloqueo de 5 minutos tras 5 intentos fallidos"
 ```
 
-Para decisiones de diseño importantes o refactorizaciones complejas, este patrón hace que Claude identifique casos borde y riesgos que de otra forma pasaría por alto.
+Cada ronda debe ser pequeña, verificable y fácil de comparar con la anterior. Si una ronda crece demasiado, divídela.
 
-## Gestión de Conversaciones
+### Reglas prácticas para iterar bien
 
-### Cuándo Iniciar una Nueva Conversación
+- cambia una sola cosa importante por turno
+- revisa el output antes de pedir la siguiente capa
+- no mezcles refactor, features y limpieza de estilo en la misma pasada si puedes evitarlo
+- usa el siguiente turno para corregir, no para reescribir todo desde cero
 
-Una conversación nueva suele ser más eficiente que un hilo muy largo:
+## Antipatrones y Modos de Fallo
 
-- Cuando **cambias a una funcionalidad diferente** después de terminar la actual
-- Cuando las respuestas de Claude parecen **demasiado ancladas** al contexto anterior
-- Cuando la calidad de las respuestas baja notablemente tras una sesión larga
+### 1) La petición vaga
 
-### Usando /compact
-
-Comprime el contexto a mitad de conversación para ahorrar tokens y restaurar el foco:
-
+```text
+❌ "Mejora el código"
+✅ "Reduce la complejidad ciclomática de `processOrder()` — tiene 12 ramas"
 ```
+
+Las palabras vagas hacen que Claude rellene huecos con su mejor apuesta. La mejor apuesta rara vez coincide con lo que querías.
+
+### 2) El “kitchen sink”
+
+```text
+❌ "Reescribe toda la autenticación, añade OAuth, implementa RBAC y mete 2FA"
+✅ "Añade Google OAuth al sistema actual. Mantén la gestión de sesiones existente."
+```
+
+Cuando todo entra en el mismo prompt, nada queda suficientemente definido.
+
+### 3) El contexto asumido
+
+```text
+❌ "Arregla el bug"
+✅ "Arregla la condición de carrera en `useCart`: al añadir artículos rápidamente se duplican entradas"
+```
+
+Si el problema no está descrito, Claude puede corregir la síntoma equivocada.
+
+### 4) La tarea sin límites
+
+```text
+❌ "Haz que toda la app sea más rápida"
+✅ "Perfila `src/api/users.ts`, encuentra el cuello de botella principal y corrige solo ese punto"
+```
+
+Los límites ayudan a evitar cambios amplios cuando solo necesitabas una mejora concreta.
+
+### 5) La explicación cuando necesitabas acción
+
+```text
+❌ "¿Cómo funciona el sistema de autenticación?"
+✅ "Analiza el sistema de autenticación y corrige cualquier vulnerabilidad de seguridad que encuentres"
+```
+
+Si quieres una respuesta accionable, dilo explícitamente. Claude no adivina el nivel de intervención que quieres.
+
+### 6) La sesión demasiado larga
+
+Cuando la conversación se alarga, el modelo puede quedar demasiado anclado a decisiones antiguas.
+
+Señales típicas:
+
+- Claude sigue proponiendo una dirección que ya descartaste
+- el prompt empieza a llenarse de excepciones
+- cada nuevo turno necesita demasiada recapitulación
+- la calidad baja porque el contexto está saturado
+
+Ahí no necesitas “un mejor prompt”. Necesitas limpiar la conversación.
+
+## Pensar en el Presupuesto de Contexto
+
+El contexto es un presupuesto, no un vertedero. Si lo llenas de texto irrelevante, cada turno pierde espacio para lo importante.
+
+### Buenas prácticas de presupuesto
+
+- menciona solo los archivos que de verdad importan
+- resume la historia larga en lugar de pegarla entera
+- separa contexto estable de la tarea de hoy
+- no repitas reglas obvias si ya viven en `CLAUDE.md`
+- si un detalle solo importa para una subtarea, pásalo en esa subtarea y no en toda la conversación
+
+### Lo que suele funcionar mejor
+
+- un prompt corto con límites claros
+- referencias puntuales a archivos
+- una lista corta de comprobaciones
+- una salida bien definida
+
+### Lo que suele funcionar peor
+
+- pegar documentación completa sin filtro
+- mezclar varios objetivos en el mismo hilo
+- esconder restricciones importantes dentro de párrafos largos
+- dejar que Claude deduzca el criterio de éxito por su cuenta
+
+## Cuándo Compactar, Reiniciar o Empezar Fresco
+
+### Usa `/compact` cuando la conversación siga siendo útil pero ya esté creciendo demasiado
+
+```text
 /compact
 ```
 
-Claude resume la conversación hasta ese punto, conservando solo el contexto esencial. Más útil cuando te acercas al límite de tokens o trabajas en una sesión larga.
+Compactar contexto no significa “cortar y perder todo”. Significa conservar lo esencial y descartar ruido acumulado.
 
-### Pega Capturas de Pantalla Directamente
+Úsalo cuando:
 
-Para bugs de UI y problemas de layout, una captura comunica más precisamente que una descripción en texto:
+- el hilo sigue centrado en la misma tarea
+- ya hay bastante contexto y quieres liberar espacio
+- necesitas mantener la calidad sin arrastrar demasiado historial
 
-```
-[pegar captura de pantalla]
-"El botón se superpone al nav en móvil. Corrígelo."
-```
+### Usa `/clear` cuando quieras un arranque limpio
 
-Una sola captura elimina la ambigüedad que párrafos enteros de descripción no pueden resolver.
-
-## Patrón de Refinamiento Iterativo
-
-La gran ventaja de Claude Code frente a herramientas autónomas es el bucle de conversación. No intentes escribir el prompt perfecto desde el principio — refina progresivamente:
-
-```
-Ronda 1: "Agrega funcionalidad de login"
-→ Revisa el resultado
-
-Ronda 2: "Bien. Ahora haz los mensajes de error más amigables —
-          'Invalid credentials' debería decir 'Email o contraseña incorrectos'"
-→ Revisa el resultado
-
-Ronda 3: "Última cosa: agrega rate limiting — bloqueo de 5 minutos tras 5 intentos fallidos"
+```text
+/clear
 ```
 
-Cada ronda es una unidad de trabajo verificable y acotada. La calidad se acumula.
+Es útil cuando:
 
-## Slash Commands
+- ya terminaste una tarea y vas a empezar otra distinta
+- el hilo quedó contaminado por intentos fallidos
+- Claude está demasiado anclado a una dirección antigua
+- prefieres empezar de cero antes que seguir parcheando contexto
 
-Claude Code tiene comandos integrados que optimizan tu flujo de trabajo:
+Si Claude ya se desvió y quieres volver atrás sin perder el hilo entero, `/rewind` te deja restaurar un punto anterior de la conversación y del estado del código. Y si ya corregiste el mismo problema dos veces en el mismo hilo, la propia guía de Anthropic recomienda limpiar contexto y reintentar con un prompt mejor definido.
 
-| Comando | Función |
-|---------|---------|
-| `/help` | Lista los comandos y capacidades disponibles |
-| `/compact` | Comprime el contexto de la conversación para ahorrar tokens |
-| `/clear` | Reinicia la conversación — útil al comenzar una nueva tarea |
-| `/cost` | Consulta los costos de API de la sesión actual |
+### Empieza una conversación nueva cuando:
 
-También puedes definir slash commands personalizados en CLAUDE.md para automatizar flujos de trabajo específicos del proyecto.
+- cambias de funcionalidad o dominio
+- la respuesta ya parece “atrapada” en supuestos viejos
+- el hilo necesita demasiada explicación solo para recuperar el foco
+- quieres comparar una variante de enfoque sin arrastrar el historial anterior
 
-## Patrón "Explícame" vs "Hazlo"
+### Regla práctica
 
-Pedir una explicación y pedir una acción produce resultados muy distintos:
+Si necesitas explicar más de lo que vas a pedir, probablemente ya te conviene compactar o reiniciar.
 
-```
+## Cómo Saber Si el Prompt Está Listo
+
+Antes de enviarlo, revisa este checklist:
+
+- ¿El objetivo está en una sola frase?
+- ¿El contexto relevante está presente sin exceso?
+- ¿Las restricciones importantes están explícitas?
+- ¿La verificación está incluida?
+- ¿La salida esperada está clara?
+- ¿Hay un solo objetivo principal por turno?
+
+Si alguna respuesta es “no”, todavía puedes mejorar el prompt.
+
+## "Explica" vs "Hazlo"
+
+Pedir explicación y pedir acción produce resultados distintos.
+
+```text
 ❌ "¿Cómo funciona el sistema de autenticación?"
-   → Obtienes una explicación
+   → obtienes una explicación
 
 ✅ "Analiza el sistema de autenticación y corrige cualquier vulnerabilidad de seguridad que encuentres"
    → Claude lee el código y hace cambios
 ```
 
-```
+```text
 ❌ "¿Por qué esta API es lenta?"
-   → Obtienes una lista de posibles causas
+   → obtienes una lista de posibles causas
 
 ✅ "Haz profiling de esta API, encuentra el cuello de botella y corrige lo que puedas ahora mismo"
-   → Diagnóstico + implementación
+   → diagnóstico + implementación
 ```
 
-Claude Code es un ingeniero, no un analista. Pide acción.
+Si quieres acción, pon la acción en el prompt. Si quieres análisis, dilo también. No mezcles ambos sin avisar.
 
 ## Referencias de Archivos para Contexto Preciso
 
-Puedes mencionar archivos directamente en tu prompt y Claude los leerá. En lugar de esperar que Claude busque en todo el codebase, señálale los archivos relevantes:
+Puedes mencionar archivos directamente en tu prompt y Claude los leerá. En vez de esperar que busque en todo el codebase, señálale los archivos relevantes.
 
-```
-Lee src/types/user.ts primero, luego agrega un nuevo campo para avatar_url
-```
-
-```
-Mira src/auth/login.ts — la lógica de renovación de tokens parece rara
+```text
+Lee `src/types/user.ts` primero, luego añade un nuevo campo para `avatar_url`
 ```
 
-Funcionan tanto rutas completas como relativas. También puedes arrastrar y soltar archivos en el prompt para dar contexto rápidamente.
+```text
+Mira `src/auth/login.ts` — la lógica de renovación de tokens parece rara
+```
 
-**Buena práctica**: Señala a Claude los archivos relevantes en lugar de esperar que busque en todo el codebase. Entrada más rápida, resultado más preciso.
+También puedes usar rutas relativas si eso hace más claro el contexto. Y si el archivo relevante vive en una zona concreta del repo, dilo.
+
+**Buena práctica**: apunta a archivos concretos en lugar de describir “todo el proyecto”. Entrada más rápida, resultado más preciso.
 
 ## Modo No Interactivo
 
-`claude --print` (o `claude -p`) ejecuta un solo prompt sin conversación — perfecto para scripts y pipelines:
+`claude --print` (o `claude -p`) ejecuta un solo prompt sin conversación. Es perfecto para scripts, pipelines y automatización ligera.
 
 ```bash
 # Resumir logs de errores
@@ -226,7 +457,7 @@ claude -p "generate test for src/utils.ts" > tests/utils.test.ts
 claude -p --output-format json "list all exported functions in src/api/"
 ```
 
-### Ejemplos Prácticos
+### Ejemplos prácticos
 
 **Generación automática de mensajes de commit:**
 ```bash
@@ -243,51 +474,41 @@ claude -p "review this diff for security issues" < pr.diff
 claude -p "generate JSDoc for all exported functions in src/api/"
 ```
 
-Funciona en cualquier lugar: Makefiles, scripts de shell, git hooks.
+Este modo funciona bien en Makefiles, scripts de shell y hooks de Git, siempre que el prompt deje claro qué entrada leer y qué salida producir.
 
-## Estrategia de Selección de Modelo
+## Slash Commands que Conviene Recordar
 
-Usa `/model` para cambiar de modelo a mitad de conversación. Elige el modelo adecuado según la complejidad de la tarea para optimizar costo y rendimiento:
+Claude Code incluye comandos integrados que ayudan a mover contexto y ordenar sesiones.
 
-| Tarea | Modelo Recomendado |
-|-------|-------------------|
-| Revisión de arquitectura, debugging complejo | opus |
-| Implementación de funcionalidades, code review | sonnet (por defecto) |
-| Preguntas rápidas, búsqueda de archivos, formateo | haiku |
+| Comando | Función |
+|---------|---------|
+| `/help` | Lista comandos y capacidades disponibles |
+| `/compact` | Comprime el contexto de la conversación para ahorrar tokens |
+| `/clear` | Reinicia la conversación — útil al empezar una tarea nueva |
+| `/cost` | Consulta los costos de API de la sesión actual |
 
-Para el modo no interactivo, usa el flag `--model`:
-```bash
-claude -p --model haiku "explain this error"
-```
+También puedes crear slash commands personalizados en `.claude/commands/` y documentar sus convenciones en `CLAUDE.md` para automatizar flujos repetidos del proyecto.
 
-**Conciencia de costos**: haiku es aproximadamente 10 veces más barato que opus por token. Empieza con sonnet, escala a opus para razonamiento complejo, y usa haiku para tareas masivas o en lote.
+## Checklist Final de Prompting
 
-## Modos de Permisos
+Antes de enviar un prompt importante, intenta pasar por esto:
 
-Usa `--allowedTools` para pre-aprobar herramientas específicas y reducir los prompts de permisos:
+1. ¿Se entiende el objetivo sin contexto extra?
+2. ¿Hay un límite claro de alcance?
+3. ¿Está explícito qué no debe cambiar?
+4. ¿Hay una forma de verificar el resultado?
+5. ¿El prompt cabe en una sola intención principal?
+6. ¿Sabes si conviene seguir en el hilo actual o empezar uno nuevo?
 
-```bash
-claude --allowedTools "Edit,Write,Bash(git *)"
-```
+Si la respuesta a varias de esas preguntas es no, mejora el prompt antes de enviarlo.
 
-Para configuración persistente, establece las herramientas permitidas en `.claude/settings.json`:
+## Resumen Práctico
 
-```json
-{
-  "permissions": {
-    "allow": ["Edit", "Write", "Bash(npm test)", "Bash(npm run lint)"]
-  }
-}
-```
+- Sé claro, directo y específico.
+- Dale contexto real, no solo intención abstracta.
+- Añade restricciones y criterios de verificación.
+- Divide tareas complejas en turnos más pequeños.
+- Revisa después de cada iteración.
+- Compacta o reinicia cuando el contexto deje de ayudar.
 
-Para scripts completamente automatizados (solo CI, nunca interactivo), `--dangerouslySkipPermissions` omite todas las verificaciones de permisos.
-
-**Buena práctica**: Empieza restrictivo, ve permitiendo gradualmente las herramientas en las que confías.
-
-## Comparación con Codex
-
-GPT Codex funciona diferente — escribes una descripción de tarea por adelantado y se ejecuta de forma autónoma. No hay conversación back-and-forth. Esto significa:
-- Los prompts de Codex necesitan ser más completos desde el inicio
-- Claude Code permite refinamiento iterativo
-- Ambos se benefician de restricciones y ejemplos explícitos
-
+Claude Code rinde mejor cuando le hablas como a un compañero técnico competente: explícito, acotado y con una definición clara de éxito.

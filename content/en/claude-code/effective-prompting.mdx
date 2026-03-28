@@ -15,10 +15,10 @@ connections:
     type: "compare"
 featured: true
 order: 3
-date: "2026-03-21"
+date: "2026-03-28"
 ---
 
-> **Official References**: [Claude Code Overview](https://docs.anthropic.com/en/docs/claude-code/overview) · [Claude Code Best Practices](https://docs.anthropic.com/en/docs/claude-code/best-practices) · [Prompt Engineering Guide](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering)
+> **Official References**: [Claude Code Overview](https://docs.anthropic.com/en/docs/claude-code/overview) · [Claude Code Best Practices](https://docs.anthropic.com/en/docs/claude-code/best-practices) · [Prompt Engineering Guide](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/overview) · [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code/cli-usage)
 
 <!-- curriculum:start -->
 ## Curriculum path
@@ -32,284 +32,543 @@ date: "2026-03-21"
 
 ### Official docs used in this guide
 - **Prompting patterns and best practices** — [Best practices](https://docs.anthropic.com/en/docs/claude-code/best-practices)
-- **General prompt engineering concepts** — [Prompt engineering](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering)
+- **General prompt engineering concepts** — [Prompt engineering](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/overview)
 - **Claude Code usage model** — [Overview](https://docs.anthropic.com/en/docs/claude-code/overview)
+- **CLI commands and session patterns** — [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code/cli-usage)
 <!-- curriculum:end -->
 
-## The Key Insight
+## The core rule: write prompts like executable engineering tickets
 
-Claude Code isn't a chatbot — it's a junior engineer with perfect memory and infinite patience. The best prompts are the same instructions you'd give a competent teammate.
+Claude Code is most useful when it can act, verify, and iterate instead of guessing what you meant.
 
-## Prompting Levels
+Anthropic's docs keep returning to four habits:
 
-### Level 1: Direct Commands
+- **be explicit** about what you want
+- **point Claude to the right context** instead of making it search blindly
+- **give it a way to verify its work**
+- **keep context clean enough** that it can still reason well late in the session
 
-Good for simple, well-defined tasks:
+A strong prompt feels less like “chatting with an AI” and more like handing a teammate a well-scoped issue.
 
-```
-Fix the TypeScript error in src/auth/login.ts
-```
+## The simplest prompt shape that scales
 
-```
-Add input validation to the signup form — email format and password min 8 chars
-```
+For most coding work, you can start with a four-part structure:
 
-### Level 2: Context + Intent
+```text
+Goal:
+What should change?
 
-Better for tasks that need judgment:
+Context:
+Which files, symptoms, patterns, or references matter?
 
-```
-The /api/users endpoint is slow (~2s). Profile it and suggest optimizations.
-Don't change the database schema — we're mid-migration.
-```
+Constraints:
+What must stay unchanged?
 
-The constraint ("don't change schema") prevents Claude from going down the wrong path.
-
-### Level 3: Architectural Delegation
-
-For complex, multi-step work:
-
-```
-Refactor the payment module from callbacks to async/await.
-1. Start with the stripe integration (src/payments/stripe.ts)
-2. Update the order processor that depends on it
-3. Make sure existing tests still pass
-4. Don't touch the PayPal integration — that's next sprint
+Done when:
+How should Claude verify success?
 ```
 
-Numbered steps give Claude a roadmap. Exclusions prevent scope creep.
+That structure works because every part removes a different kind of ambiguity:
 
-## Anti-Patterns
+| Part | What it prevents |
+|---|---|
+| Goal | Claude solving the wrong problem |
+| Context | wasted exploration and wrong starting assumptions |
+| Constraints | scope creep and risky “helpful” changes |
+| Done when | premature completion |
 
-### The Vague Request
+## What good prompts actually contain
 
-```
-❌ "Make the code better"
-✅ "Reduce the cyclomatic complexity of processOrder() — it has 12 branches"
-```
+### 1. A concrete target state
 
-### The Kitchen Sink
+Weak:
 
-```
-❌ "Rewrite the entire auth system, add OAuth, implement RBAC, and add 2FA"
-✅ "Add Google OAuth to the existing auth system. Keep the current session management."
-   (Then follow up with RBAC and 2FA as separate tasks)
-```
-
-### Assuming Context
-
-```
-❌ "Fix the bug"
-✅ "Fix the race condition in useCart — adding items rapidly creates duplicate entries"
+```text
+Improve the auth flow.
 ```
 
-## The "Plan First" Pattern
+Better:
 
-For non-trivial tasks, ask Claude to plan before executing:
-
-```
-I want to add real-time notifications using WebSockets.
-Before writing any code, outline your approach:
-- Which library?
-- Where does the WebSocket server live?
-- How does it integrate with our existing auth?
+```text
+Make session-timeout login failures recover automatically by fixing token refresh in src/auth/.
 ```
 
-This catches architectural mismatches before Claude writes 500 lines in the wrong direction.
+The improvement is that the second version names a **behavior**, not just a product area.
 
-## Extended Thinking Mode
+### 2. Starting points, not background essays
 
-Claude Code lets you dial up reasoning depth based on the complexity of your task:
+Anthropic recommends specific context. In practice, give Claude:
 
-| Situation | Phrasing |
-|-----------|----------|
-| Routine work | Default mode is fine |
-| Complex problems | "think hard", "think carefully" |
-| Architecture decisions | "ultrathink", "think as deeply as possible" |
+- the first file or directory to inspect
+- the existing implementation pattern to copy
+- the reproduction steps or failing symptom
+- the most important edge case
 
-```
-❌ "How should I restructure the auth layer?"
-✅ "Use ultrathink to analyze migrating our session-based auth to JWT.
-   Include security trade-offs, rollback strategy, and a phased migration plan."
-```
-
-For significant design decisions or complex refactors, this pattern gets Claude to surface edge cases and risks it might otherwise skip.
-
-## Conversation Management
-
-### When to Start a New Conversation
-
-A fresh conversation is often more efficient than a long thread:
-
-- When you're **switching to a different feature** after finishing the current one
-- When Claude's responses seem **overly anchored** to earlier context
-- When response quality noticeably drops after a long session
-
-### Using /compact
-
-Compress context mid-conversation to save tokens and restore focus:
-
-```
-/compact
+```text
+Context:
+- Bug shows up after session timeout
+- Start in src/auth/login.ts and src/auth/refresh.ts
+- Follow the retry pattern already used in src/api/client.ts
+- Write a failing test before fixing it
 ```
 
-Claude summarizes the conversation so far, keeping only the essential context. Most useful when you're approaching token limits or working across a long session.
+That is dramatically better than a paragraph of vague backstory.
 
-### Paste Screenshots Directly
+### 3. Constraints that change decisions
 
-For UI bugs and layout issues, a screenshot communicates more precisely than text descriptions:
+Constraints matter most when they remove tempting but wrong options:
 
+```text
+Constraints:
+- do not change the public API shape
+- do not add dependencies
+- do not touch the OAuth flow
+- keep the diff inside src/auth unless a shared helper already exists
 ```
+
+Good constraints are not bureaucracy. They keep Claude from “solving” the task by changing something you were relying on.
+
+### 4. Verification Claude can run itself
+
+Anthropic's Claude Code best-practices guide is blunt: giving Claude a way to verify its work is one of the highest-leverage moves you can make.
+
+```text
+Done when:
+- login succeeds after session timeout
+- the regression test passes
+- auth-related typecheck stays clean
+```
+
+Without this, you become the only feedback loop.
+
+## Prompting patterns that work in real sessions
+
+### 1. Direct execution for small, obvious tasks
+
+Use this when the diff is easy to describe in one sentence.
+
+```text
+Fix the TypeScript error in src/auth/login.ts.
+Keep the change minimal and run the relevant tests afterward.
+```
+
+Good for:
+
+- a single bug
+- a focused docs update
+- one-file refactors
+- obvious type or lint fixes
+
+Anthropic's guidance on plan mode is useful here: if you could already describe the diff in one sentence, don't add planning overhead unless the task is risky.
+
+### 2. Explore first, then implement
+
+Use this when you know the symptom but not the cause.
+
+```text
+Users report duplicate cart entries when they click quickly.
+Explore the cart update flow first and identify the root cause.
+Then implement the smallest safe fix.
+Write or update a regression test.
+```
+
+This works well because it matches Claude Code's natural loop:
+
+1. inspect
+2. form a hypothesis
+3. change code
+4. verify
+
+### 3. Plan first for architectural or multi-file work
+
+Ask for a plan before any edits when:
+
+- the task crosses multiple modules
+- the rollback cost is high
+- there are several plausible designs
+- you are unsure which pattern in the codebase should dominate
+
+```text
+I want to add WebSocket-based notifications.
+Before writing code, propose a plan covering:
+- where the server integration should live
+- how auth should work
+- how to keep the rollout reversible
+- what should be tested first
+```
+
+This is not about making Claude slower. It is about failing earlier and more cheaply.
+
+### 4. Chain prompts instead of overloading one prompt
+
+Anthropic's prompt-engineering docs recommend chaining for complex tasks that have distinct phases. That matters in Claude Code too.
+
+A good chain looks like:
+
+1. **map the problem**
+2. **choose an approach**
+3. **implement**
+4. **review / verify**
+
+For example:
+
+```text
+Step 1: inspect the notification pipeline and identify where retries can duplicate sends.
+Step 2: propose the smallest fix.
+Step 3: after I approve the approach, implement it.
+Step 4: run the relevant tests and summarize any residual risk.
+```
+
+If Claude keeps dropping a step, that usually means the step should become its own prompt.
+
+### 5. Use examples when format or tone matters
+
+Few-shot examples are especially helpful when you care about:
+
+- output structure
+- naming conventions
+- review style
+- content tone for docs
+
+```text
+Write release notes in this format:
+
+<example>
+## Fixed
+- Corrected race condition in checkout retry flow
+
+## Changed
+- Simplified auth logging around token refresh
+</example>
+
+Now write release notes for the current diff.
+```
+
+Anthropic's prompting guide recommends a handful of relevant examples rather than a huge example dump. Three good examples beat ten noisy ones.
+
+### 6. Use lightweight XML-style structure for complicated asks
+
+Claude handles plain English well, but XML-style sections help when your prompt mixes many inputs.
+
+```text
+<goal>Add regression coverage for checkout timeout failures.</goal>
+<context>
+- start in src/checkout/
+- reuse the test helpers in tests/helpers/payment.ts
+</context>
+<constraints>
+- no snapshot tests
+- do not change production behavior unless required to make the bug reproducible
+</constraints>
+<done_when>
+- failing test first
+- fix merged into existing checkout test suite
+- relevant tests pass
+</done_when>
+```
+
+You do not need XML for every prompt. Use it when structure will reduce ambiguity.
+
+## A practical escalation ladder
+
+When Claude is struggling, the answer usually is **not** “write an even longer prompt.” Use this escalation ladder instead:
+
+1. **Clarify the goal** — what exactly should change?
+2. **Add better context** — files, symptoms, patterns, references
+3. **Add harder constraints** — what must not change?
+4. **Add verification** — tests, screenshots, commands, expected output
+5. **Split the task** — explore → plan → implement → verify
+6. **Escalate tools** — CLAUDE.md, MCP, subagents, hooks, scripts
+
+That is the real progression from beginner prompting to effective operator behavior.
+
+## Context-budget thinking matters more than clever wording
+
+Anthropic's Claude Code best-practices page emphasizes that performance degrades as context fills. That changes how you should prompt.
+
+### Prefer targeted context over exhaustive context
+
+Bad:
+
+```text
+Please inspect the whole repo and figure out why checkout is flaky.
+```
+
+Better:
+
+```text
+Investigate checkout flakiness.
+Start in src/checkout/, tests/e2e/checkout.spec.ts, and the retry helper in src/lib/retry.ts.
+Focus on failures after network timeout.
+```
+
+### Put long reference material above the ask when needed
+
+Anthropic's long-context guidance recommends putting long reference material first and the actual ask later. In Claude Code, that usually means:
+
+- attach or paste the relevant artifact
+- keep the actual request at the end
+- ask Claude to quote or cite the part it is relying on when precision matters
+
+### Use `/compact` before the session gets sloppy
+
+A long session is not automatically a good session.
+Use `/compact` when:
+
+- Claude keeps anchoring on stale context
+- too many exploratory turns are now irrelevant
+- answers are getting slower and fuzzier
+
+### Start a new conversation when the job changes
+
+New feature, new architectural question, or a big mental-model shift? Start fresh.
+Prompt quality is not only about wording. It is also about whether the current conversation still fits the job.
+
+## Iteration loops beat “perfect prompt” fantasies
+
+Claude Code is strongest when you treat it as a high-speed iteration partner.
+
+A healthy loop looks like this:
+
+1. give a bounded task
+2. inspect the result
+3. correct the direction
+4. add the next constraint or refinement
+5. verify again
+
+```text
+Round 1:
+Add login rate limiting.
+
+Round 2:
+Good. Keep the server behavior, but make the user-facing error message friendlier.
+
+Round 3:
+Now add a regression test for five failed attempts within five minutes.
+```
+
+This works because each round is:
+
+- understandable
+- reviewable
+- reversible
+- easier to verify than a one-shot “build the whole auth system” ask
+
+## Failure modes that make Claude look worse than it is
+
+| Failure mode | What it looks like | Better move |
+|---|---|---|
+| vague scope | Claude edits unrelated files | specify directories, files, or boundaries |
+| missing success criteria | output looks plausible but is unverified | define tests, screenshots, or commands |
+| overstuffed prompt | Claude misses one of seven requirements | split into chained prompts |
+| too much stale context | Claude keeps following old assumptions | `/compact` or start fresh |
+| hidden constraints | Claude chooses a forbidden solution | say what must not change |
+| asking for explanation when you want action | Claude gives analysis only | explicitly ask it to implement and verify |
+
+## “Tell me” versus “do it” is a real distinction
+
+Claude will happily explain if your prompt sounds analytical.
+If you want action, ask for action.
+
+```text
+Explain why this API is slow.
+```
+
+That usually gets you analysis.
+
+```text
+Profile this API, identify the bottleneck, fix whatever is safe to fix now, and report what remains.
+```
+
+That gives Claude a job, not a discussion topic.
+
+## Practical prompt templates you can steal
+
+### Bug fix template
+
+```text
+Goal:
+Fix the race condition causing duplicate cart entries.
+
+Context:
+- repro: add the same item twice quickly
+- start in src/cart/useCart.ts
+- related server action: src/app/actions/cart.ts
+- follow the optimistic rollback pattern in src/wishlist/
+
+Constraints:
+- no new dependencies
+- do not change the API contract
+
+Done when:
+- duplicate-entry repro is fixed
+- rollback still works on failure
+- relevant tests pass
+```
+
+### Refactor template
+
+```text
+Goal:
+Refactor the payment retry logic to reduce branching and duplicate logging.
+
+Context:
+- start in src/payments/retry.ts
+- callers live in src/payments/stripe.ts and src/payments/jobs/
+- preserve current behavior
+
+Constraints:
+- no public API changes
+- no schema changes
+- keep logs equivalent unless duplication is removed intentionally
+
+Done when:
+- retry flow is easier to follow
+- tests still pass
+- changed behavior, if any, is called out explicitly
+```
+
+### Docs/content template
+
+```text
+Goal:
+Expand this guide so it is more practical for working engineers.
+
+Context:
+- preserve frontmatter, curriculum markers, and official links
+- align claims with the cited vendor docs
+- match the depth of the strongest docs in the same site section
+
+Constraints:
+- do not invent unsupported product behavior
+- keep internal links intact
+
+Done when:
+- the guide adds concrete patterns, examples, and failure modes
+- markdown remains valid
+- diff is reviewable
+```
+
+## When to bring in other Claude Code features
+
+Prompting is only one lever.
+Escalate when the task needs a stronger operating model.
+
+### Use CLAUDE.md when the same setup keeps repeating
+
+If you are always restating:
+
+- repo conventions
+- test commands
+- coding standards
+- review expectations
+
+…that is no longer a prompting problem. It is a missing persistent instruction surface.
+
+### Use MCP when Claude lacks live context
+
+If the truth lives in:
+
+- Jira
+- Slack
+- internal docs
+- databases
+- browser-accessible systems
+
+…stop stuffing screenshots and pasted snippets into the prompt if a tool can provide fresher context.
+
+### Use subagents when the work is noisy but separable
+
+If a task naturally splits into independent research lanes, delegation is better than stuffing everything into one prompt. The next guide covers this in depth.
+
+## Conversation and CLI tactics that improve prompt quality
+
+### Reference files directly
+
+Claude Code performs better when you point at likely touchpoints.
+
+```text
+Read src/types/user.ts first, then add avatar_url support.
+```
+
+```text
+Inspect tests/auth/session.test.ts and the refresh logic in src/auth/ before changing anything.
+```
+
+This reduces wasted search and shrinks context usage.
+
+### Use screenshots for UI work
+
+For visual bugs, one screenshot plus one sentence often beats ten paragraphs.
+
+```text
 [paste screenshot]
-"The button overlaps the nav bar on mobile. Fix it."
+The mobile nav overlaps the CTA button at 375px width. Fix the layout without changing desktop spacing.
 ```
 
-A single screenshot eliminates ambiguity that paragraphs of description can't resolve.
+### Use `claude -p` for one-shot automation
 
-## Iterative Refinement Pattern
-
-Claude Code's key advantage over autonomous tools is the conversation loop. Don't try to write the perfect prompt upfront — refine progressively:
-
-```
-Round 1: "Add login functionality"
-→ Review output
-
-Round 2: "Good. Now make the error messages user-friendly —
-          'Invalid credentials' should say 'Incorrect email or password'"
-→ Review output
-
-Round 3: "Last thing: add rate limiting — lock for 5 minutes after 5 failed attempts"
-```
-
-Each round is a verifiable, contained unit of work. The quality compounds.
-
-## Slash Commands
-
-Claude Code has built-in commands that streamline your workflow:
-
-| Command | What it does |
-|---------|--------------|
-| `/help` | List available commands and capabilities |
-| `/compact` | Compress conversation context to save tokens |
-| `/clear` | Reset the conversation — useful when starting a new task |
-| `/cost` | Check API costs for the current session |
-
-You can also define custom slash commands in CLAUDE.md to automate project-specific workflows.
-
-## "Tell Me" vs "Do It" Pattern
-
-Asking for an explanation and asking for action produce very different results:
-
-```
-❌ "How does the auth system work?"
-   → You get an explanation
-
-✅ "Analyze the auth system and fix any security vulnerabilities you find"
-   → Claude reads the code and makes changes
-```
-
-```
-❌ "Why is this API slow?"
-   → You get a list of possible causes
-
-✅ "Profile this API, find the bottleneck, and fix whatever you can right now"
-   → Diagnosis + implementation
-```
-
-Claude Code is an engineer, not an analyst. Ask for action.
-
-## File References for Precise Context
-
-You can mention files directly in your prompt and Claude will read them. Instead of expecting Claude to search the entire codebase, point it to the relevant files:
-
-```
-Read src/types/user.ts first, then add a new field for avatar_url
-```
-
-```
-Look at src/auth/login.ts — the token refresh logic seems off
-```
-
-Full paths or relative paths both work. You can also drag and drop files into the prompt for quick context.
-
-**Best practice**: Point Claude to relevant files rather than expecting it to search the entire codebase. Faster input, more accurate output.
-
-## Non-Interactive Mode
-
-`claude --print` (or `claude -p`) runs a single prompt with no conversation — perfect for scripts and pipelines:
+Anthropic's CLI docs support `--print` / `-p` for non-interactive runs, which is useful when you need a single focused output rather than a session.
 
 ```bash
-# Summarize error logs
-cat error.log | claude -p "summarize these errors"
-
-# Save output to a file
-claude -p "generate test for src/utils.ts" > tests/utils.test.ts
-
-# Get structured JSON output
-claude -p --output-format json "list all exported functions in src/api/"
+claude -p "summarize these test failures" < failing-tests.txt
 ```
-
-### Practical Examples
-
-**Git commit message generation:**
-```bash
-git diff --staged | claude -p "write a conventional commit message"
-```
-
-**Code review in CI:**
-```bash
-claude -p "review this diff for security issues" < pr.diff
-```
-
-**Documentation generation:**
-```bash
-claude -p "generate JSDoc for all exported functions in src/api/"
-```
-
-Works anywhere: Makefiles, shell scripts, git hooks.
-
-## Model Selection Strategy
-
-Use `/model` to switch models mid-conversation. Match the model to your task's complexity for optimal cost and performance:
-
-| Task | Recommended Model |
-|------|------------------|
-| Architecture review, complex debugging | opus |
-| Feature implementation, code review | sonnet (default) |
-| Quick questions, file search, formatting | haiku |
-
-For non-interactive mode, use the `--model` flag:
-```bash
-claude -p --model haiku "explain this error"
-```
-
-**Cost awareness**: haiku is roughly 10x cheaper than opus per token. Start with sonnet, escalate to opus for complex reasoning, and use haiku for bulk or batch tasks.
-
-## Permission Modes
-
-Use `--allowedTools` to pre-approve specific tools and reduce permission prompts:
 
 ```bash
-claude --allowedTools "Edit,Write,Bash(git *)"
+claude -p --output-format json --json-schema '{"type":"array","items":{"type":"string"}}'   "list all public routes in src/app"
 ```
 
-For persistent configuration, set allowed tools in `.claude/settings.json`:
+Useful when:
 
-```json
-{
-  "permissions": {
-    "allow": ["Edit", "Write", "Bash(npm test)", "Bash(npm run lint)"]
-  }
-}
+- scripting repetitive analysis
+- generating structured output
+- running one-off transformations in CI
+
+### Resume instead of repeating setup
+
+If the task is ongoing, `claude --resume` can be better than rewriting a huge recap prompt from scratch.
+
+That is another form of prompt hygiene: reuse good state instead of retyping it badly.
+
+### Model and effort selection
+
+You do not need the strongest reasoning mode for every task.
+
+| Task shape | Good default |
+|---|---|
+| small edits, formatting, quick questions | lower-cost / faster model |
+| normal implementation and review | default coding model |
+| architecture, tricky debugging, complex tradeoffs | stronger model or higher-effort reasoning |
+
+If you ask for deeper thinking, say **why**:
+
+```text
+Think carefully about rollback risk and migration safety before changing this auth flow.
 ```
 
-For fully automated scripts (CI only, never interactive), `--dangerouslySkipPermissions` bypasses all permission checks.
+That is better than vague “be smart” phrasing.
 
-**Best practice**: Start restrictive, gradually allow tools you trust.
+## Final checklist for strong Claude Code prompts
 
-## Codex Comparison
+Before hitting enter, ask:
 
-GPT Codex works differently — you write a task description upfront and it executes autonomously. There's no back-and-forth conversation. This means:
-- Codex prompts need to be more complete upfront
-- Claude Code allows iterative refinement
-- Both benefit from explicit constraints and examples
+- Does Claude know what should change?
+- Does it know where to start?
+- Does it know what must stay unchanged?
+- Does it know how to verify success?
+- Is this one verification-sized task, or should I split it?
+- Is the current conversation still clean enough to support good work?
+
+If you can answer all six, your prompt is probably already better than most.
+
+## The real upgrade path
+
+The biggest prompting improvement is not learning magic words.
+It is learning to turn fuzzy requests into:
+
+- bounded tasks
+- explicit constraints
+- verifiable finish lines
+- manageable iteration loops
+
+That is how you stop using Claude Code like a chatbot and start using it like an engineering partner.

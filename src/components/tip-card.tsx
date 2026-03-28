@@ -8,6 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import type { TipMeta } from "@/lib/content";
+import { formatIsoDate } from "@/lib/utils";
 
 const difficultyColors: Record<string, string> = {
   beginner: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
@@ -22,11 +23,13 @@ interface TipCardProps {
 }
 
 export function TipCard({ tip, locale, difficultyLabels }: TipCardProps) {
+  const formattedDate = formatIsoDate(tip.date, locale);
+
   return (
     <Link
       href={`/${locale}/${tip.tool}/${tip.slug}`}
       className="group focus:outline-none focus:ring-2 focus:ring-ring rounded-lg"
-      aria-label={`${tip.title} — ${difficultyLabels[tip.difficulty]}, ${tip.readingTime} min read`}
+      aria-label={`${tip.title} — ${difficultyLabels[tip.difficulty]}, ${formattedDate}, ${tip.readingTime} min read`}
     >
       <Card className="h-full transition-all duration-200 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 bg-card">
         <CardHeader className="pb-3">
@@ -37,9 +40,20 @@ export function TipCard({ tip, locale, difficultyLabels }: TipCardProps) {
             >
               {difficultyLabels[tip.difficulty]}
             </Badge>
-            <span className="text-xs text-muted-foreground font-mono" aria-label={`${tip.readingTime} minute read`}>
-              {tip.readingTime}m
-            </span>
+            <div className="text-right min-w-fit">
+              <time
+                dateTime={tip.date}
+                className="block text-[11px] text-muted-foreground"
+              >
+                {formattedDate}
+              </time>
+              <span
+                className="block text-xs text-muted-foreground font-mono"
+                aria-label={`${tip.readingTime} minute read`}
+              >
+                {tip.readingTime}m
+              </span>
+            </div>
           </div>
           <CardTitle className="text-base sm:text-lg leading-tight group-hover:text-primary transition-colors break-words">
             {tip.title}

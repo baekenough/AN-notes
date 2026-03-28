@@ -20,7 +20,7 @@ connections:
   type: compare
 featured: true
 order: 3
-date: '2026-03-24'
+date: "2026-03-28"
 ---
 
 > **Referencias Oficiales**: [Sandboxing](https://developers.openai.com/codex/concepts/sandboxing) · [Config Basics](https://developers.openai.com/codex/config-basic) · [Cloud Environments](https://developers.openai.com/codex/cloud/environments) · [Review](https://developers.openai.com/codex/app/review)
@@ -43,149 +43,260 @@ date: '2026-03-24'
 - **Ciclo de vida cloud, setup e internet** — [Cloud environments](https://developers.openai.com/codex/cloud/environments)
 <!-- curriculum:end -->
 
-## El sandbox es seguridad y también UX
+## El sandbox no es solo seguridad: también es ergonomía
 
-Si el límite es demasiado estricto, todo se convierte en approvals.
-Si es demasiado amplio, un error pequeño puede costar caro.
+La conversación equivocada es “¿cómo hago para que Codex tenga más poder?”.
+La conversación correcta es “¿cómo dejo que haga trabajo normal sin volver la revisión inmanejable?”.
 
-La meta real es esta:
-**dejar que Codex haga trabajo normal sin frenarse todo el tiempo, mientras las acciones riesgosas siguen bajo control humano.**
+Sandboxing en Codex define **qué puede tocar**, **cuándo debe pedir permiso** y **qué tan caro sería un error**.
+Si aprietas demasiado, te ahogas en approvals.
+Si aflojas demasiado, la revisión deja de ser cómoda y el blast radius crece.
 
-## Mantén separados local y cloud en tu cabeza
+La meta operativa es esta:
 
-### Codex local
-Corre en tu máquina, con sandbox y approval policy definidos por ti.
+- Codex no debería pedir permiso para trabajo rutinario y local.
+- Sí debería frenar antes de cruzar límites de riesgo.
+- El diff resultante debe seguir siendo fácil de revisar y revertir.
 
-### Codex cloud
-Corre en un contenedor administrado por OpenAI, donde setup scripts, variables de entorno y política de internet importan más.
+## Piensa en tres palancas, no en una sola
 
-Mezclar ambos modelos es una fuente clásica de confusión.
+Mucha gente habla de “el sandbox” como si fuera un único switch.
+En la práctica, el comportamiento real sale de **tres palancas combinadas**:
 
-## Los tres sandbox modes locales más comunes
+1. **`sandbox_mode`** — qué puede hacer por defecto.
+2. **`approval_policy`** — en qué momento se detiene para pedir permiso.
+3. **`writable_roots`** — exactamente dónde puede escribir.
 
-La documentación de Sandboxing los resume así:
+Si configuras solo una de las tres, el modelo mental queda incompleto.
 
-| Modo | Significado | Cuándo usarlo |
-|------|-------------|---------------|
-| `read-only` | inspección; editar o ejecutar pide approval | auditoría, exploración, review segura |
-| `workspace-write` | edita dentro del workspace y corre comandos rutinarios | desarrollo diario normal |
+## Los modos locales más comunes
+
+La documentación oficial resume así los modos más usados:
+
+| Modo | Qué permite | Cuándo encaja mejor |
+| --- | --- | --- |
+| `read-only` | inspección; editar o correr comandos requiere approval | auditoría, exploración, lectura segura |
+| `workspace-write` | leer, editar dentro del workspace y ejecutar comandos rutinarios locales dentro de ese límite | desarrollo diario normal |
 | `danger-full-access` | elimina restricciones del sandbox | automatización rara y de mucha confianza |
 
 OpenAI describe `workspace-write` como el modo local de baja fricción por defecto.
+Eso importa porque te da una pista de diseño: **si no tienes una razón fuerte para salirte de ahí, probablemente todavía no la necesitas**.
 
-## La approval policy define cuándo se detiene Codex
+## Approval policy: dónde nace la fatiga
 
-Los docs de config muestran una combinación muy común:
+El sandbox no suele doler por el nombre del modo.
+Duele por la frecuencia con la que interrumpe el flujo.
+
+La combinación que aparece una y otra vez en la documentación es:
 
 ```toml
 approval_policy = "on-request"
 sandbox_mode = "workspace-write"
 ```
 
-Funciona bien porque:
+Ese combo funciona bien como baseline porque deja pasar trabajo típico dentro del repo, pero sigue poniendo una puerta antes de acciones que cruzan el borde.
 
-- el trabajo normal dentro del repo sigue avanzando
-- los cruces de frontera todavía piden permiso
+### Cómo leer el tradeoff real
 
-Para la mayoría de los equipos, ese es el default práctico.
+| Síntoma | Lo que suele significar | Ajuste más probable |
+| --- | --- | --- |
+| “Pide approval cada dos minutos” | el límite está demasiado estrecho para el trabajo diario | revisar primero `sandbox_mode` y `writable_roots` |
+| “No pide casi nada, pero revisar me da nervios” | abriste demasiado el perímetro | volver a cerrar permisos o reforzar checkpoints + review |
+| “A veces pide approval por cosas raras” | la frontera no coincide con cómo trabaja tu repo | afinar rutas escribibles y comandos esperados |
 
-## Writable roots importa más de lo que parece
+La clave es distinguir **approval fatigue** de **riesgo legítimo**.
+No toda interrupción es mala.
+Pero si las pausas aparecen en acciones rutinarias y previsibles, el problema suele ser la configuración, no el usuario.
 
-Mucha gente mira solo el sandbox mode y olvida writable roots.
-En la práctica, ahí vive bastante riesgo accidental.
+## `writable_roots` decide el blast radius real
 
-Buenos defaults:
+Los docs de Sandboxing señalan que, si necesitas trabajar sobre más de un directorio, puedes extender la escritura con writable roots en vez de desactivar el sandbox entero.
+Ese detalle cambia muchísimo la práctica diaria.
 
-- el propio repositorio
-- quizá un directorio temporal
+### Buenos defaults
 
-Defaults riesgosos:
+- el root del repo actual
+- quizá un directorio temporal controlado
+- como mucho, una segunda carpeta hermana si la tarea realmente la necesita
+
+### Defaults peligrosos
 
 - todo tu home
-- múltiples proyectos sin relación
+- varios proyectos no relacionados
+- carpetas con secretos, notas personales o repos fuera del flujo actual
 
-La pregunta no es solo “¿puede escribir Codex?”, sino **¿exactamente dónde puede escribir?**
+Una regla útil:
+**si no te sentirías cómodo viendo ese directorio en un diff inesperado, no debería ser writable root por defecto.**
 
-## En cloud, setup es el contrato
+## Local y cloud: modelos mentales distintos
 
-Cloud Environments describe un flujo parecido a este:
+Muchos tropiezos vienen de mezclar cómo se comporta Codex local con cómo funciona Codex cloud.
+No son lo mismo.
 
-1. crear el contenedor y hacer checkout del repo
-2. ejecutar el setup script
-3. aplicar la política de internet
-4. dejar que el agente edite y verifique
+| Aspecto | Local | Cloud |
+| --- | --- | --- |
+| Dónde corre | tu máquina | contenedor administrado por OpenAI |
+| Qué suele importar más | sandbox local, approvals, writable roots | setup, internet, variables de entorno, reproducibilidad |
+| Estado implícito | muy fácil depender sin querer de herramientas ya instaladas | el contenedor expone rápido lo que nunca declaraste |
+| Rollback típico | Git local, checkout, revert, stash | rerun limpio + Git + config reproducible |
+| Fuente clásica de confusión | permisos demasiado anchos o estrechos | asumir que cloud “ya sabe” preparar tu entorno |
 
-Dos detalles importan mucho:
+La pregunta correcta no es “¿por qué cloud no hace lo mismo que local?”
+Sino: **“qué parte de mi éxito local dependía de estado que nunca formalicé?”**
 
-- **los setup scripts corren con internet**
-- **el internet en la agent phase está apagado por defecto**
+## En cloud, setup es el contrato operativo
 
-Por eso instalación de dependencias, codegen y bootstrap de tests conviene moverlos a setup.
+Los docs de Cloud Environments describen un ciclo claro:
 
-## Qué sí y qué no meter en setup
+1. Codex crea un contenedor y hace checkout del repo.
+2. Ejecuta tu **setup script**.
+3. Aplica la política de internet.
+4. Entra la fase del agente para editar y verificar.
 
-Buenos candidatos:
+Dos hechos oficiales importan muchísimo:
 
-- instalar dependencias
-- fijar versiones de runtime o tooling
-- preparar datos de test
-- codegen
-- preparación de builds nativos
+- **los setup scripts corren con acceso a internet**
+- **el acceso a internet en la fase del agente está apagado por defecto**
 
-Malos candidatos:
+Eso te da una guía directa: si algo necesita descargar dependencias, hacer bootstrap, preparar toolchains o generar artefactos base, normalmente pertenece a setup y no al loop de edición.
 
-- implementar toda la feature
-- pasos que requieren juicio humano repetido
+## El borde de setup: qué sí y qué no meter ahí
 
-Setup debe volver reproducible el entorno, no resolver la tarea en silencio.
+Setup debe dejar el entorno listo para que el agente trabaje.
+No debe “resolver la tarea por adelantado”.
 
-## Review y sandbox deberían pensarse juntos
+### Sí conviene poner en setup
 
-La documentación de Review explica que el panel se enfoca por defecto en **uncommitted changes**, y puede cambiar a diff contra base branch o last-turn changes.
-Eso importa porque permisos más amplios implican una necesidad mayor de review.
+- instalación de dependencias
+- pinning de runtimes o toolchains
+- codegen repetible
+- preparación de datos de test
+- bootstrap de compilaciones nativas
+- pasos de warming o caché que no requieran juicio humano
 
-En la práctica:
+### No conviene poner en setup
 
-- sandbox más estricto = más interrupciones, menor blast radius
-- sandbox más amplio = menos interrupciones, mayor carga de revisión
+- implementar la feature
+- mutar archivos de producto como parte silenciosa del arranque
+- decisiones que dependan de leer el diff o del contexto del turno
+- hacks temporales que solo existen para “hacer pasar” una tarea concreta
 
-Las dos cosas siempre van juntas.
+Un setup bueno es **reproducible, declarativo y aburrido**.
+Si cada tarea necesita explicar de nuevo cómo levantar el entorno, tu problema no es el prompt: es setup.
 
-## Una configuración inicial sensata
+## Variables de entorno, secretos y límites de exposición
 
-### Local
+Cloud Environments distingue entre variables de entorno y secretos:
+
+- las **environment variables** están disponibles durante toda la tarea, incluyendo setup y agent phase
+- los **secrets** solo están disponibles para los setup scripts y se eliminan antes de la fase del agente
+
+Eso tiene implicaciones prácticas:
+
+- si el agente necesita leer algo durante la edición, no asumas que puede ver un secret de setup
+- si un dato solo se necesita para instalar o autenticar bootstrap, mejor dejarlo como secret de setup que exponerlo toda la sesión
+- si dependes de credenciales en tiempo de ejecución, diseña explícitamente ese límite en vez de descubrirlo a mitad de una tarea
+
+## Review y permisos siempre van juntos
+
+La documentación de Review dice que el panel se centra por defecto en **uncommitted changes**, y puede cambiar a:
+
+- cambios contra la base branch
+- cambios del último turno
+- staged vs unstaged cuando trabajas localmente
+
+Esto conecta directo con sandboxing.
+Cuanto más ancho sea el permiso, más necesaria es una disciplina de revisión explícita.
+
+### Traducción práctica
+
+- **sandbox más estricto** → más pausas, pero el espacio de daño es menor
+- **sandbox más amplio** → menos pausas, pero tu rutina de review tiene que ser mejor
+
+Si amplías permisos y no mejoras `/review`, `/diff`, checkpoints o hábitos de verificación, solo cambiaste fricción por riesgo oculto.
+
+## Configuraciones sensatas para empezar
+
+### Baseline local de baja fricción
 
 ```toml
-model = "gpt-5.4"
 approval_policy = "on-request"
 sandbox_mode = "workspace-write"
 ```
 
-Y luego mantén narrow los writable roots.
+A eso súmale writable roots estrechos.
+Ese detalle importa más que añadir una configuración “inteligente” extra.
 
-### Cloud
+### Cuándo ampliar writable roots
 
-- setup script determinista
-- internet solo cuando haga falta
-- exposición mínima de secretos
-- comandos reales de verificación documentados en `AGENTS.md`
+Amplía raíces escribibles cuando:
 
-## Fallos típicos
+- la tarea necesita tocar dos carpetas hermanas del mismo proyecto
+- el repo genera artefactos en un directorio controlado fuera del root
+- tienes un workspace multi-paquete donde la frontera real no coincide con un solo folder
 
-### “Me pide approval todo el tiempo”
-A menudo `read-only` es demasiado estricto, o el límite de escritura está mal definido.
+No las amplíes solo para “que deje de molestar”.
+Primero confirma que la molestia viene de una frontera mal diseñada.
 
-### “Funciona local pero falla en cloud”
-Suele haber estado local oculto que nunca se modeló en setup.
+### Cuándo evitar `danger-full-access`
 
-### “Ahora va más rápido, pero me da miedo”
-Suele pasar cuando se amplían permisos sin mejorar review ni rollback.
+Evítalo si:
 
-## Regla práctica
+- todavía estás afinando instrucciones del repo
+- el diff de salida aún te sorprende con frecuencia
+- estás onboarding a alguien nuevo
+- no tienes una rutina clara de review y rollback
+
+En otras palabras: **más poder no arregla un flujo inmaduro**.
+
+## Fallos típicos y cómo diagnosticarlos rápido
+
+| Problema | Diagnóstico habitual | Primera corrección |
+| --- | --- | --- |
+| “Me pide approval para casi todo” | `read-only` o roots demasiado estrechos | pasar a `workspace-write` o revisar fronteras |
+| “Funciona local, falla en cloud” | dependías de estado local no modelado | mover bootstrap a setup |
+| “Cloud no ve algo que instalé” | se instaló manualmente fuera del setup | declarar instalación en setup |
+| “El agente no encuentra credenciales” | el dato estaba como secret solo de setup | rediseñar exposición o el paso que lo necesita |
+| “Ahora corre más libre, pero revisar cuesta” | ampliaste permisos sin subir rigor de review | usar review por scope y checkpoints más frecuentes |
+
+## Un playbook simple para no pasarte ni quedarte corto
+
+### Si estás empezando
+
+- local primero
+- `workspace-write` + `on-request`
+- writable roots estrechos
+- tareas pequeñas y reversibles
+- review siempre al final
+
+### Si ya sientes approval fatigue real
+
+- identifica **qué acción** te interrumpe demasiado
+- revisa si el problema es el modo o el límite de escritura
+- amplía solo la parte necesaria
+- vuelve a medir si mejoró la fricción sin disparar el riesgo
+
+### Si migras un flujo a cloud
+
+- documenta los comandos reales de verificación
+- mueve bootstrap reproducible a setup
+- no asumas internet en agent phase
+- valida explícitamente qué necesita secrets y qué no
+
+## Checklist rápido antes de abrir más permisos
+
+- ¿El cuello de botella es de verdad approval fatigue y no prompt vago?
+- ¿La tarea cabe dentro de `workspace-write` si ajusto mejor los writable roots?
+- ¿Tengo checkpoints o rollback claros si algo sale mal?
+- ¿La revisión final sigue siendo manejable en tamaño y alcance?
+- ¿En cloud, el setup deja el entorno listo sin resolver la tarea por mí?
+- ¿Estoy separando bien environment variables de secrets de setup?
+
+## Regla de cierre
 
 Empieza con límites más estrechos.
-Ábrelos solo cuando la fatiga de approvals sea el verdadero cuello de botella.
-Y cada vez que amplíes permisos, refuerza review y disciplina de rollback.
+Ábrelos solo cuando la fricción ya sea un problema demostrado.
+Y cada vez que amplíes autonomía, sube también la calidad del review, los checkpoints y la claridad del entorno.
 
 El mejor sandbox de Codex no es el más poderoso.
 Es el que tu equipo puede confiar una y otra vez.

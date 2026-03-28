@@ -20,7 +20,7 @@ connections:
   type: compare
 featured: true
 order: 5
-date: '2026-03-24'
+date: "2026-03-28"
 ---
 
 > **Official References**: [Skills](https://developers.openai.com/codex/skills) · [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [Automations](https://developers.openai.com/codex/app/automations)
@@ -45,8 +45,7 @@ date: '2026-03-24'
 
 ## When should a prompt become a skill?
 
-If you keep repeating the same setup and expectations, you are no longer dealing with a prompting problem.
-You are dealing with a missing skill.
+If you keep repeating the same setup and expectations, you probably do not have a prompting problem. You have a missing skill.
 
 Strong candidates include:
 
@@ -56,7 +55,7 @@ Strong candidates include:
 - cleaning document frontmatter
 - follow-up migrations after a framework upgrade
 
-Skills shine when the input pattern and expected output shape repeat.
+Skills shine when the input pattern and expected output shape repeat. A useful threshold: if you have written roughly the same instructions three or four times, stop polishing the prompt and start packaging the workflow.
 
 ## What does a skill look like?
 
@@ -67,22 +66,54 @@ my-skill/
   SKILL.md           # required
   scripts/           # optional
   references/        # optional
-  agents/openai.yaml # optional
+  assets/            # optional
+  agents/openai.yaml # optional metadata/dependencies
 ```
 
 The docs also make one requirement explicit: `SKILL.md` must include **name** and **description**.
 
+A minimal shape looks like this:
+
+```md
+---
+name: release-notes
+description: Draft release notes from recent merged changes when the user asks for a product or engineering summary.
+---
+
+1. Gather merged changes for the requested period.
+2. Group them by user-facing impact.
+3. Write concise release notes with risk flags.
+4. End with open questions if evidence is missing.
+```
+
+That is enough to make the skill routable and useful.
+You can add scripts, references, assets, or optional UI/invocation metadata later.
+
 ## Why progressive disclosure matters
 
-The skill system does not load everything all at once.
-According to the docs, Codex starts with each skill’s metadata and only loads the full `SKILL.md` when it decides the skill is relevant.
+The skill system does not load everything at once. According to the docs, Codex starts with each skill’s metadata and only loads the full `SKILL.md` when it decides the skill is relevant.
 
 That matters because:
 
 - it keeps context lighter
 - the description becomes a routing surface
+- strong names and descriptions improve both explicit and implicit use
 
 If your description is vague, Codex may pick the wrong skill or never pick it at all.
+
+A bad description:
+
+```text
+Helps with repository tasks.
+```
+
+A better description:
+
+```text
+Validate markdown frontmatter and repair missing required fields for docs content files when the task is a narrow content hygiene pass.
+```
+
+The second one gives Codex a real trigger shape.
 
 ## Two ways skills get used
 
@@ -94,14 +125,71 @@ Codex can choose a skill when the task matches the description.
 
 That means the description should say **what the skill does** and **when to use it**.
 
+## How to write a skill that actually gets chosen
+
+A strong skill usually makes four things obvious near the top:
+
+1. **trigger condition** — when it should be used
+2. **scope boundary** — when it should not be used
+3. **procedure** — what sequence Codex should follow
+4. **finish condition** — what done looks like
+
+A compact pattern for `SKILL.md` is:
+
+```md
+---
+name: docs-drift-check
+description: Compare product documentation against the current repository behavior when the user asks for a docs accuracy check.
+---
+
+Use this skill when:
+- the task is a docs accuracy pass
+- the relevant source files are known
+
+Do not use this skill when:
+- the request is broad product writing from scratch
+- no repo evidence exists yet
+
+Workflow:
+1. Read the relevant docs page.
+2. Inspect the linked implementation.
+3. Record mismatches only when evidence is concrete.
+4. Propose the smallest safe wording change.
+
+Done when:
+- every stated mismatch is evidence-backed
+- the update is scoped to the requested docs
+```
+
+This is much easier for Codex to route than a loose paragraph.
+
 ## Where should skills live?
 
-Best Practices points to two standard homes:
+Best Practices points to two standard homes most teams care about:
 
 - personal skills → `$HOME/.agents/skills`
 - shared team skills → `.agents/skills` inside the repository
 
 Shared repo skills are especially useful for onboarding. They encode “how this team repeatedly gets work done.”
+
+### Personal skill libraries are best for:
+
+- workflows unique to your role
+- individual writing or triage habits
+- experiments that are not ready for team-wide use
+- personal automations you do not want to impose on the repository
+
+### Team-shared skill libraries are best for:
+
+- repo-specific conventions
+- recurring release, review, or docs tasks
+- onboarding helpers
+- workflows that should behave consistently across contributors
+
+A good default is:
+
+- start in your personal skill library while experimenting
+- move to the repo skill library once the workflow is stable and broadly useful
 
 ## Good skill design rules
 
@@ -115,7 +203,41 @@ If it depends on standard examples or docs, put them in `references/`.
 ### 3. Include start and finish conditions
 A good skill says when to use it and what success looks like.
 
-## Skills vs AGENTS vs MCP
+### 4. Optimize for reuse, not for one heroic prompt
+If the skill only works for one exact task, it is probably just a saved prompt.
+
+### 5. Keep the top of `SKILL.md` sharp
+Because Codex loads skill metadata before the full body, the name and description do disproportionate work.
+Make them concrete.
+
+## When to use scripts, references, and agents metadata
+
+### Use `scripts/` when the workflow always needs the same mechanics
+Examples:
+
+- gathering changelog commits
+- running a standard lint-and-test bundle
+- extracting issue metadata into a clean intermediate format
+
+Put the repeated machine steps in code so `SKILL.md` stays readable.
+
+### Use `references/` when the skill depends on standard examples or guidance
+Examples:
+
+- a house style guide
+- release note examples
+- expected output templates
+- migration caveat documents
+
+References help you avoid pasting the same long examples into every skill body.
+
+### Use `agents/openai.yaml` when you need optional metadata or app-facing behavior
+This is the place for extra UI metadata, invocation policy, or tool dependency hints.
+Not every skill needs it.
+
+The practical rule is simple: keep the workflow understandable in `SKILL.md`, but move bulky supporting material out once it becomes repetitive.
+
+## Skills vs AGENTS vs MCP vs prompts
 
 - `AGENTS.md` = durable repo rules
 - skill = reusable workflow
@@ -123,6 +245,15 @@ A good skill says when to use it and what success looks like.
 - prompt = today’s request
 
 These surfaces work best together when they stay distinct.
+
+A simple example:
+
+- `AGENTS.md` says how the repo expects docs edits to be verified
+- a skill says how to run the docs-update workflow
+- MCP provides the outside reference docs if needed
+- the prompt says which page to update today
+
+That separation is what keeps the system understandable.
 
 ## Sometimes a subagent is the better tool
 
@@ -135,10 +266,61 @@ They are not always the right answer for:
 
 In those cases, explicit subagent workflows or worktree-based parallelism may fit better.
 
+A good heuristic:
+
+- if the work is mostly a repeatable sequence, build a skill
+- if the work is mostly decomposition and parallelism, reach for subagents or worktrees
+
+## Practical examples of good skill candidates
+
+### Release note drafting
+A stable sequence of gathering, grouping, and summarizing changes.
+Good fit for `SKILL.md` plus maybe a helper script.
+
+### Docs frontmatter repair
+A narrow and repeatable content hygiene task.
+Good fit for a team-shared repository skill.
+
+### Recurring bug triage
+A strong fit when the same log sources, commands, and output format repeat.
+Often even better if paired with MCP for external ticket context.
+
+### Framework-upgrade follow-up pass
+Useful when the same checklist gets applied to many packages or folders after a known upgrade.
+
+## Common skill failure modes
+
+### “The skill never triggers”
+The name or description is too vague.
+
+### “The skill is huge and hard to maintain”
+Too much one-off context lives in `SKILL.md` instead of scripts or references.
+
+### “The team has three overlapping skills that do almost the same thing”
+The library needs consolidation and clearer scope boundaries.
+
+### “The skill works only for the original author”
+Important assumptions were never written down.
+
+### “The skill keeps getting invoked when it should not”
+The description explains what it does, but not when it should stay out of the way.
+
+## A practical skill review checklist
+
+Before you keep or share a skill, ask:
+
+- Is the task genuinely repeated?
+- Does `SKILL.md` clearly state when to use the skill?
+- Does it also say when not to use it?
+- Can heavy mechanics move into `scripts/`?
+- Can examples or templates move into `references/`?
+- Would another teammate understand the workflow without extra chat context?
+
+If the answer to the last question is no, the skill probably is not ready for team sharing yet.
+
 ## Skills become even stronger with automations
 
-The Automations docs describe recurring background runs.
-In that setup, a skill becomes a reusable body for the automation.
+The Automations docs describe recurring background runs. In that setup, a skill becomes the reusable body of the automation.
 
 Examples:
 
@@ -149,6 +331,16 @@ Examples:
 
 That is where skills stop being just convenience and start becoming systemized leverage.
 
+A practical pattern looks like this:
+
+1. get the workflow working manually
+2. package it as a skill
+3. tighten the success criteria
+4. run it repeatedly until the outputs are stable
+5. only then attach it to an automation
+
+Automating an unstable skill only repeats unstable output faster.
+
 ## A quick go/no-go checklist
 
 Before building a skill, ask:
@@ -156,7 +348,19 @@ Before building a skill, ask:
 - Is this truly repeated work?
 - Are the inputs and outputs fairly stable?
 - Is the description enough to know when it applies?
+- Does `SKILL.md` define success?
 - Can long instructions be split into scripts or references?
+- Should this start in a personal library, or is it ready for the team library?
+
+## Sharp operational advice
+
+If you only remember five things, remember these:
+
+1. **Write `SKILL.md` first, and make the description precise.**
+2. **Assume Codex will see metadata before full instructions.**
+3. **Keep personal and team-shared skill libraries distinct on purpose.**
+4. **Move repeated mechanics into `scripts/` and stable examples into `references/`.**
+5. **Pair mature skills with automations only after the manual workflow is already stable.**
 
 When repeated work starts piling up, the next level in Codex is not “becoming better at one-off prompting.”
 It is building a good skill library.
