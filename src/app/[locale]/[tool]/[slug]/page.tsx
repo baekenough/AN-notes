@@ -9,8 +9,14 @@ import { getToolConfig } from "@/lib/tools";
 import {
   buildLanguageAlternates,
   ensureLocale,
+  getDefaultOpenGraphImageUrl,
+  getDefaultTwitterImageUrl,
   getLocalePath,
   getOgLocale,
+  getSiteOrganizationJsonLd,
+  getToolKeywords,
+  siteAuthorName,
+  siteLinkedInUrl,
   siteName,
   siteUrl,
   toAbsoluteUrl,
@@ -63,7 +69,9 @@ export async function generateMetadata({
   return {
     title,
     description,
-    keywords: tip.tags,
+    keywords: Array.from(
+      new Set([...getToolKeywords(safeLocale, typedTool), ...tip.tags]),
+    ),
     alternates: {
       canonical: toAbsoluteUrl(localePath),
       languages: buildLanguageAlternates(pagePath),
@@ -79,11 +87,13 @@ export async function generateMetadata({
       modifiedTime: tip.date,
       section: toolConfig.name,
       tags: tip.tags,
+      images: [getDefaultOpenGraphImageUrl()],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
+      images: [getDefaultTwitterImageUrl()],
     },
   };
 }
@@ -100,22 +110,47 @@ export default async function TipPage({
   params: Promise<{ locale: string; tool: string; slug: string }>;
 }) {
   const { locale, tool, slug } = await params;
-  setRequestLocale(locale);
+  const safeLocale = ensureLocale(locale);
+  setRequestLocale(safeLocale);
 
   if (!validTools.includes(tool as Tool)) {
     notFound();
   }
 
-  const tip = getTip(locale, tool as Tool, slug);
+  const tip = getTip(safeLocale, tool as Tool, slug);
   if (!tip) {
     notFound();
   }
 
   const t = await getTranslations();
   const toolConfig = getToolConfig(tool as Tool);
-  const safeLocale = ensureLocale(locale);
   const canonicalUrl = toAbsoluteUrl(getLocalePath(safeLocale, `/${tool}/${slug}`));
   const formattedDate = formatIsoDate(tip.date, locale);
+  const organizationJsonLd = getSiteOrganizationJsonLd();
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: siteName,
+        item: toAbsoluteUrl(getLocalePath(safeLocale)),
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: toolConfig.name,
+        item: toAbsoluteUrl(getLocalePath(safeLocale, `/${tool}`)),
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: tip.title,
+        item: canonicalUrl,
+      },
+    ],
+  };
   const articleJsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",
@@ -128,15 +163,18 @@ export default async function TipPage({
     articleSection: toolConfig.name,
     mainEntityOfPage: canonicalUrl,
     url: canonicalUrl,
+    isPartOf: {
+      "@id": `${siteUrl}#website`,
+    },
+    about: [toolConfig.name, ...tip.tags],
+    isAccessibleForFree: true,
+    image: getDefaultOpenGraphImageUrl(),
     author: {
       "@type": "Person",
-      name: "Sangyi Baek",
+      name: siteAuthorName,
+      url: siteLinkedInUrl,
     },
-    publisher: {
-      "@type": "Organization",
-      name: siteName,
-      url: siteUrl,
-    },
+    publisher: organizationJsonLd,
   };
 
   return (
@@ -144,6 +182,10 @@ export default async function TipPage({
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
 
       {/* Back link */}

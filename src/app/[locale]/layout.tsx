@@ -9,9 +9,12 @@ import { SiteFooter } from "@/components/site-footer";
 import {
   buildLanguageAlternates,
   ensureLocale,
+  getDefaultOpenGraphImageUrl,
+  getDefaultTwitterImageUrl,
   getLocaleDescription,
   getLocalePath,
   getOgLocale,
+  getSiteKeywords,
   siteName,
   toAbsoluteUrl,
 } from "@/lib/seo";
@@ -43,6 +46,7 @@ export async function generateMetadata({
 
   return {
     description,
+    keywords: getSiteKeywords(safeLocale),
     alternates: {
       canonical: toAbsoluteUrl(localePath),
       languages: buildLanguageAlternates(),
@@ -54,11 +58,13 @@ export async function generateMetadata({
       description,
       url: toAbsoluteUrl(localePath),
       locale: getOgLocale(safeLocale),
+      images: [getDefaultOpenGraphImageUrl()],
     },
     twitter: {
       card: "summary_large_image",
       title: siteName,
       description,
+      images: [getDefaultTwitterImageUrl()],
     },
   };
 }

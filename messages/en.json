@@ -1,7 +1,7 @@
 {
   "site": {
     "title": "AI Native Notes",
-    "subtitle": "",
+    "subtitle": "Human-written guides for Claude Code, GPT Codex, and Gemini CLI",
     "description": "Master your AI coding tools — Claude Code, GPT Codex, and more",
     "tagline": "Tips, guides, and best practices for AI-powered development"
   },
@@ -26,7 +26,38 @@
     "sectionTitle": "Choose Your Tool",
     "tips": "{count} tips",
     "comingSoon": "Coming Soon",
-    "viewGuide": "View Guide"
+    "viewGuide": "View Guide",
+    "sectionDescription": "Each track explains setup, instructions, safety boundaries, MCP, and automation patterns for a specific AI coding tool.",
+    "highlightsLabel": "Key topics",
+    "profiles": {
+      "claudeCode": {
+        "summary": "Covers the practical Claude Code loop: agent teams, hooks, background worktrees, and prompt design for real repositories.",
+        "focus": [
+          "Agent Teams",
+          "Hooks automation",
+          "Git worktrees",
+          "Prompt design"
+        ]
+      },
+      "gptCodex": {
+        "summary": "Shows how to run Codex safely with AGENTS.md, sandbox and approval policies, MCP, skills, and subagents.",
+        "focus": [
+          "AGENTS.md",
+          "Sandbox",
+          "MCP",
+          "Subagents"
+        ]
+      },
+      "geminiCli": {
+        "summary": "Explains long-context repo analysis, extensions, trusted folders, plan mode, and automation patterns in Gemini CLI.",
+        "focus": [
+          "Long context",
+          "Extensions",
+          "Trusted folders",
+          "Plan mode"
+        ]
+      }
+    }
   },
   "learningPath": {
     "sectionTitle": "Recommended learning paths",
@@ -137,5 +168,23 @@
         }
       ]
     }
+  },
+  "faq": {
+    "sectionTitle": "Common questions",
+    "sectionDescription": "Quick answers for readers deciding where to start and how this library is meant to be used.",
+    "items": [
+      {
+        "question": "What is AI Native Notes for?",
+        "answer": "It is a curated guide library for developers who want practical, opinionated help using AI coding tools in real repositories."
+      },
+      {
+        "question": "Which guide should I start with?",
+        "answer": "Start with the getting-started guide for your tool, then continue through the recommended learning path and recent updates."
+      },
+      {
+        "question": "Does the site help teams as well as solo developers?",
+        "answer": "Yes. The guides cover personal setup, repo rules, permissions, automation, review loops, and multi-agent workflows for teams."
+      }
+    ]
   }
 }

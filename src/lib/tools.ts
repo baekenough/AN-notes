@@ -1,7 +1,10 @@
 import { Tool } from './content';
 
+export type ToolMessageKey = 'claudeCode' | 'gptCodex' | 'geminiCli';
+
 export interface ToolConfig {
   id: Tool;
+  messageKey: ToolMessageKey;
   name: string;
   vendor: string;
   color: string;
@@ -9,11 +12,14 @@ export interface ToolConfig {
   icon: string;
   status: 'active' | 'coming-soon';
   url: string;
+  discoverySummary: string;
+  discoveryTopics: string[];
 }
 
 export const tools: ToolConfig[] = [
   {
     id: 'claude-code',
+    messageKey: 'claudeCode',
     name: 'Claude Code',
     vendor: 'Anthropic',
     color: 'text-orange-400',
@@ -21,9 +27,13 @@ export const tools: ToolConfig[] = [
     icon: 'C',
     status: 'active',
     url: 'https://docs.anthropic.com/en/docs/claude-code',
+    discoverySummary:
+      'Repo-native execution with agent teams, hooks, prompt design, and background worktrees.',
+    discoveryTopics: ['agent teams', 'hooks', 'worktrees', 'prompting'],
   },
   {
     id: 'gpt-codex',
+    messageKey: 'gptCodex',
     name: 'GPT Codex',
     vendor: 'OpenAI',
     color: 'text-emerald-400',
@@ -31,9 +41,13 @@ export const tools: ToolConfig[] = [
     icon: 'G',
     status: 'active',
     url: 'https://developers.openai.com/codex/quickstart',
+    discoverySummary:
+      'AGENTS.md, sandbox and approval controls, MCP, skills, and subagents for autonomous coding loops.',
+    discoveryTopics: ['AGENTS.md', 'sandbox', 'MCP', 'subagents'],
   },
   {
     id: 'gemini-cli',
+    messageKey: 'geminiCli',
     name: 'Gemini CLI',
     vendor: 'Google',
     color: 'text-blue-400',
@@ -41,6 +55,9 @@ export const tools: ToolConfig[] = [
     icon: 'G',
     status: 'active',
     url: 'https://geminicli.com/docs/',
+    discoverySummary:
+      'Long-context repo analysis, extensions, trusted folders, plan mode, and headless automation.',
+    discoveryTopics: ['long context', 'extensions', 'plan mode', 'automation'],
   },
 ];
 

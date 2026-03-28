@@ -1,7 +1,7 @@
 {
   "site": {
     "title": "AI Native Notes",
-    "subtitle": "",
+    "subtitle": "Guías prácticas de Claude Code, GPT Codex y Gemini CLI",
     "description": "Domina tus herramientas de programación con IA — Claude Code, GPT Codex y más",
     "tagline": "Consejos, guías y mejores prácticas para el desarrollo con IA"
   },
@@ -26,7 +26,38 @@
     "sectionTitle": "Elige tu herramienta",
     "tips": "{count} tips",
     "comingSoon": "Próximamente",
-    "viewGuide": "Ver Guía"
+    "viewGuide": "Ver Guía",
+    "sectionDescription": "Cada ruta explica instalación, archivos de instrucciones, límites de seguridad, MCP y automatización para una herramienta concreta de programación con IA.",
+    "highlightsLabel": "Temas clave",
+    "profiles": {
+      "claudeCode": {
+        "summary": "Cubre el loop práctico de Claude Code: agent teams, hooks, worktrees en segundo plano y diseño de prompts para repos reales.",
+        "focus": [
+          "Agent Teams",
+          "Automatización con hooks",
+          "Git worktrees",
+          "Diseño de prompts"
+        ]
+      },
+      "gptCodex": {
+        "summary": "Explica cómo operar Codex con seguridad usando AGENTS.md, sandbox, approval policies, MCP, skills y subagents.",
+        "focus": [
+          "AGENTS.md",
+          "Sandbox",
+          "MCP",
+          "Subagents"
+        ]
+      },
+      "geminiCli": {
+        "summary": "Resume análisis de repos con contexto largo, extensions, trusted folders, plan mode y automatización en Gemini CLI.",
+        "focus": [
+          "Long context",
+          "Extensions",
+          "Trusted folders",
+          "Plan mode"
+        ]
+      }
+    }
   },
   "learningPath": {
     "sectionTitle": "Rutas recomendadas",
@@ -137,5 +168,23 @@
         }
       ]
     }
+  },
+  "faq": {
+    "sectionTitle": "Preguntas frecuentes",
+    "sectionDescription": "Respuestas rápidas para decidir por dónde empezar y cómo aprovechar mejor esta biblioteca de guías.",
+    "items": [
+      {
+        "question": "¿Para quién es AI Native Notes?",
+        "answer": "Es una biblioteca curada de guías para desarrolladores y equipos que quieren usar herramientas de codificación con IA en repositorios reales."
+      },
+      {
+        "question": "¿Con qué guía debería empezar?",
+        "answer": "Empieza por la guía de getting-started de tu herramienta y luego sigue la ruta recomendada y las actualizaciones recientes."
+      },
+      {
+        "question": "¿Sirve para equipos además de personas individuales?",
+        "answer": "Sí. Las guías cubren configuración personal, reglas del repo, permisos, automatización, review loops y workflows multiagente para equipos."
+      }
+    ]
   }
 }

@@ -14,8 +14,13 @@ import type { Tool } from "@/lib/content";
 import {
   buildLanguageAlternates,
   ensureLocale,
+  getDefaultOpenGraphImageUrl,
+  getDefaultTwitterImageUrl,
   getLocalePath,
   getOgLocale,
+  getSiteOrganizationJsonLd,
+  getSiteWebsiteJsonLd,
+  getWhatsNewKeywords,
   getWhatsNewSeoCopy,
   siteName,
   toAbsoluteUrl,
@@ -77,6 +82,8 @@ export async function generateMetadata({
   return {
     title: copy.title,
     description: copy.description,
+    keywords: getWhatsNewKeywords(safeLocale),
+    category: "Developer education",
     alternates: {
       canonical: toAbsoluteUrl(localePath),
       languages: buildLanguageAlternates("/whats-new"),
@@ -88,11 +95,13 @@ export async function generateMetadata({
       description: copy.description,
       url: toAbsoluteUrl(localePath),
       locale: getOgLocale(safeLocale),
+      images: [getDefaultOpenGraphImageUrl()],
     },
     twitter: {
       card: "summary_large_image",
       title: copy.title,
       description: copy.description,
+      images: [getDefaultTwitterImageUrl()],
     },
   };
 }
@@ -103,18 +112,62 @@ export default async function WhatsNewPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  setRequestLocale(locale);
+  const safeLocale = ensureLocale(locale);
+  setRequestLocale(safeLocale);
 
   const t = await getTranslations();
   const currentYear = new Date().getUTCFullYear();
+  const copy = getWhatsNewSeoCopy(safeLocale);
+  const canonicalUrl = toAbsoluteUrl(getLocalePath(safeLocale, "/whats-new"));
   const difficultyLabels = {
     beginner: t("tip.difficulty.beginner"),
     intermediate: t("tip.difficulty.intermediate"),
     advanced: t("tip.difficulty.advanced"),
   };
+  const whatsNewJsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      getSiteOrganizationJsonLd(),
+      getSiteWebsiteJsonLd(safeLocale, copy.description),
+      {
+        "@type": "CollectionPage",
+        "@id": `${canonicalUrl}#webpage`,
+        url: canonicalUrl,
+        name: copy.title,
+        description: copy.description,
+        inLanguage: safeLocale,
+        isPartOf: {
+          "@id": `${toAbsoluteUrl("")}#website`,
+        },
+        about: toolKeys.map((toolKey) => getToolConfig(toolIdMap[toolKey]).name),
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: siteName,
+            item: toAbsoluteUrl(getLocalePath(safeLocale)),
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: copy.title,
+            item: canonicalUrl,
+          },
+        ],
+      },
+    ],
+  };
 
   return (
     <div className="container mx-auto max-w-5xl px-4 py-12">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(whatsNewJsonLd) }}
+      />
+
       <div className="mb-12">
         <Badge
           variant="outline"
@@ -130,7 +183,7 @@ export default async function WhatsNewPage({
 
       {toolKeys.map((toolKey, idx) => {
         const toolConfig = getToolConfig(toolIdMap[toolKey]);
-        const recentTips = getLatestTipsByTool(locale, toolIdMap[toolKey], 2);
+        const recentTips = getLatestTipsByTool(safeLocale, toolIdMap[toolKey], 2);
 
         return (
           <div key={toolKey}>

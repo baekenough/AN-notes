@@ -11,33 +11,96 @@ function normalizeSiteUrl(raw: string): string {
   }
 }
 
+function dedupeKeywords(...groups: ReadonlyArray<readonly string[]>): string[] {
+  return Array.from(new Set(groups.flat()));
+}
+
 export const siteName = "AI Native Notes";
+export const siteAuthorName = "Sangyi Baek";
+export const siteGitHubUrl = "https://github.com/baekenough/AN-notes";
+export const siteLinkedInUrl = "https://www.linkedin.com/in/sangyi-baek-a8b028203/";
+export const siteOwnerName = siteAuthorName;
 export const siteUrl = normalizeSiteUrl(
   process.env.NEXT_PUBLIC_SITE_URL ?? FALLBACK_SITE_URL,
 );
+export const defaultOpenGraphImagePath = "/opengraph-image";
+export const defaultTwitterImagePath = "/twitter-image";
+export const siteAuthor = {
+  "@type": "Person",
+  name: siteAuthorName,
+};
+export const sitePublisher = {
+  "@type": "Organization",
+  "@id": `${siteUrl}#organization`,
+  name: siteName,
+  url: siteUrl,
+  sameAs: [siteGitHubUrl, siteLinkedInUrl],
+};
 
 const localeDescriptions: Record<Locale, string> = {
-  ko: "AI 코딩 도구를 마스터하세요 — Claude Code, GPT Codex, 그리고 더 많은 도구들",
-  en: "Master your AI coding tools — Claude Code, GPT Codex, and more",
-  es: "Domina tus herramientas de programación con IA — Claude Code, GPT Codex y más",
+  ko: "Claude Code, GPT Codex, Gemini CLI를 위한 실전 설치·워크플로·자동화 가이드 모음",
+  en: "Human-written setup, workflow, sandbox, MCP, and automation guides for Claude Code, GPT Codex, and Gemini CLI",
+  es: "Guías prácticas de instalación, workflows, sandbox, MCP y automatización para Claude Code, GPT Codex y Gemini CLI",
+};
+
+const sharedKeywords: Record<Locale, string[]> = {
+  ko: [
+    "AI 코딩",
+    "Claude Code",
+    "GPT Codex",
+    "Gemini CLI",
+    "AGENTS.md",
+    "MCP",
+    "sandbox",
+    "AI 워크플로",
+    "개발자 가이드",
+  ],
+  en: [
+    "AI coding guides",
+    "Claude Code",
+    "GPT Codex",
+    "Gemini CLI",
+    "AGENTS.md",
+    "MCP",
+    "sandboxing",
+    "multi-agent workflows",
+    "developer guides",
+  ],
+  es: [
+    "guías de programación con IA",
+    "Claude Code",
+    "GPT Codex",
+    "Gemini CLI",
+    "AGENTS.md",
+    "MCP",
+    "sandbox",
+    "workflows con agentes",
+    "guías para desarrolladores",
+  ],
 };
 
 const homeSeoCopy: Record<Locale, { title: string; description: string }> = {
   ko: {
     title: "AI 코딩 도구를 제대로 사용하기",
     description:
-      "Claude Code, GPT Codex, Gemini CLI를 위한 실전 팁과 가이드. 한국어·영어·스페인어로 제공됩니다.",
+      "Claude Code, GPT Codex, Gemini CLI를 위한 실전 설치·워크플로·자동화 가이드를 한국어·영어·스페인어로 제공합니다.",
   },
   en: {
     title: "Use AI Coding Tools the Right Way",
     description:
-      "Practical guides for Claude Code, GPT Codex, and Gemini CLI in English, Korean, and Spanish.",
+      "Practical setup, workflow, sandbox, MCP, and automation guides for Claude Code, GPT Codex, and Gemini CLI in English, Korean, and Spanish.",
   },
   es: {
     title: "Usa herramientas de IA de la manera correcta",
     description:
-      "Guías prácticas de Claude Code, GPT Codex y Gemini CLI en español, inglés y coreano.",
+      "Guías prácticas de instalación, workflow, sandbox, MCP y automatización para Claude Code, GPT Codex y Gemini CLI en español, inglés y coreano.",
   },
+};
+
+const homeKeywords: Record<Locale, string[]> = {
+  ko: ["AI 코딩 도구", "AI Native Notes", "실전 가이드", "프롬프트", "자동화"],
+  en: ["AI Native Notes", "AI coding tools", "practical guides", "prompting", "automation"],
+  es: ["AI Native Notes", "herramientas de IA", "guías prácticas", "prompts", "automatización"],
 };
 
 const whatsNewSeoCopy: Record<Locale, { title: string; description: string }> = {
@@ -58,6 +121,12 @@ const whatsNewSeoCopy: Record<Locale, { title: string; description: string }> = 
   },
 };
 
+const whatsNewKeywords: Record<Locale, string[]> = {
+  ko: ["제품 업데이트", "최근 가이드", "AI 도구 변화"],
+  en: ["product updates", "latest guides", "AI tool changes"],
+  es: ["actualizaciones de producto", "guías recientes", "cambios en herramientas de IA"],
+};
+
 const toolSeoTitles: Record<Locale, Record<Tool, string>> = {
   ko: {
     "claude-code": "Claude Code 가이드",
@@ -76,6 +145,24 @@ const toolSeoTitles: Record<Locale, Record<Tool, string>> = {
   },
 };
 
+const toolKeywords: Record<Locale, Record<Tool, string[]>> = {
+  ko: {
+    "claude-code": ["Claude Code 튜토리얼", "agent teams", "hooks", "worktrees"],
+    "gpt-codex": ["GPT Codex 튜토리얼", "AGENTS.md", "sandbox", "subagents"],
+    "gemini-cli": ["Gemini CLI 튜토리얼", "long context", "trusted folders", "automation"],
+  },
+  en: {
+    "claude-code": ["Claude Code tutorials", "agent teams", "hooks", "worktrees"],
+    "gpt-codex": ["GPT Codex tutorials", "AGENTS.md", "sandbox", "subagents"],
+    "gemini-cli": ["Gemini CLI tutorials", "long context", "trusted folders", "automation"],
+  },
+  es: {
+    "claude-code": ["tutoriales de Claude Code", "agent teams", "hooks", "worktrees"],
+    "gpt-codex": ["tutoriales de GPT Codex", "AGENTS.md", "sandbox", "subagents"],
+    "gemini-cli": ["tutoriales de Gemini CLI", "long context", "trusted folders", "automation"],
+  },
+};
+
 const ogLocaleMap: Record<Locale, string> = {
   ko: "ko_KR",
   en: "en_US",
@@ -90,8 +177,22 @@ export function getLocaleDescription(locale: Locale): string {
   return localeDescriptions[locale];
 }
 
+export function getSiteKeywords(locale: Locale): string[] {
+  return sharedKeywords[locale];
+}
+
+export function mergeKeywords(
+  ...groups: Array<readonly string[] | undefined>
+): string[] {
+  return dedupeKeywords(...groups.map(group => [...(group ?? [])]));
+}
+
 export function getHomeSeoCopy(locale: Locale): { title: string; description: string } {
   return homeSeoCopy[locale];
+}
+
+export function getHomeKeywords(locale: Locale): string[] {
+  return dedupeKeywords(sharedKeywords[locale], homeKeywords[locale]);
 }
 
 export function getWhatsNewSeoCopy(locale: Locale): {
@@ -99,6 +200,10 @@ export function getWhatsNewSeoCopy(locale: Locale): {
   description: string;
 } {
   return whatsNewSeoCopy[locale];
+}
+
+export function getWhatsNewKeywords(locale: Locale): string[] {
+  return dedupeKeywords(sharedKeywords[locale], whatsNewKeywords[locale]);
 }
 
 export function getToolSeoCopy(
@@ -134,6 +239,10 @@ export function getToolSeoCopy(
   }
 }
 
+export function getToolKeywords(locale: Locale, tool: Tool): string[] {
+  return dedupeKeywords(sharedKeywords[locale], toolKeywords[locale][tool]);
+}
+
 export function getOgLocale(locale: Locale): string {
   return ogLocaleMap[locale];
 }
@@ -156,4 +265,45 @@ export function buildLanguageAlternates(path = ""): Record<string, string> {
   return Object.fromEntries(
     locales.map((locale) => [locale, toAbsoluteUrl(getLocalePath(locale, path))]),
   );
+}
+
+export function getDefaultOpenGraphImageUrl(): string {
+  return toAbsoluteUrl(defaultOpenGraphImagePath);
+}
+
+export function getDefaultTwitterImageUrl(): string {
+  return toAbsoluteUrl(defaultTwitterImagePath);
+}
+
+export function buildBreadcrumbJsonLd(
+  items: Array<{ name: string; url: string }>,
+) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.name,
+      item: item.url,
+    })),
+  };
+}
+
+export function getSiteOrganizationJsonLd() {
+  return sitePublisher;
+}
+
+export function getSiteWebsiteJsonLd(locale: Locale, description: string) {
+  return {
+    "@type": "WebSite",
+    "@id": `${siteUrl}#website`,
+    name: siteName,
+    url: siteUrl,
+    inLanguage: locale,
+    description,
+    publisher: {
+      "@id": `${siteUrl}#organization`,
+    },
+  };
 }

@@ -15,6 +15,8 @@ function buildToolSection(tool: Tool): string[] {
 
   return [
     `[${toolConfig.name}] ${tips.length} canonical articles, ${tips.length * locales.length} localized pages | source=${toolConfig.url}`,
+    `  summary: ${toolConfig.discoverySummary}`,
+    `  topics: ${toolConfig.discoveryTopics.join(", ")}`,
     ...locales.map((locale) => `  index (${locale}): ${getLocalePath(locale, `/${tool}`)}`),
     `  pattern: /{locale}/${tool}/{slug}`,
     ...tips.map((tip) => `  - ${tip.slug}: ${toAbsoluteUrl(getLocalePath("en", `/${tool}/${tip.slug}`))}`),
@@ -32,13 +34,16 @@ export function GET(): Response {
   const totalPages = staticPages + localizedTipPages;
 
   const body = [
-    "# agents.txt v0.2",
+    "# agents.txt v0.3",
     `# ${siteName} — ${siteUrl}`,
     `# Documentation Sets: ${activeTools.length} | Total Pages: ${totalPages} | Last updated: ${today}`,
     "",
     `SITE: ${siteName}`,
     `URL: ${siteUrl}`,
     "TYPE: site-index",
+    "AUDIENCE: developers, engineering teams, autonomous agents",
+    "EDITORIAL-FOCUS: getting-started, repo instructions, sandboxing, MCP, automation, multi-agent workflows",
+    "FRESHNESS: article dates in UI, /whats-new summaries, sitemap alternates",
     `LOCALES: ${locales.length}`,
     `SETS: ${activeTools.length}`,
     `PAGES: ${totalPages}`,
@@ -49,15 +54,21 @@ export function GET(): Response {
     `robots: ${siteUrl}/robots.txt`,
     `llms: ${siteUrl}/llms.txt`,
     "",
+    "== DISCOVERY RULES ==",
+    "1. Start with /llms.txt for curated summaries and topic clusters.",
+    "2. Use /sitemap.xml for complete canonical + localized URL discovery.",
+    "3. Treat English slugs as canonical identifiers reused across locales.",
+    "4. Prefer tool index pages before individual articles when choosing a learning path.",
+    "",
     "== DOCUMENTATION SETS ==",
     "",
     ...activeTools.flatMap((tool) => buildToolSection(tool)),
     "== NAVIGATION ==",
     "RULES:",
-    "1. Use /sitemap.xml for complete URL discovery.",
-    "2. Use /llms.txt for curated LLM-first context.",
-    "3. All user-facing pages are locale-prefixed: /en, /ko, /es.",
-    "4. Canonical slug source is English; localized pages reuse the same slug.",
+    "1. All user-facing pages are locale-prefixed: /en, /ko, /es.",
+    "2. Canonical slug source is English; localized pages reuse the same slug.",
+    "3. Latest product-level updates live on /{locale}/whats-new.",
+    "4. Home and tool index pages contain the densest summary copy for search/agent grounding.",
     "",
   ].join("\n");
 

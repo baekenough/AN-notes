@@ -7,10 +7,15 @@ import { locales } from "@/i18n/config";
 import { getLatestTipsByTool, getTipsByTool, type Tool } from "@/lib/content";
 import { getToolConfig } from "@/lib/tools";
 import {
+  getDefaultOpenGraphImageUrl,
+  getDefaultTwitterImageUrl,
   buildLanguageAlternates,
   ensureLocale,
   getLocalePath,
   getOgLocale,
+  getSiteOrganizationJsonLd,
+  getSiteWebsiteJsonLd,
+  getToolKeywords,
   getToolSeoCopy,
   siteName,
   toAbsoluteUrl,
@@ -54,6 +59,8 @@ export async function generateMetadata({
   return {
     title,
     description,
+    keywords: getToolKeywords(safeLocale, typedTool),
+    category: "Developer education",
     alternates: {
       canonical: toAbsoluteUrl(localePath),
       languages: buildLanguageAlternates(toolPath),
@@ -65,11 +72,13 @@ export async function generateMetadata({
       description,
       url: toAbsoluteUrl(localePath),
       locale: getOgLocale(safeLocale),
+      images: [getDefaultOpenGraphImageUrl()],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
+      images: [getDefaultTwitterImageUrl()],
     },
   };
 }
@@ -80,7 +89,8 @@ export default async function ToolPage({
   params: Promise<{ locale: string; tool: string }>;
 }) {
   const { locale, tool } = await params;
-  setRequestLocale(locale);
+  const safeLocale = ensureLocale(locale);
+  setRequestLocale(safeLocale);
 
   if (!validTools.includes(tool as Tool)) {
     notFound();
@@ -93,24 +103,30 @@ export default async function ToolPage({
     return (
       <div className="container mx-auto max-w-5xl px-4 py-24 text-center">
         <span
-          className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${toolConfig.gradient} flex items-center justify-center text-3xl font-bold ${toolConfig.color} mx-auto mb-6`}
+          className={`mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br ${toolConfig.gradient} text-3xl font-bold ${toolConfig.color}`}
         >
           {toolConfig.icon}
         </span>
-        <h1 className="text-3xl font-bold mb-4">{toolConfig.name}</h1>
-        <p className="text-muted-foreground text-lg">{t("tools.comingSoon")}</p>
+        <h1 className="mb-4 text-3xl font-bold">{toolConfig.name}</h1>
+        <p className="text-lg text-muted-foreground">{t("tools.comingSoon")}</p>
       </div>
     );
   }
 
   const t = await getTranslations();
-  const tips = getTipsByTool(locale, tool as Tool);
+  const tips = getTipsByTool(safeLocale, tool as Tool);
   const orderedTips = [...tips].sort(
     (a, b) => a.order - b.order || a.title.localeCompare(b.title)
   );
   const [starterTip, ...remainingTips] = orderedTips;
   const nextTips = remainingTips.slice(0, 3);
-  const recentTips = getLatestTipsByTool(locale, tool as Tool, 3);
+  const recentTips = getLatestTipsByTool(safeLocale, tool as Tool, 3);
+  const summary = t(`tools.profiles.${toolConfig.messageKey}.summary`);
+  const topics = t.raw(
+    `tools.profiles.${toolConfig.messageKey}.focus`
+  ) as string[];
+  const canonicalUrl = toAbsoluteUrl(getLocalePath(safeLocale, `/${tool}`));
+  const { title, description } = getToolSeoCopy(safeLocale, tool as Tool, tips.length);
 
   const beginnerTips = tips.filter(tip => tip.difficulty === "beginner");
   const intermediateTips = tips.filter(
@@ -130,30 +146,97 @@ export default async function ToolPage({
     { tips: advancedTips, label: difficultyLabels.advanced },
   ].filter(s => s.tips.length > 0);
 
+  const toolJsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      getSiteOrganizationJsonLd(),
+      getSiteWebsiteJsonLd(safeLocale, description),
+      {
+        "@type": "CollectionPage",
+        "@id": `${canonicalUrl}#webpage`,
+        url: canonicalUrl,
+        name: title,
+        description,
+        inLanguage: safeLocale,
+        isPartOf: {
+          "@id": `${toAbsoluteUrl("")}#website`,
+        },
+        about: [toolConfig.name, ...topics],
+        mainEntity: {
+          "@type": "ItemList",
+          itemListElement: orderedTips.map((tip, index) => ({
+            "@type": "ListItem",
+            position: index + 1,
+            url: toAbsoluteUrl(getLocalePath(safeLocale, `/${tip.tool}/${tip.slug}`)),
+            name: tip.title,
+            description: tip.description,
+          })),
+        },
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: siteName,
+            item: toAbsoluteUrl(getLocalePath(safeLocale)),
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: toolConfig.name,
+            item: canonicalUrl,
+          },
+        ],
+      },
+    ],
+  };
+
   return (
     <div className="container mx-auto max-w-5xl px-4 py-12">
-      {/* Tool header */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(toolJsonLd) }}
+      />
+
       <div className="mb-12">
-        <div className="flex items-center gap-3 mb-4 min-w-0">
+        <div className="mb-4 flex min-w-0 items-center gap-3">
           <span
-            className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br ${toolConfig.gradient} flex items-center justify-center text-xl sm:text-2xl font-bold ${toolConfig.color} flex-shrink-0`}
+            className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${toolConfig.gradient} text-xl font-bold ${toolConfig.color} sm:h-14 sm:w-14 sm:text-2xl`}
           >
             {toolConfig.icon}
           </span>
           <div className="min-w-0">
-            <h1 className="text-2xl sm:text-3xl font-bold truncate">{toolConfig.name}</h1>
-            <p className="text-muted-foreground truncate">{toolConfig.vendor}</p>
+            <h1 className="truncate text-2xl font-bold sm:text-3xl">
+              {toolConfig.name}
+            </h1>
+            <p className="truncate text-muted-foreground">{toolConfig.vendor}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2 mt-4">
+        <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+          {summary}
+        </p>
+        <div className="mt-4 flex flex-wrap items-center gap-2">
           <Badge variant="outline">
             {t("tools.tips", { count: tips.length })}
           </Badge>
+          <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            {t("tools.highlightsLabel")}
+          </span>
+          {topics.map(topic => (
+            <span
+              key={topic}
+              className="rounded-full border border-border/60 bg-secondary/70 px-2.5 py-1 text-xs text-muted-foreground"
+            >
+              {topic}
+            </span>
+          ))}
           <a
             href={toolConfig.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-1"
+            className="flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-primary"
             aria-label={`${toolConfig.name} documentation (opens in new tab)`}
           >
             Docs
@@ -177,34 +260,34 @@ export default async function ToolPage({
           <CardContent className="p-6 md:p-7">
             <div className="grid gap-6 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] md:items-start">
               <div>
-                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-3">
+                <p className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   {t("learningPath.toolTitle")}
                 </p>
-                <h2 className="text-xl sm:text-2xl font-bold tracking-tight mb-3">
+                <h2 className="mb-3 text-xl font-bold tracking-tight sm:text-2xl">
                   {t("learningPath.startHere")}
                 </h2>
-                <p className="text-muted-foreground leading-relaxed mb-5">
+                <p className="mb-5 text-muted-foreground leading-relaxed">
                   {t("learningPath.toolDescription", { tool: toolConfig.name })}
                 </p>
                 <div className="rounded-xl border border-border/60 bg-background/70 p-4">
-                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2">
+                  <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                     1. {t("learningPath.firstGuide")}
                   </p>
                   <Link
-                    href={`/${locale}/${starterTip.tool}/${starterTip.slug}`}
-                    className="block group"
+                    href={`/${safeLocale}/${starterTip.tool}/${starterTip.slug}`}
+                    className="group block"
                   >
-                    <p className="font-semibold leading-snug group-hover:text-primary transition-colors">
+                    <p className="font-semibold leading-snug transition-colors group-hover:text-primary">
                       {starterTip.title}
                     </p>
-                    <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                       {starterTip.description}
                     </p>
                   </Link>
                 </div>
                 <div className="mt-5">
                   <Button asChild>
-                    <Link href={`/${locale}/${starterTip.tool}/${starterTip.slug}`}>
+                    <Link href={`/${safeLocale}/${starterTip.tool}/${starterTip.slug}`}>
                       {t("learningPath.openFirstGuide")}
                     </Link>
                   </Button>
@@ -213,21 +296,21 @@ export default async function ToolPage({
 
               {nextTips.length > 0 && (
                 <div>
-                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-3">
+                  <p className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                     {t("learningPath.nextSteps")}
                   </p>
                   <div className="space-y-3">
                     {nextTips.map((tip, index) => (
                       <Link
                         key={tip.slug}
-                        href={`/${locale}/${tip.tool}/${tip.slug}`}
-                        className="block rounded-xl border border-border/60 p-4 hover:border-primary/30 transition-colors"
+                        href={`/${safeLocale}/${tip.tool}/${tip.slug}`}
+                        className="block rounded-xl border border-border/60 p-4 transition-colors hover:border-primary/30"
                       >
-                        <p className="text-xs text-muted-foreground mb-1">
+                        <p className="mb-1 text-xs text-muted-foreground">
                           {index + 2}. {t("learningPath.step")}
                         </p>
                         <p className="font-medium leading-snug">{tip.title}</p>
-                        <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+                        <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
                           {tip.description}
                         </p>
                       </Link>
@@ -243,19 +326,19 @@ export default async function ToolPage({
       {recentTips.length > 0 && (
         <div className="mb-12">
           <div className="mb-5 max-w-2xl">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+            <h2 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
               {t("latestUpdates.toolTitle", { tool: toolConfig.name })}
             </h2>
-            <p className="text-sm text-muted-foreground leading-relaxed">
+            <p className="text-sm leading-relaxed text-muted-foreground">
               {t("latestUpdates.toolDescription", { tool: toolConfig.name })}
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             {recentTips.map(tip => (
               <TipCard
                 key={`${tip.slug}-recent`}
                 tip={tip}
-                locale={locale}
+                locale={safeLocale}
                 difficultyLabels={difficultyLabels}
               />
             ))}
@@ -263,18 +346,17 @@ export default async function ToolPage({
         </div>
       )}
 
-      {/* Tips by difficulty */}
       {sections.map((section, idx) => (
         <div key={section.label} className={idx > 0 ? "mt-12" : ""}>
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-4">
+          <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
             {section.label}
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {section.tips.map(tip => (
               <TipCard
                 key={tip.slug}
                 tip={tip}
-                locale={locale}
+                locale={safeLocale}
                 difficultyLabels={difficultyLabels}
               />
             ))}
