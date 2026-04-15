@@ -278,6 +278,41 @@ A simple cadence many teams can adopt:
 
 The cadence matters less than consistency. Repeating the same weekly rhythm reduces context thrash.
 
+## Decision table: single lane vs subagents vs worktrees
+
+Use this quick table when people disagree on execution style:
+
+| Situation | Best first move |
+|-----------|-----------------|
+| One narrow fix with clear dependency chain | Single lane in current tree |
+| Broad investigation with multiple candidate approaches | Subagents first |
+| Long-running implementation that must not collide with active work | Dedicated worktree |
+| Parallel implementation + independent verification | Two worktrees (impl + verify) |
+| Recurring docs/release operational work | Dedicated docs/release worktree |
+
+Sequence rule:
+
+1. **Explore with subagents** if uncertainty is high.
+2. **Execute in worktree** once one path is selected.
+3. **Verify in separate lane** if risk or scope is medium/high.
+
+## Team policy snippet you can adopt
+
+You can paste this into your engineering handbook or `AGENTS.md` companion docs:
+
+```md
+### Worktree Policy
+
+- One worktree must map to one reviewable objective.
+- Worktree names must follow the approved naming matrix.
+- Every handoff must include status, evidence, diff scope, and risk note.
+- Every handoff must name the next owner (reviewer, verifier, or release lane).
+- Worktrees older than 14 days must be reviewed for merge/cleanup.
+- Verification lane is required for migrations, auth, billing, or security-sensitive changes.
+```
+
+This turns worktree usage from “personal preference” into a team-level operating contract.
+
 ## Quick checklist
 
 Before opening a worktree:

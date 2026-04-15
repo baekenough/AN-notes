@@ -280,6 +280,41 @@ Una cadencia simple y repetible:
 
 Más importante que el día exacto es mantener el ritmo. La repetición reduce el desgaste de contexto.
 
+## Tabla de decisión: lane único vs subagentes vs worktrees
+
+Cuando hay debate sobre cómo ejecutar, usa esta tabla rápida:
+
+| Situación | Mejor primer paso |
+|-----------|-------------------|
+| Un fix acotado con dependencia clara | Lane único en el árbol actual |
+| Investigación amplia con varios enfoques candidatos | Subagentes primero |
+| Implementación larga que no debe chocar con trabajo activo | Worktree dedicado |
+| Implementación en paralelo + verificación independiente | Dos worktrees (impl + verify) |
+| Trabajo operativo recurrente de docs/release | Worktree dedicado de docs/release |
+
+Regla de secuencia:
+
+1. **Explora con subagentes** si la incertidumbre es alta.
+2. **Ejecuta en worktree** cuando ya elegiste una ruta.
+3. **Verifica en lane separado** si riesgo o alcance es medio/alto.
+
+## Plantilla de política de equipo
+
+Puedes pegar esto en el handbook de ingeniería o en docs complementarios de `AGENTS.md`:
+
+```md
+### Política de Worktrees
+
+- Un worktree debe corresponder a un único objetivo revisable.
+- Los nombres de worktree deben seguir la matriz de naming aprobada.
+- Todo handoff debe incluir estado, evidencia, alcance de diff y nota de riesgo.
+- Todo handoff debe nombrar al siguiente owner (reviewer, verifier o lane de release).
+- Worktrees con más de 14 días deben revisarse para merge/limpieza.
+- El lane de verificación es obligatorio para migraciones, auth, billing o cambios sensibles de seguridad.
+```
+
+Con esto, el uso de worktrees deja de ser preferencia personal y pasa a ser contrato operativo del equipo.
+
 ## Checklist rápido
 
 Antes de abrir un worktree:
