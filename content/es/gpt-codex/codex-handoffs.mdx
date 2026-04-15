@@ -18,6 +18,9 @@ connections:
 - slug: codex-ci-cd-workflows
   tool: gpt-codex
   type: enhances
+- slug: codex-verification-loops
+  tool: gpt-codex
+  type: enhances
 - slug: multi-agent-workflow
   tool: claude-code
   type: compare
@@ -41,6 +44,7 @@ date: '2026-04-15'
 8. [Reviews y Automatizaciones con Codex](./codex-ci-cd-workflows) — volver repetible el workflow
 9. [Codex Worktrees](./codex-worktrees) — aislar ejecución paralela larga
 10. **Handoffs en Codex** — transferir contexto y ownership sin perder calidad ← **Estás aquí**
+11. [Loops de Verificación en Codex](./codex-verification-loops) — convertir claims de handoff en evidencia
 
 ### Documentación oficial usada en esta guía
 - **Descomposición de tareas y restricciones explícitas** — [Best Practices](https://developers.openai.com/codex/learn/best-practices)
@@ -200,3 +204,4 @@ Antes del merge:
 - rollback documentado
 
 Buen output de Codex no alcanza por sí solo. Son los buenos handoffs los que vuelven confiable el workflow paralelo a escala de equipo.
+Luego continúa con [Loops de Verificación en Codex](./codex-verification-loops) para estandarizar la calidad de prueba antes del merge.

@@ -18,6 +18,9 @@ connections:
 - slug: codex-ci-cd-workflows
   tool: gpt-codex
   type: enhances
+- slug: codex-verification-loops
+  tool: gpt-codex
+  type: enhances
 - slug: multi-agent-workflow
   tool: claude-code
   type: compare
@@ -41,6 +44,7 @@ date: '2026-04-15'
 8. [Codex 리뷰와 자동화](./codex-ci-cd-workflows) — 반복 가능한 운영 루프
 9. [Codex Worktrees](./codex-worktrees) — 장기 병렬 실행 격리
 10. **Codex 핸드오프** — 품질 손실 없이 컨텍스트와 오너십 전달 ← **현재 문서**
+11. [Codex 검증 루프](./codex-verification-loops) — 핸드오프 주장을 실행 가능한 근거로 검증
 
 ### 이 문서에서 참고한 공식 문서
 - **작업 분해와 명시적 제약** — [Best Practices](https://developers.openai.com/codex/learn/best-practices)
@@ -201,3 +205,4 @@ Codex로 빠르게 코드를 만드는 팀은 많습니다.
 - 롤백 경로 문서화
 
 좋은 Codex 출력만으로는 부족합니다. 좋은 핸드오프가 있어야 병렬 워크플로우가 팀 규모에서도 안정적으로 작동합니다.
+머지 전 근거 품질을 표준화하려면 [Codex 검증 루프](./codex-verification-loops)로 이어서 보세요.

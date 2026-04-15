@@ -1,0 +1,193 @@
+---
+title: Loops de Verificación en Codex — Demostrar que Funciona Antes del Merge
+description: Diseña loops de verificación proporcionales al riesgo, mantén evidencia
+  fresca y evita que handoffs de "se ve bien" lleguen a producción.
+difficulty: advanced
+tags:
+- verification
+- testing
+- review
+- calidad
+connections:
+- slug: codex-handoffs
+  tool: gpt-codex
+  type: prerequisite
+- slug: codex-ci-cd-workflows
+  tool: gpt-codex
+  type: combines
+- slug: codex-sandbox
+  tool: gpt-codex
+  type: enhances
+- slug: github-actions-workflows
+  tool: claude-code
+  type: compare
+featured: false
+order: 11
+date: '2026-04-15'
+---
+
+> **Referencias Oficiales**: [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [Review](https://developers.openai.com/codex/app/review) · [Sandboxing](https://developers.openai.com/codex/concepts/sandboxing)
+
+<!-- curriculum:start -->
+## Ruta del currículo
+
+1. [Primeros Pasos con Codex](./codex-getting-started) — primeras victorias locales
+2. [Instrucciones de Codex](./codex-instructions) — reglas y defaults estables
+3. [Sandboxing en Codex](./codex-sandbox) — límites de ejecución seguros
+4. [Diseño de Tareas en Codex](./codex-task-design) — dar forma revisable al trabajo
+5. [Skills de Codex](./codex-skills) — empaquetar procedimientos repetidos
+6. [Subagentes de Codex](./codex-subagents) — exploración paralela y delegación
+7. [MCP en Codex](./codex-mcp) — conectar contexto externo
+8. [Reviews y Automatizaciones con Codex](./codex-ci-cd-workflows) — volver repetible el workflow
+9. [Codex Worktrees](./codex-worktrees) — aislar ejecución paralela larga
+10. [Handoffs en Codex](./codex-handoffs) — transferir contexto y ownership limpiamente
+11. **Loops de Verificación en Codex** — convertir claims en prueba mergeable ← **Estás aquí**
+
+### Documentación oficial usada en esta guía
+- **Task framing con done criteria explícitos** — [Best Practices](https://developers.openai.com/codex/learn/best-practices)
+- **Checkpoints de review por alcance de diff** — [Review](https://developers.openai.com/codex/app/review)
+- **Límites de permisos y expectativas de ejecución segura** — [Sandboxing](https://developers.openai.com/codex/concepts/sandboxing)
+<!-- curriculum:end -->
+
+## Por qué importan los loops de verificación
+
+Codex genera output rápido.
+Los loops de verificación determinan si ese output es confiable.
+
+Sin loop explícito, los equipos terminan desplegando con lenguaje de confianza:
+
+- "se ve bien"
+- "debería pasar"
+- "probablemente es seguro"
+
+Eso no es evidencia.
+
+## Contrato de done: claim -> command -> output
+
+Cada claim de completitud debe mapear a una verificación concreta.
+
+- **Claim**: qué afirmas como verdadero
+- **Command**: qué lo demuestra
+- **Output**: qué evidencia viste realmente
+
+Si falta un eslabón, el claim está incompleto.
+
+## Profundidad de verificación por nivel de riesgo
+
+| Nivel de riesgo | Cambio típico | Loop mínimo | Loop recomendado |
+|-----------------|---------------|-------------|------------------|
+| Bajo | microcambio de copy/docs/UI | lint + check puntual | lint + build + snapshot rápido de review |
+| Medio | refactor + cambios de lógica | lint + tests + build | lint + tests + build + pase de reviewer |
+| Alto | auth/billing/seguridad/migración | lint + suite completa + build | lint + suite completa + build + lane verifier + prueba de rollback |
+
+La profundidad de verificación debe escalar con blast radius, no con confianza subjetiva.
+
+## Paquete base de comandos (ejemplo)
+
+```bash
+npm run lint
+npm run test
+npm run build
+```
+
+Añade checks de dominio para tu stack (tests de migración, smoke scripts, contract tests).
+El paquete base es piso, no techo.
+
+## Reglas de frescura de evidencia
+
+Salida vieja de tests no sirve como evidencia de cambios nuevos.
+
+Usa estas reglas:
+
+1. Re-ejecutar checks tras el último cambio relevante.
+2. Adjuntar salida ligada al diff actual.
+3. Declarar checks omitidos y su motivo.
+4. Re-ejecutar checks críticos tras resolver conflictos.
+
+Evidencia fresca reduce falsa confianza.
+
+## Plantilla de handoff de verificación
+
+```md
+### Verification Summary
+
+- Scope: <qué se verificó>
+- Commands run:
+  - <command>: <pass/fail>
+- Key outputs:
+  - <líneas de resultado clave>
+- Skipped checks:
+  - <none o motivo>
+- Residual risks:
+  - <none o lista>
+- Verdict:
+  - pass | rework required
+```
+
+Debe ser breve, nunca ambigua.
+
+## Lanes paralelos de verificación
+
+Para trabajo de riesgo medio/alto, separa implementación de verificación:
+
+- **Lane de implementación**: escribe código
+- **Lane de verificación**: re-ejecuta checks, audita diff, cuestiona supuestos
+- **Lane de review**: decide merge readiness
+
+Así evitas que un mismo lane se califique a sí mismo.
+
+## Protocolo de triaje de fallos
+
+Cuando fallan checks:
+
+1. clasificar fallo: preexistente vs regresión
+2. adjuntar salida del comando fallido
+3. aislar fix mínimo
+4. re-ejecutar checks rápidos relevantes
+5. re-ejecutar gate completo antes de merge
+
+Loops rápidos sí; saltar el gate final no.
+
+## Checklist de prueba pre-merge
+
+Antes de merge, confirma:
+
+- comandos de verificación ejecutados sobre el diff actual
+- fallos resueltos o explícitamente aceptados
+- review scope coincide con el alcance declarado
+- riesgos residuales documentados
+- existe rollback para cambios no triviales
+
+## Anti-patrones a evitar
+
+### Tomar lint pass como prueba total de calidad
+
+Lint es necesario, nunca suficiente.
+
+### Reusar salida de CI de commits viejos
+
+La evidencia debe corresponder al estado actual.
+
+### Ocultar checks omitidos
+
+Omitir checks solo es aceptable si se declara con motivo.
+
+### Merge sin owner de veredicto final
+
+Si nadie es dueño del veredicto final de verificación, el sistema ya falló.
+
+## Checklist rápido
+
+Antes del handoff:
+
+- cadena claim-command-output completa
+- evidencia fresca
+- checks omitidos declarados
+
+Antes del merge:
+
+- comandos gate en verde
+- veredicto reviewer/verifier registrado
+- riesgos residuales + rollback documentados
+
+La velocidad de Codex ayuda a moverte rápido. Los loops de verificación te ayudan a moverte seguro.

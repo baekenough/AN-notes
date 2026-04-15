@@ -1,0 +1,193 @@
+---
+title: Codex Verification Loops — Prove It Works Before You Merge
+description: Build verification loops that scale with risk, keep evidence fresh, and
+  prevent "looks good" handoffs from reaching production.
+difficulty: advanced
+tags:
+- verification
+- testing
+- review
+- quality
+connections:
+- slug: codex-handoffs
+  tool: gpt-codex
+  type: prerequisite
+- slug: codex-ci-cd-workflows
+  tool: gpt-codex
+  type: combines
+- slug: codex-sandbox
+  tool: gpt-codex
+  type: enhances
+- slug: github-actions-workflows
+  tool: claude-code
+  type: compare
+featured: false
+order: 11
+date: '2026-04-15'
+---
+
+> **Official References**: [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [Review](https://developers.openai.com/codex/app/review) · [Sandboxing](https://developers.openai.com/codex/concepts/sandboxing)
+
+<!-- curriculum:start -->
+## Curriculum path
+
+1. [Codex Getting Started](./codex-getting-started) — first local wins
+2. [Codex Instructions](./codex-instructions) — stable rules and defaults
+3. [Codex Sandboxing](./codex-sandbox) — safe execution boundaries
+4. [Codex Task Design](./codex-task-design) — shape reviewable tasks
+5. [Codex Skills](./codex-skills) — package repeatable procedure
+6. [Codex Subagents](./codex-subagents) — parallel exploration and delegation
+7. [Codex MCP](./codex-mcp) — connect external context
+8. [Codex Reviews and Automations](./codex-ci-cd-workflows) — make workflows repeatable
+9. [Codex Worktrees](./codex-worktrees) — isolate long parallel execution
+10. [Codex Handoffs](./codex-handoffs) — transfer context and ownership cleanly
+11. **Codex Verification Loops** — convert claims into merge-ready proof ← **You are here**
+
+### Official docs used in this guide
+- **Task framing with explicit done criteria** — [Best Practices](https://developers.openai.com/codex/learn/best-practices)
+- **Diff-scoped review checkpoints** — [Review](https://developers.openai.com/codex/app/review)
+- **Permission boundaries and safe execution expectations** — [Sandboxing](https://developers.openai.com/codex/concepts/sandboxing)
+<!-- curriculum:end -->
+
+## Why verification loops matter
+
+Codex can generate fast output.
+Verification loops decide whether that output is trustworthy.
+
+Without an explicit loop, teams ship based on confidence language:
+
+- "looks good"
+- "should pass"
+- "probably safe"
+
+Those are not evidence.
+
+## The done contract: claim -> command -> output
+
+Every completion claim should map to a concrete check.
+
+- **Claim**: what you say is true
+- **Command**: what proves it
+- **Output**: the evidence you actually saw
+
+If one link is missing, the claim is incomplete.
+
+## Risk-tiered verification depth
+
+| Risk tier | Typical change | Minimum loop | Recommended loop |
+|-----------|----------------|--------------|------------------|
+| Low | copy/docs/UI micro-change | lint + targeted check | lint + build + quick review snapshot |
+| Medium | refactor + logic edits | lint + tests + build | lint + tests + build + reviewer pass |
+| High | auth/billing/security/migration | lint + full tests + build | lint + full tests + build + verifier lane + rollback drill |
+
+Verification depth should scale with blast radius, not developer confidence.
+
+## Baseline command pack (example)
+
+```bash
+npm run lint
+npm run test
+npm run build
+```
+
+Add domain checks for your stack (migration tests, smoke scripts, contract tests).
+The baseline pack is a floor, not a ceiling.
+
+## Evidence freshness rules
+
+Old test output is not valid evidence for new changes.
+
+Use these freshness rules:
+
+1. Re-run checks after the latest meaningful edit.
+2. Attach outputs tied to the current diff.
+3. Mark skipped checks explicitly and explain why.
+4. Re-run at least critical checks after conflict resolution.
+
+Fresh evidence reduces false confidence.
+
+## Verification handoff template
+
+```md
+### Verification Summary
+
+- Scope: <what was verified>
+- Commands run:
+  - <command>: <pass/fail>
+- Key outputs:
+  - <short result lines>
+- Skipped checks:
+  - <none or reason>
+- Residual risks:
+  - <none or list>
+- Verdict:
+  - pass | rework required
+```
+
+Keep it short, but never ambiguous.
+
+## Parallel verification lanes
+
+For medium/high-risk work, split verification from implementation:
+
+- **Implementation lane**: writes code
+- **Verification lane**: reruns checks, audits diff, challenges assumptions
+- **Review lane**: decides merge readiness
+
+This prevents a single lane from grading its own homework.
+
+## Failure triage protocol
+
+When checks fail:
+
+1. classify failure: pre-existing vs regression
+2. attach failing command output
+3. isolate minimal fix
+4. re-run only relevant quick checks
+5. re-run full gate before merge
+
+Fast loops are good. Skipping final gate is not.
+
+## Pre-merge proof checklist
+
+Before merge, confirm:
+
+- verification commands were run on current diff
+- failures are resolved or explicitly accepted
+- review scope matches claimed change scope
+- residual risks are documented
+- rollback path exists for non-trivial changes
+
+## Anti-patterns to avoid
+
+### Treating lint pass as total quality proof
+
+Lint is necessary, never sufficient.
+
+### Reusing CI output from older commits
+
+Evidence must match the current state.
+
+### Hiding skipped checks
+
+Skipped checks are acceptable only when declared with reason.
+
+### Merging with unresolved ownership
+
+If no one owns the final verification verdict, the system is already broken.
+
+## Quick checklist
+
+Before handoff:
+
+- claim-command-output chain complete
+- evidence fresh
+- skipped checks declared
+
+Before merge:
+
+- gate commands passed
+- reviewer/verifier verdict captured
+- residual risks + rollback documented
+
+Codex speed helps you move fast. Verification loops help you move safely.
