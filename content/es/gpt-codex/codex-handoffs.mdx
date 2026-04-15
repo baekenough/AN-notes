@@ -1,0 +1,202 @@
+---
+title: Handoffs en Codex — Convertir Lanes Paralelos en Resultados Listos para Merge
+description: Aprende a transferir trabajo entre subagentes, worktrees, verificación y
+  reviewers sin perder contexto, evidencia ni ownership.
+difficulty: advanced
+tags:
+- handoff
+- orquestación
+- review
+- colaboración
+connections:
+- slug: codex-worktrees
+  tool: gpt-codex
+  type: prerequisite
+- slug: codex-subagents
+  tool: gpt-codex
+  type: combines
+- slug: codex-ci-cd-workflows
+  tool: gpt-codex
+  type: enhances
+- slug: multi-agent-workflow
+  tool: claude-code
+  type: compare
+featured: false
+order: 10
+date: '2026-04-15'
+---
+
+> **Referencias Oficiales**: [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [Subagents](https://developers.openai.com/codex/subagents) · [Review](https://developers.openai.com/codex/app/review) · [Worktrees](https://developers.openai.com/codex/app/worktrees)
+
+<!-- curriculum:start -->
+## Ruta del currículo
+
+1. [Primeros Pasos con Codex](./codex-getting-started) — primeras victorias locales
+2. [Instrucciones de Codex](./codex-instructions) — reglas y defaults estables
+3. [Sandboxing en Codex](./codex-sandbox) — límites de ejecución seguros
+4. [Diseño de Tareas en Codex](./codex-task-design) — dar forma revisable al trabajo
+5. [Skills de Codex](./codex-skills) — empaquetar procedimientos repetidos
+6. [Subagentes de Codex](./codex-subagents) — exploración paralela y delegación
+7. [MCP en Codex](./codex-mcp) — conectar contexto externo
+8. [Reviews y Automatizaciones con Codex](./codex-ci-cd-workflows) — volver repetible el workflow
+9. [Codex Worktrees](./codex-worktrees) — aislar ejecución paralela larga
+10. **Handoffs en Codex** — transferir contexto y ownership sin perder calidad ← **Estás aquí**
+
+### Documentación oficial usada en esta guía
+- **Descomposición de tareas y restricciones explícitas** — [Best Practices](https://developers.openai.com/codex/learn/best-practices)
+- **Lanes paralelos con workers delegados** — [Subagents](https://developers.openai.com/codex/subagents)
+- **Checkpoints de review por alcance de diff** — [Review](https://developers.openai.com/codex/app/review)
+- **Modelo de aislamiento branch/archivos** — [Worktrees](https://developers.openai.com/codex/app/worktrees)
+<!-- curriculum:end -->
+
+## Por qué los handoffs son donde se fuga la calidad
+
+Muchos equipos ya generan código rápido con Codex.
+Muchos menos pueden **transferir** trabajo entre lanes sin fricción.
+
+Los handoffs suelen fallar cuando falta uno de estos campos:
+
+- estado actual del objetivo
+- evidencia de verificación
+- alcance exacto del diff
+- nota de riesgo y plan de rollback
+- siguiente owner explícito
+
+Si falta uno, el siguiente lane debe redescubrir contexto. Ahí se pierde tiempo y calidad.
+
+## Contrato mínimo de handoff
+
+Trata cada handoff lane-a-lane como un API pequeño.
+Exige siempre estos cinco campos:
+
+1. **Estado de objetivo** — done / partial / blocked
+2. **Evidencia** — salida de lint/tests/build (o motivo de omisión)
+3. **Alcance del diff** — qué cambió y dónde
+4. **Nota de riesgo** — rollback y edge cases abiertos
+5. **Siguiente owner** — quién toma exactamente la siguiente acción
+
+Un contrato compacto es más fuerte que un resumen largo.
+
+## Profundidad de evidencia por tipo de cambio
+
+| Tipo de cambio | Evidencia mínima | Evidencia recomendada |
+|----------------|------------------|------------------------|
+| Cambios UI/contenido | lint + sanity local de render | lint + build + chequeo visual |
+| Refactor sin cambio de comportamiento | lint + tests objetivo | lint + tests + snapshot de review scope |
+| Lógica de auth/billing/seguridad | lint + tests + build | lint + suite completa + sign-off de reviewer + nota de rollback |
+| Migración/cambio de shape de datos | lint + checks de migración | lint + tests de migración + plan de rollback + lane de verificación |
+
+Cuanto mayor el blast radius, más robusta debe ser la evidencia del handoff.
+
+## Plantilla copy-ready de handoff
+
+```md
+### Handoff: <lane-name> -> <lane-name>
+
+- Estado de objetivo: done | partial | blocked
+- Evidencia:
+  - lint: <pass/fail + command>
+  - tests: <pass/fail + command>
+  - build: <pass/fail + command>
+- Alcance del diff:
+  - directorios cambiados: <list>
+  - archivos clave: <list>
+- Nota de riesgo:
+  - rollback: <short>
+  - edge cases abiertos: <list or none>
+- Siguiente owner: <person/role/lane>
+- Próxima acción antes de: <date/time or trigger>
+```
+
+Usa la misma plantilla en issues, comentarios de PR o runbooks internos. La consistencia importa más que la herramienta.
+
+## Patrones de routing de lanes que funcionan
+
+### Patrón A — Explorar y luego ejecutar
+
+1. El lane de subagentes explora 2–3 opciones.
+2. El lane principal elige una.
+3. El lane en worktree ejecuta.
+4. El lane de verificación valida antes del PR.
+
+### Patrón B — Ejecutar + verificar independiente
+
+1. Worktree de implementación crea candidato.
+2. Worktree de verificación independiente repite checks y audita diff.
+3. Lane de review decide merge o retrabajo.
+
+### Patrón C — Flujo docs/release seguro
+
+1. Implementación mergeada.
+2. Lane docs/release actualiza solo docs y release notes.
+3. Reviewer valida consistencia user-facing.
+
+Importa menos el nombre del patrón que la claridad del ownership en cada paso.
+
+## Anti-patrones comunes de handoff
+
+### “Se ve bien” sin salida de comandos
+
+Sin evidencia, el siguiente lane repite validación desde cero.
+
+### “Alguien revíselo” sin owner
+
+El trabajo se estanca por vacío de ownership.
+
+### Entregar diff gigante y mezclado al verifier
+
+No puede aislar riesgo rápido. Divide lanes antes.
+
+### Riesgo conocido sin rollback definido
+
+El plan de rollback se inventa durante el incidente.
+
+## Auditoría rápida pre-merge (15 minutos)
+
+Antes de merge, pregunta:
+
+- ¿Están los cinco campos del contrato?
+- ¿La evidencia es fresca (no reciclada)?
+- ¿El alcance del diff coincide con el objetivo declarado?
+- ¿Cada acción pendiente tiene siguiente owner nombrado?
+- ¿El rollback es realista para el cambio?
+
+Si una respuesta es no, haz una vuelta más de handoff.
+
+## Protocolo de escalación para lanes bloqueados
+
+Si un lane queda bloqueado más de un ciclo:
+
+1. marca estado como `blocked`
+2. adjunta evidencia concreta del bloqueo
+3. propone una ruta alternativa
+4. asigna siguiente owner explícito
+5. define próximo check-in con timebox
+
+Los bloqueos son normales. Los bloqueos sin owner son caros.
+
+## Versión para desarrollador individual
+
+Incluso trabajando solo, mantén el contrato entre tus propias fases:
+
+- tú como builder
+- tú como verifier
+- tú como reviewer
+
+Parece redundante al inicio, pero reduce puntos ciegos por exceso de confianza.
+
+## Checklist rápido
+
+Antes del handoff:
+
+- cinco campos del contrato completos
+- evidencia adjunta
+- siguiente owner nombrado
+
+Antes del merge:
+
+- feedback del lane de verificación resuelto
+- review scope limpio
+- rollback documentado
+
+Buen output de Codex no alcanza por sí solo. Son los buenos handoffs los que vuelven confiable el workflow paralelo a escala de equipo.

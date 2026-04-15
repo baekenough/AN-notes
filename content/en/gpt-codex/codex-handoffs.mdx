@@ -1,0 +1,202 @@
+---
+title: Codex Handoffs — Turning Parallel Lanes into Merge-Ready Outcomes
+description: Learn how to move work across subagents, worktrees, verification lanes,
+  and reviewers without dropping context, evidence, or ownership.
+difficulty: advanced
+tags:
+- handoff
+- orchestration
+- review
+- collaboration
+connections:
+- slug: codex-worktrees
+  tool: gpt-codex
+  type: prerequisite
+- slug: codex-subagents
+  tool: gpt-codex
+  type: combines
+- slug: codex-ci-cd-workflows
+  tool: gpt-codex
+  type: enhances
+- slug: multi-agent-workflow
+  tool: claude-code
+  type: compare
+featured: false
+order: 10
+date: '2026-04-15'
+---
+
+> **Official References**: [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [Subagents](https://developers.openai.com/codex/subagents) · [Review](https://developers.openai.com/codex/app/review) · [Worktrees](https://developers.openai.com/codex/app/worktrees)
+
+<!-- curriculum:start -->
+## Curriculum path
+
+1. [Codex Getting Started](./codex-getting-started) — first local wins
+2. [Codex Instructions](./codex-instructions) — stable rules and defaults
+3. [Codex Sandboxing](./codex-sandbox) — safe execution boundaries
+4. [Codex Task Design](./codex-task-design) — shape reviewable tasks
+5. [Codex Skills](./codex-skills) — package repeatable procedure
+6. [Codex Subagents](./codex-subagents) — parallel exploration and delegation
+7. [Codex MCP](./codex-mcp) — connect external context
+8. [Codex Reviews and Automations](./codex-ci-cd-workflows) — make workflows repeatable
+9. [Codex Worktrees](./codex-worktrees) — isolate long parallel execution
+10. **Codex Handoffs** — transfer context and ownership without quality loss ← **You are here**
+
+### Official docs used in this guide
+- **Task decomposition and explicit constraints** — [Best Practices](https://developers.openai.com/codex/learn/best-practices)
+- **Parallel lanes via delegated workers** — [Subagents](https://developers.openai.com/codex/subagents)
+- **Diff-scoped review checkpoints** — [Review](https://developers.openai.com/codex/app/review)
+- **Branch/file isolation model** — [Worktrees](https://developers.openai.com/codex/app/worktrees)
+<!-- curriculum:end -->
+
+## Why handoffs are where quality leaks
+
+Many teams can generate code quickly with Codex.
+Fewer teams can **transfer** work cleanly between lanes.
+
+Handoffs usually fail when one of these is missing:
+
+- current goal status
+- evidence from verification
+- exact diff scope
+- risk notes and rollback path
+- explicit next owner
+
+If even one field is missing, the next lane has to rediscover context. That is where time and quality disappear.
+
+## The minimum handoff contract
+
+Treat each lane-to-lane handoff like a small API.
+Require these five fields every time:
+
+1. **Goal status** — done / partial / blocked
+2. **Evidence** — lint/tests/build output (or explicit reason omitted)
+3. **Diff scope** — what changed and where
+4. **Risk note** — rollback path and unresolved edge cases
+5. **Next owner** — exactly who takes the next action
+
+A compact contract beats long narrative summaries.
+
+## Evidence depth by change type
+
+| Change type | Minimum evidence | Recommended evidence |
+|-------------|------------------|----------------------|
+| UI/content-only updates | lint + local render sanity | lint + build + screenshot check |
+| Refactor without behavior change | lint + target tests | lint + tests + review scope snapshot |
+| Auth/billing/security logic | lint + tests + build | lint + full tests + reviewer sign-off + rollback note |
+| Migration/data shape change | lint + migration checks | lint + migration tests + rollback plan + verifier lane |
+
+The higher the blast radius, the heavier the handoff evidence should be.
+
+## Copy-ready handoff template
+
+```md
+### Handoff: <lane-name> -> <lane-name>
+
+- Goal status: done | partial | blocked
+- Evidence:
+  - lint: <pass/fail + command>
+  - tests: <pass/fail + command>
+  - build: <pass/fail + command>
+- Diff scope:
+  - changed dirs: <list>
+  - notable files: <list>
+- Risk note:
+  - rollback path: <short>
+  - unresolved edge cases: <list or none>
+- Next owner: <person/role/lane>
+- Next action due: <date/time or trigger>
+```
+
+Use the same template in issues, PR comments, or internal runbooks. Consistency matters more than tool choice.
+
+## Lane routing patterns that work
+
+### Pattern A — Explore then execute
+
+1. Subagent lane explores 2–3 options.
+2. Main lane selects one option.
+3. Worktree lane executes.
+4. Verification lane validates before PR.
+
+### Pattern B — Execute + independent verify
+
+1. Implementation worktree ships code candidate.
+2. Separate verification worktree reruns checks and audits diff.
+3. Reviewer lane decides merge or rework.
+
+### Pattern C — Release-safe docs flow
+
+1. Implementation merged.
+2. Docs/release lane updates docs and release notes only.
+3. Reviewer confirms user-facing consistency.
+
+The pattern is less important than keeping ownership explicit at every step.
+
+## Common handoff anti-patterns
+
+### “Looks good” without command output
+
+Without evidence, the next lane repeats verification from scratch.
+
+### “Someone should review this” without naming owner
+
+Work stalls in an ownership vacuum.
+
+### Huge mixed diff handed to verifier
+
+Verifier cannot isolate risk quickly. Split into narrower lanes earlier.
+
+### Risk known but rollback unspecified
+
+Teams discover rollback strategy during incident time, which is too late.
+
+## Fast pre-merge handoff audit (15 minutes)
+
+Before merge, ask:
+
+- Are all five handoff fields present?
+- Is evidence fresh (not copied from older runs)?
+- Does diff scope match the stated goal?
+- Is there a named next owner for each remaining action?
+- Is rollback realistic for the changed surface?
+
+If one answer is no, do one more handoff cycle.
+
+## Escalation protocol for blocked lanes
+
+When a lane is blocked for more than one cycle:
+
+1. mark status as `blocked`
+2. attach concrete blocker evidence
+3. propose one fallback path
+4. assign next owner explicitly
+5. timebox next check-in
+
+Blocked lanes are normal. Unowned blocked lanes are expensive.
+
+## Solo-developer version
+
+Even alone, keep the same contract between your own phases:
+
+- builder-you
+- verifier-you
+- reviewer-you
+
+It feels redundant at first, but it prevents self-confident blind spots.
+
+## Quick checklist
+
+Before handoff:
+
+- five contract fields completed
+- evidence attached
+- next owner named
+
+Before merge:
+
+- verifier lane feedback resolved
+- review scope clean
+- rollback path documented
+
+Great Codex output is not enough. Great handoffs are what make parallel workflows reliable at team scale.
