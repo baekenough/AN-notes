@@ -1,0 +1,133 @@
+---
+title: Simulacros de Resiliencia Caótica en Codex — Ensayar Fallos Antes de Recibirlos
+description: Playbook avanzado para equipos Codex que valida preparación de incidentes mediante mutación de escenarios, scorecards medibles y decisiones explícitas por checkpoint.
+difficulty: advanced
+tags:
+- advanced
+- operations
+- reliability
+- incident-response
+connections:
+- slug: codex-post-incident-hardening-loop
+  tool: gpt-codex
+  type: prerequisite
+- slug: codex-incident-recovery-playbook
+  tool: gpt-codex
+  type: combines
+- slug: codex-operating-manual
+  tool: gpt-codex
+  type: enhances
+- slug: claude-chaos-resilience-drills
+  tool: claude-code
+  type: compare
+featured: false
+order: 19
+date: '2026-04-16'
+---
+
+> **Official References**: [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [Review](https://developers.openai.com/codex/app/review) · [Worktrees](https://developers.openai.com/codex/app/worktrees) · [Automations](https://developers.openai.com/codex/app/automations)
+
+## Por qué los simulacros de resiliencia son obligatorios a escala
+
+Los planes de incidente prueban intención.
+Los simulacros prueban capacidad.
+
+Sin ensayo bajo presión, la calidad de recuperación es una suposición.
+
+## Tiers de madurez de simulacro
+
+| Tier | Alcance | Cadencia | Criterio de aprobación |
+|---|---|---|---|
+| Tabletop de decisiones | ownership y lógica de bifurcación | semanal | sin ownership ambiguo en decisiones |
+| Simulación de servicio | un sistema o lane | quincenal | ventana objetivo de recuperación cumplida con evidencia |
+| Simulación de alta fidelidad | recuperación multi-lane coordinada | mensual | mitigación+verificación+comms+seguimiento completos |
+
+## Paquete de diseño de escenario
+
+Todo simulacro inicia con:
+
+- hipótesis de escenario
+- mecanismo de trigger
+- límite de radio de impacto
+- criterios de abortar
+- comandante y owner del score
+
+Campos ausentes generan resultados ruidosos.
+
+## Orquestación por lanes
+
+- **Lane de inyección**: activar fallo controlado
+- **Lane de respuesta**: ejecutar decisión de mitigación
+- **Lane de verificación**: validar comportamiento restaurado
+- **Lane de comunicación**: gestionar timeline y escalaciones
+
+Un único comandante debe mantener disciplina de checkpoints.
+
+## Scorecard de resiliencia
+
+Score binario por fila:
+
+- latencia de detección en objetivo
+- ownership explícito durante todo el flujo
+- mitigación reversible
+- evidencia fresca de verificación
+- owners de seguimiento con fecha asignada
+
+Puntaje mínimo de aprobación: 4/5.
+
+## Disciplina de decisiones por checkpoint
+
+En cada checkpoint exige una decisión explícita:
+
+1. continuar mitigación
+2. rollback a revisión estable
+3. escalar y pausar rollout
+
+Decisiones implícitas crean rutas de fallo ocultas.
+
+## Política de mutación de escenarios
+
+No repitas simulaciones idénticas.
+
+Mutar al menos una variable por ciclo:
+
+- timing de falla
+- clase de dependencia
+- disponibilidad de owners
+- restricciones de comunicación
+
+La mutación desarrolla resiliencia adaptativa.
+
+## Programa trimestral de simulacros
+
+- ejecutar mínimo una simulación de alta fidelidad
+- rotar comandante y observadores
+- revisar dimensiones con score bajo repetido
+- retirar controles que no mejoren la tendencia de score
+
+Simulacros de alta calidad superan volumen sin señal.
+
+## Anti-patrones avanzados
+
+### Inflar score sin evidencia
+
+Optimizar métricas sin prueba produce confianza falsa.
+
+### Comandante sobrecargado con ownership de lanes
+
+Una sola persona no debe sostener todas las señales.
+
+### Seguimientos logueados sin fecha límite
+
+Trabajo sin fecha es riesgo latente de incidente.
+
+## Checklist rápido
+
+Antes de cerrar ciclo de simulacro:
+
+- scorecard archivado
+- decisiones por checkpoint registradas
+- mutación de escenario documentada
+- owners y fechas de seguimiento asignados
+
+Codex acelera la ejecución de respuesta. Los simulacros validan la confiabilidad de esa respuesta.

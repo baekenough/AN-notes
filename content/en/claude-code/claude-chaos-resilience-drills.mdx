@@ -1,0 +1,127 @@
+---
+title: "Claude Chaos Resilience Drills"
+description: "Advanced drill system for Claude teams to rehearse failure scenarios and prove operational resilience before real incidents." 
+difficulty: advanced
+tags: ["advanced", "operations", "reliability", "incident-response"]
+connections:
+  - slug: "claude-post-incident-hardening-loop"
+    tool: "claude-code"
+    type: "prerequisite"
+  - slug: "claude-incident-recovery-playbook"
+    tool: "claude-code"
+    type: "combines"
+  - slug: "claude-operating-manual"
+    tool: "claude-code"
+    type: "enhances"
+  - slug: "codex-chaos-resilience-drills"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 13
+date: "2026-04-16"
+---
+
+> **Official References**: [Best Practices](https://docs.anthropic.com/en/docs/claude-code/best-practices) · [Hooks](https://docs.anthropic.com/en/docs/claude-code/hooks) · [Security](https://docs.anthropic.com/en/docs/claude-code/security) · [GitHub Actions](https://docs.anthropic.com/en/docs/claude-code/github-actions)
+
+## Why drills are mandatory at advanced maturity
+
+A runbook that is never exercised is only documentation.
+
+Resilience drills convert written policy into verified team behavior.
+
+## Drill tier model
+
+| Tier | Scope | Frequency | Success signal |
+|---|---|---|---|
+| Tabletop | decision flow + ownership | weekly | all owners make correct decision handoffs |
+| Partial simulation | one lane or one subsystem | biweekly | target SLO restored within agreed window |
+| Full simulation | cross-lane end-to-end recovery | monthly | recovery + communication + follow-up all completed |
+
+## Pre-drill design packet
+
+Prepare before every drill:
+
+- scenario statement
+- expected failure signature
+- blast-radius boundary
+- stop condition
+- observers and scoring owner
+
+No design packet means results cannot be compared over time.
+
+## Execution lane split
+
+- **Failure injection lane**: trigger scenario safely
+- **Response lane**: execute containment and mitigation
+- **Verification lane**: run checks and evidence capture
+- **Comms lane**: timeline updates and escalation notices
+
+Assign one owner per lane and one global drill commander.
+
+## Resilience scorecard
+
+Score each drill (0/1 per row):
+
+- detection happened in target window
+- ownership handoff stayed explicit
+- mitigation decision was reversible
+- verification evidence was fresh
+- post-drill follow-up owner assigned
+
+Score below 4/5 means retry with narrowed scope.
+
+## Decision checkpoint protocol
+
+At each checkpoint, force a clear choice:
+
+1. continue mitigation
+2. rollback to stable state
+3. escalate and pause rollout
+
+Unstated decisions are hidden risks.
+
+## Failure-handling rule
+
+If drill execution diverges from scenario assumptions:
+
+- stop simulation
+- record divergence
+- convert divergence into next drill input
+
+Never smooth over unexpected behavior.
+
+## Quarterly resilience program
+
+Every quarter:
+
+- run at least one full-scope drill
+- rotate drill commander role
+- review recurring low-score dimensions
+- retire controls that never move reliability
+
+Resilience improves through iteration quality, not drill count.
+
+## Advanced anti-patterns
+
+### Drill becomes performance theater
+
+If people optimize for optics, reliability signal collapses.
+
+### Same scenario repeated with no mutation
+
+Teams memorize one path instead of building adaptive capability.
+
+### Post-drill actions tracked without owners
+
+Unowned actions become reliability debt.
+
+## Quick checklist
+
+Before closing a drill cycle:
+
+- scorecard captured
+- decision checkpoints logged
+- follow-up owners assigned
+- next scenario drafted
+
+Claude can help teams respond faster. Drills prove teams can respond correctly.

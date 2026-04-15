@@ -1,0 +1,124 @@
+---
+title: "Gemini Chaos Resilience Drills"
+description: "Advanced resilience-drill system for Gemini CLI teams to rehearse incident pressure and validate operational readiness." 
+difficulty: advanced
+tags: ["advanced", "operations", "reliability", "incident-response"]
+connections:
+  - slug: "gemini-post-incident-hardening-loop"
+    tool: "gemini-cli"
+    type: "prerequisite"
+  - slug: "gemini-incident-recovery-playbook"
+    tool: "gemini-cli"
+    type: "combines"
+  - slug: "gemini-operating-manual"
+    tool: "gemini-cli"
+    type: "enhances"
+  - slug: "codex-chaos-resilience-drills"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 13
+date: "2026-04-16"
+---
+
+> **Official References**: [Get Started](https://geminicli.com/docs/get-started/) · [CLI Commands](https://geminicli.com/docs/cli/commands/) · [Sub-agents](https://geminicli.com/docs/core/subagents/) · [Skills](https://geminicli.com/docs/cli/skills/)
+
+## Why Gemini teams need resilience drills
+
+Hardening plans without rehearsal decay quickly.
+
+Drills verify whether teams can execute under uncertainty, not just describe process.
+
+## Drill tiers
+
+| Tier | Scope | Cadence | Exit signal |
+|---|---|---|---|
+| Decision tabletop | ownership and branching decisions | weekly | no ambiguous owner handoffs |
+| Service slice simulation | one workflow/surface | biweekly | recovery target met with evidence |
+| Full operational simulation | multi-lane coordinated recovery | monthly | complete response + comms + follow-up |
+
+## Drill setup packet
+
+Define before start:
+
+- scenario and trigger
+- expected detection signal
+- isolation boundary
+- abort condition
+- score owner
+
+If setup quality is weak, drill metrics become noisy.
+
+## Lane roles
+
+- **Injection lane**: simulate fault safely
+- **Response lane**: choose mitigation and apply
+- **Verification lane**: prove state recovery
+- **Communication lane**: maintain timeline updates
+
+One commander should enforce checkpoint discipline.
+
+## Reliability scorecard (0/1)
+
+- detection latency within target
+- ownership remained explicit
+- mitigation remained reversible
+- verification evidence is fresh
+- follow-up owner assigned
+
+Threshold under 4/5 requires rerun.
+
+## Checkpoint decision protocol
+
+At each major checkpoint choose explicitly:
+
+1. continue mitigation
+2. rollback
+3. escalate and pause
+
+Delayed decisions are hidden instability.
+
+## Scenario mutation rule
+
+Never run identical drills repeatedly.
+
+Mutate one variable every cycle:
+
+- timing
+- dependency failure type
+- ownership availability
+- communication channel constraints
+
+Mutation prevents false confidence.
+
+## Quarterly reliability review
+
+- run at least one full simulation
+- rotate commander and observers
+- identify persistent low-score rows
+- remove controls that produce no reliability gain
+
+## Advanced anti-patterns
+
+### Scoring without evidence links
+
+Numbers without evidence cannot drive action.
+
+### Commander also owns all lanes
+
+This destroys independent signal and overloads decisions.
+
+### Follow-up tracked with no due date
+
+Undated actions are deferred risk.
+
+## Quick checklist
+
+Before closing a drill cycle:
+
+- scorecard stored
+- checkpoint decisions logged
+- scenario mutation recorded
+- follow-up owners assigned
+
+Gemini CLI increases execution speed. Drills ensure reliability keeps up.

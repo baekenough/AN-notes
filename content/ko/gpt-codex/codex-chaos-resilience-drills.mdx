@@ -1,0 +1,133 @@
+---
+title: Codex 카오스 복원력 드릴 — 실패가 오기 전에 리허설하기
+description: Codex 팀이 시나리오 변이, 측정 가능한 스코어카드, 명시적 체크포인트 의사결정을 통해 사고 준비도를 검증하는 고급 복원력 드릴 플레이북.
+difficulty: advanced
+tags:
+- advanced
+- operations
+- reliability
+- incident-response
+connections:
+- slug: codex-post-incident-hardening-loop
+  tool: gpt-codex
+  type: prerequisite
+- slug: codex-incident-recovery-playbook
+  tool: gpt-codex
+  type: combines
+- slug: codex-operating-manual
+  tool: gpt-codex
+  type: enhances
+- slug: claude-chaos-resilience-drills
+  tool: claude-code
+  type: compare
+featured: false
+order: 19
+date: '2026-04-16'
+---
+
+> **Official References**: [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [Review](https://developers.openai.com/codex/app/review) · [Worktrees](https://developers.openai.com/codex/app/worktrees) · [Automations](https://developers.openai.com/codex/app/automations)
+
+## 왜 팀 스케일에서 복원력 드릴이 필수인가
+
+사고 계획은 의도를 증명합니다.
+드릴은 역량을 증명합니다.
+
+압박 상황 리허설이 없으면 복구 품질은 추측에 가깝습니다.
+
+## 드릴 성숙도 티어
+
+| 티어 | 범위 | 주기 | 통과 기준 |
+|---|---|---|---|
+| 의사결정 테이블탑 | 오너십 + 분기 로직 | 매주 | 모호한 의사결정 오너 없음 |
+| 서비스 시뮬레이션 | 단일 시스템/레인 | 격주 | 근거 포함 목표 복구 시간 달성 |
+| 고충실도 시뮬레이션 | 다중 레인 협업 복구 | 매월 | 완화+검증+커뮤니케이션+후속조치 완료 |
+
+## 시나리오 설계 패킷
+
+모든 드릴은 아래로 시작합니다.
+
+- 시나리오 가설
+- 트리거 메커니즘
+- 영향 반경 경계
+- 중단 기준
+- 커맨더와 스코어 오너
+
+패킷 항목이 비면 결과 노이즈가 커집니다.
+
+## 레인 오케스트레이션
+
+- **Injection 레인**: 통제된 실패 트리거
+- **Response 레인**: 완화 의사결정 실행
+- **Verification 레인**: 복구 동작 검증
+- **Comms 레인**: 타임라인/에스컬레이션 업데이트
+
+체크포인트 타이밍은 단일 드릴 커맨더가 엄격히 관리합니다.
+
+## 복원력 스코어카드
+
+항목별 이진 점수:
+
+- 탐지 지연이 목표 이내
+- 오너십이 끝까지 명시적 유지
+- 완화가 가역적으로 유지
+- 검증 근거가 최신
+- 후속 오너/기한 배정 완료
+
+최소 통과 점수는 4/5입니다.
+
+## 체크포인트 의사결정 규율
+
+각 체크포인트마다 아래 중 하나를 명시합니다.
+
+1. 완화 계속
+2. 안정 리비전으로 롤백
+3. 에스컬레이션 후 롤아웃 중지
+
+암묵적 의사결정은 숨은 실패 경로를 만듭니다.
+
+## 시나리오 변이 정책
+
+동일 시뮬레이션 반복을 금지합니다.
+
+매 사이클마다 최소 1개 변수 변이:
+
+- 장애 타이밍
+- 의존성 클래스
+- 오너 가용성
+- 커뮤니케이션 제약
+
+변이는 적응형 복원력을 만듭니다.
+
+## 분기별 드릴 프로그램
+
+- 최소 1회 고충실도 시뮬레이션 실행
+- 커맨더/옵저버 역할 순환
+- 반복 저점 항목 리뷰
+- 점수 추세에 기여하지 않는 통제 폐기
+
+양보다 질 높은 드릴이 중요합니다.
+
+## 고급 안티패턴
+
+### 근거 없는 점수 부풀리기
+
+증거 없는 지표 최적화는 거짓 확신을 만듭니다.
+
+### 커맨더의 레인 겸임 과부하
+
+한 사람이 모든 신호를 잡으면 결정 품질이 떨어집니다.
+
+### 기한 없는 후속 조치 로그
+
+기한 없는 작업은 잠재적 사고 리스크입니다.
+
+## 빠른 체크리스트
+
+드릴 사이클 종료 전:
+
+- 스코어카드 보관
+- 체크포인트 의사결정 기록
+- 시나리오 변이 문서화
+- 후속 오너/기한 배정
+
+Codex는 대응 실행 속도를 올립니다. 드릴은 대응 신뢰성을 검증합니다.

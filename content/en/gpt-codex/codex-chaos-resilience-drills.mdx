@@ -1,0 +1,133 @@
+---
+title: Codex Chaos Resilience Drills — Rehearsing Failure Before It Finds You
+description: Advanced resilience-drill playbook for Codex teams to validate incident readiness through scenario mutation, measurable scorecards, and explicit checkpoint decisions.
+difficulty: advanced
+tags:
+- advanced
+- operations
+- reliability
+- incident-response
+connections:
+- slug: codex-post-incident-hardening-loop
+  tool: gpt-codex
+  type: prerequisite
+- slug: codex-incident-recovery-playbook
+  tool: gpt-codex
+  type: combines
+- slug: codex-operating-manual
+  tool: gpt-codex
+  type: enhances
+- slug: claude-chaos-resilience-drills
+  tool: claude-code
+  type: compare
+featured: false
+order: 19
+date: '2026-04-16'
+---
+
+> **Official References**: [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [Review](https://developers.openai.com/codex/app/review) · [Worktrees](https://developers.openai.com/codex/app/worktrees) · [Automations](https://developers.openai.com/codex/app/automations)
+
+## Why resilience drills are non-optional at scale
+
+Incident plans prove intent.
+Drills prove capability.
+
+If teams never rehearse under pressure, recovery quality is a guess.
+
+## Drill maturity tiers
+
+| Tier | Scope | Cadence | Pass criteria |
+|---|---|---|---|
+| Decision tabletop | ownership and branching logic | weekly | no ambiguous decision ownership |
+| Service simulation | one system or lane | biweekly | target recovery window met with evidence |
+| Full-fidelity simulation | multi-lane coordinated recovery | monthly | mitigation + verification + comms + follow-up complete |
+
+## Scenario design packet
+
+Every drill starts with:
+
+- scenario hypothesis
+- trigger mechanism
+- blast-radius boundary
+- abort criteria
+- commander and score owner
+
+Missing packet fields produce noisy results.
+
+## Lane orchestration
+
+- **Injection lane**: trigger controlled failure
+- **Response lane**: execute mitigation decision
+- **Verification lane**: validate restored behavior
+- **Comms lane**: run timeline and escalation updates
+
+One drill commander keeps checkpoint timing strict.
+
+## Resilience scorecard
+
+Binary score per row:
+
+- detection latency within target
+- ownership remained explicit
+- mitigation stayed reversible
+- verification evidence was fresh
+- follow-up owners assigned with deadlines
+
+Minimum passing score: 4/5.
+
+## Checkpoint decision discipline
+
+At each checkpoint, require one explicit decision:
+
+1. continue mitigation
+2. rollback to stable revision
+3. escalate and pause rollout
+
+Implicit decisions create hidden failure paths.
+
+## Scenario mutation policy
+
+Do not repeat identical simulations.
+
+Mutate at least one variable per cycle:
+
+- fault timing
+- dependency class
+- owner availability
+- communication constraints
+
+Mutation builds adaptive resilience.
+
+## Quarterly drill program
+
+- run one full-fidelity simulation minimum
+- rotate commander and observers
+- review repeated low-scoring dimensions
+- retire controls that do not move score trends
+
+High-quality drills beat high-volume drills.
+
+## Advanced anti-patterns
+
+### Score inflation without evidence
+
+Optimized metrics without proof give false confidence.
+
+### Commander overloaded with lane ownership
+
+Decision quality drops when one person holds all signals.
+
+### Follow-ups logged without due dates
+
+Undated work is latent incident risk.
+
+## Quick checklist
+
+Before closing a drill cycle:
+
+- scorecard archived
+- checkpoint decisions recorded
+- scenario mutation documented
+- follow-up owners and deadlines assigned
+
+Codex accelerates response execution. Drills verify response reliability.

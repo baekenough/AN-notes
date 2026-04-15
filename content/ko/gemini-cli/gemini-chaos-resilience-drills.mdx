@@ -1,0 +1,124 @@
+---
+title: "Gemini 카오스 복원력 드릴"
+description: "Gemini CLI 팀이 사고 압박 상황을 리허설하고 운영 준비도를 검증하기 위한 고급 복원력 드릴 체계."
+difficulty: advanced
+tags: ["advanced", "operations", "reliability", "incident-response"]
+connections:
+  - slug: "gemini-post-incident-hardening-loop"
+    tool: "gemini-cli"
+    type: "prerequisite"
+  - slug: "gemini-incident-recovery-playbook"
+    tool: "gemini-cli"
+    type: "combines"
+  - slug: "gemini-operating-manual"
+    tool: "gemini-cli"
+    type: "enhances"
+  - slug: "codex-chaos-resilience-drills"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 13
+date: "2026-04-16"
+---
+
+> **공식 참고 자료**: [Get Started](https://geminicli.com/docs/get-started/) · [CLI Commands](https://geminicli.com/docs/cli/commands/) · [Sub-agents](https://geminicli.com/docs/core/subagents/) · [Skills](https://geminicli.com/docs/cli/skills/)
+
+## 왜 Gemini 팀에 복원력 드릴이 필요한가
+
+리허설 없는 하드닝 계획은 빠르게 무력화됩니다.
+
+드릴은 팀이 프로세스를 설명하는지, 실제 압박에서 실행하는지 구분해줍니다.
+
+## 드릴 티어
+
+| 티어 | 범위 | 주기 | 종료 신호 |
+|---|---|---|---|
+| 의사결정 테이블탑 | 오너십/분기 의사결정 | 매주 | 모호한 오너 핸드오프 없음 |
+| 서비스 단위 시뮬레이션 | 단일 워크플로우/표면 | 격주 | 근거 포함 목표 복구 달성 |
+| 전체 운영 시뮬레이션 | 다중 레인 협업 복구 | 매월 | 대응+커뮤니케이션+후속조치 완료 |
+
+## 드릴 셋업 패킷
+
+시작 전 정의 항목:
+
+- 시나리오와 트리거
+- 예상 탐지 신호
+- 격리 경계
+- 중단 조건
+- 스코어 오너
+
+셋업 품질이 낮으면 드릴 지표가 노이즈화됩니다.
+
+## 레인 역할
+
+- **Injection 레인**: 장애를 안전하게 시뮬레이션
+- **Response 레인**: 완화안 선택 및 적용
+- **Verification 레인**: 복구 상태 증명
+- **Communication 레인**: 타임라인 업데이트 유지
+
+체크포인트 규율은 단일 커맨더가 강제해야 합니다.
+
+## 신뢰성 스코어카드 (0/1)
+
+- 탐지 지연이 목표 이내
+- 오너십이 명시적으로 유지됨
+- 완화가 가역적으로 유지됨
+- 검증 근거가 최신임
+- 후속 작업 오너가 배정됨
+
+4/5 미만은 재실행 대상입니다.
+
+## 체크포인트 의사결정 프로토콜
+
+주요 체크포인트마다 명시 선택:
+
+1. 완화 계속
+2. 롤백
+3. 에스컬레이션 후 일시 중지
+
+지연된 의사결정은 숨은 불안정성입니다.
+
+## 시나리오 변이 규칙
+
+동일 드릴을 반복 실행하지 마세요.
+
+매 사이클마다 최소 1개 변수 변경:
+
+- 타이밍
+- 의존성 실패 유형
+- 오너 가용성
+- 커뮤니케이션 채널 제약
+
+변이가 없으면 거짓 확신이 생깁니다.
+
+## 분기별 신뢰성 리뷰
+
+- 최소 1회 전체 시뮬레이션 실행
+- 커맨더/옵저버 역할 순환
+- 반복 저점 항목 식별
+- 신뢰성 개선 없는 통제 폐기
+
+## 고급 안티패턴
+
+### 근거 링크 없는 점수 기록
+
+근거 없는 숫자는 실행 개선으로 이어지지 않습니다.
+
+### 커맨더가 모든 레인까지 겸임
+
+독립 신호가 붕괴하고 의사결정 과부하가 발생합니다.
+
+### 기한 없는 후속 작업
+
+기한 없는 액션은 지연된 리스크입니다.
+
+## 빠른 체크리스트
+
+드릴 사이클 종료 전:
+
+- 스코어카드 저장
+- 체크포인트 의사결정 로그
+- 시나리오 변이 기록
+- 후속 오너 배정
+
+Gemini CLI는 실행 속도를 올립니다. 드릴은 신뢰성이 그 속도를 따라가게 만듭니다.

@@ -1,0 +1,124 @@
+---
+title: "Gemini Simulacros de Resiliencia Caótica"
+description: "Sistema avanzado de simulacros para equipos Gemini CLI que ensaya presión de incidente y valida preparación operativa."
+difficulty: advanced
+tags: ["advanced", "operations", "reliability", "incident-response"]
+connections:
+  - slug: "gemini-post-incident-hardening-loop"
+    tool: "gemini-cli"
+    type: "prerequisite"
+  - slug: "gemini-incident-recovery-playbook"
+    tool: "gemini-cli"
+    type: "combines"
+  - slug: "gemini-operating-manual"
+    tool: "gemini-cli"
+    type: "enhances"
+  - slug: "codex-chaos-resilience-drills"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 13
+date: "2026-04-16"
+---
+
+> **Referencias oficiales**: [Get Started](https://geminicli.com/docs/get-started/) · [CLI Commands](https://geminicli.com/docs/cli/commands/) · [Sub-agents](https://geminicli.com/docs/core/subagents/) · [Skills](https://geminicli.com/docs/cli/skills/)
+
+## Por qué los equipos Gemini necesitan simulacros
+
+Los planes de hardening sin ensayo se degradan rápido.
+
+Los simulacros prueban si el equipo ejecuta bajo incertidumbre, no solo si documenta procesos.
+
+## Tiers de simulacro
+
+| Tier | Alcance | Cadencia | Señal de salida |
+|---|---|---|---|
+| Tabletop de decisiones | ownership y bifurcaciones | semanal | sin handoffs ambiguos |
+| Simulación por slice | un flujo/superficie | quincenal | objetivo de recuperación con evidencia |
+| Simulación operativa completa | recuperación coordinada multi-lane | mensual | respuesta+comunicación+seguimiento completos |
+
+## Paquete de setup
+
+Define antes de iniciar:
+
+- escenario y trigger
+- señal esperada de detección
+- límite de aislamiento
+- condición de abortar
+- owner de score
+
+Si el setup es débil, las métricas del simulacro pierden valor.
+
+## Roles por lane
+
+- **Lane de inyección**: simular fallo de forma segura
+- **Lane de respuesta**: elegir y aplicar mitigación
+- **Lane de verificación**: probar recuperación
+- **Lane de comunicación**: mantener updates de timeline
+
+Un solo comandante debe mantener disciplina de checkpoints.
+
+## Scorecard de confiabilidad (0/1)
+
+- latencia de detección en ventana objetivo
+- ownership explícito durante todo el flujo
+- mitigación reversible
+- evidencia de verificación fresca
+- owner de seguimiento asignado
+
+Bajo 4/5 requiere rerun.
+
+## Protocolo de checkpoints
+
+En cada checkpoint mayor decide explícitamente:
+
+1. continuar mitigación
+2. rollback
+3. escalar y pausar
+
+Las decisiones tardías son inestabilidad oculta.
+
+## Regla de mutación de escenario
+
+No repitas simulacros idénticos.
+
+Mutar al menos una variable por ciclo:
+
+- timing
+- tipo de falla de dependencia
+- disponibilidad de owners
+- restricciones de canal de comunicación
+
+La mutación evita confianza falsa.
+
+## Revisión trimestral
+
+- ejecutar al menos una simulación completa
+- rotar comandante y observadores
+- detectar filas de score bajo persistente
+- retirar controles que no mejoran confiabilidad
+
+## Anti-patrones avanzados
+
+### Score sin enlaces de evidencia
+
+Números sin evidencia no guían acción.
+
+### Comandante dueño de todos los lanes
+
+Se pierde señal independiente y se sobrecarga la decisión.
+
+### Seguimiento sin fecha límite
+
+Acciones sin fecha son riesgo diferido.
+
+## Checklist rápido
+
+Antes de cerrar ciclo de simulacro:
+
+- scorecard guardado
+- decisiones de checkpoint registradas
+- mutación de escenario documentada
+- owners de seguimiento asignados
+
+Gemini CLI acelera ejecución. Los simulacros aseguran que la confiabilidad siga el ritmo.

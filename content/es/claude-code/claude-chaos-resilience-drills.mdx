@@ -1,0 +1,127 @@
+---
+title: "Claude Simulacros de Resiliencia Caótica"
+description: "Sistema avanzado de simulacros para equipos Claude que ensaya fallos críticos y valida resiliencia operativa antes de incidentes reales."
+difficulty: advanced
+tags: ["advanced", "operations", "reliability", "incident-response"]
+connections:
+  - slug: "claude-post-incident-hardening-loop"
+    tool: "claude-code"
+    type: "prerequisite"
+  - slug: "claude-incident-recovery-playbook"
+    tool: "claude-code"
+    type: "combines"
+  - slug: "claude-operating-manual"
+    tool: "claude-code"
+    type: "enhances"
+  - slug: "codex-chaos-resilience-drills"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 13
+date: "2026-04-16"
+---
+
+> **Referencias oficiales**: [Best Practices](https://docs.anthropic.com/en/docs/claude-code/best-practices) · [Hooks](https://docs.anthropic.com/en/docs/claude-code/hooks) · [Security](https://docs.anthropic.com/en/docs/claude-code/security) · [GitHub Actions](https://docs.anthropic.com/en/docs/claude-code/github-actions)
+
+## Por qué los simulacros son obligatorios en madurez avanzada
+
+Un runbook no ejercitado sigue siendo solo documentación.
+
+Los simulacros convierten política escrita en comportamiento operativo verificable.
+
+## Modelo de tiers de simulacro
+
+| Tier | Alcance | Frecuencia | Señal de éxito |
+|---|---|---|---|
+| Tabletop | flujo de decisiones + ownership | semanal | todos los owners ejecutan handoffs correctos |
+| Simulación parcial | un lane o subsistema | quincenal | SLO objetivo restaurado dentro de la ventana acordada |
+| Simulación completa | recuperación end-to-end multi-lane | mensual | recuperación + comunicación + seguimiento completados |
+
+## Paquete de diseño previo
+
+Antes de cada simulacro prepara:
+
+- declaración de escenario
+- firma esperada del fallo
+- límite de radio de impacto
+- condición de parada
+- observadores y owner de score
+
+Sin paquete de diseño no hay comparabilidad entre simulacros.
+
+## División por lanes
+
+- **Lane de inyección de fallo**: activa el escenario de forma segura
+- **Lane de respuesta**: ejecuta contención y mitigación
+- **Lane de verificación**: corre checks y captura evidencia
+- **Lane de comunicación**: actualiza timeline y avisos de escalación
+
+Asigna un owner por lane y un comandante global de simulacro.
+
+## Scorecard de resiliencia
+
+Puntúa cada simulacro con 0/1 por fila:
+
+- detección dentro de ventana objetivo
+- handoff de ownership explícito
+- decisión de mitigación reversible
+- evidencia de verificación fresca
+- owner de seguimiento asignado
+
+Si el score es < 4/5, repite con alcance más acotado.
+
+## Protocolo de checkpoints de decisión
+
+En cada checkpoint fuerza una opción explícita:
+
+1. continuar mitigación
+2. rollback a estado estable
+3. escalar y pausar rollout
+
+Decisiones implícitas son riesgo oculto.
+
+## Regla de manejo de desvíos
+
+Si la ejecución diverge del escenario:
+
+- detener simulación
+- registrar desvío
+- convertir desvío en input del siguiente simulacro
+
+Nunca maquilles comportamiento inesperado.
+
+## Programa trimestral de resiliencia
+
+Cada trimestre:
+
+- ejecutar al menos un simulacro completo
+- rotar rol de comandante
+- revisar dimensiones con score bajo recurrente
+- retirar controles que no mejoran confiabilidad
+
+La resiliencia mejora por calidad de iteración, no por cantidad de simulacros.
+
+## Anti-patrones avanzados
+
+### Simulacro como teatro de performance
+
+Si se optimiza para apariencia, la señal de resiliencia colapsa.
+
+### Repetir siempre el mismo escenario
+
+El equipo memoriza una ruta en vez de ganar adaptabilidad.
+
+### Seguimiento sin owners
+
+Acciones sin owner se convierten en deuda de confiabilidad.
+
+## Checklist rápido
+
+Antes de cerrar un ciclo de simulacro:
+
+- scorecard registrado
+- checkpoints de decisión logueados
+- owners de seguimiento asignados
+- próximo escenario borrador listo
+
+Claude puede acelerar la respuesta. Los simulacros prueban que la respuesta sea correcta.
