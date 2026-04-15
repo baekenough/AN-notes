@@ -114,3 +114,133 @@ Antes del consejo mensual de confiabilidad:
 - tendencia de follow-up burn-down revisada
 
 Gemini CLI acelera ejecución. Las métricas mantienen la confiabilidad responsable.
+
+<!-- expansion:depth-v2 -->
+## Diccionario de métricas (campos obligatorios)
+
+Define cada métrica con esquema único:
+
+```md
+### Metric Definition
+- Name:
+- Purpose:
+- Formula:
+- Data source:
+- Collection cadence:
+- Owner:
+- Red threshold:
+- Yellow threshold:
+- Expected action on breach:
+```
+
+Definiciones ambiguas generan discusiones interminables en incidentes.
+
+## Política SLO tipo error budget
+
+Define por severidad:
+
+- número de breaches permitidos por trimestre
+- umbral de escalación obligatoria
+- regla de freeze al agotar presupuesto
+
+### Ejemplo
+
+- SEV-1: cero tolerancia a incumplir ventana de contención
+- SEV-2: más de 2 breaches trimestrales obliga revisión de controles
+- SEV-3: seguimiento por tendencia
+
+## Preguntas de revisión semanal
+
+1. ¿Qué métrica se movió más vs baseline?
+2. ¿La variación es señal o ruido (muestra)?
+3. ¿Quién es el owner de acción esta semana?
+4. ¿En qué bucket de control cae la acción?
+5. ¿Qué cambio esperamos ver para la próxima revisión?
+
+## Tabla de mapeo de escalación
+
+| Tipo de breach | Owner inmediato | Owner secundario | SLA respuesta |
+|---|---|---|---|
+| MTTD red | observability owner | incident commander | 24h |
+| MTTC red | incident commander | release owner | mismo día |
+| MTTR red | platform owner | service owner | 24h |
+| freshness breach | verifier owner | commander | mismo día |
+| follow-up closure breach | reliability owner | team lead | 72h |
+
+## Formato de resumen ejecutivo mensual
+
+```md
+### Monthly Resilience Summary
+- Top improving metric:
+- Top regressing metric:
+- Repeated breach classes:
+- Controls added this month:
+- Controls retired this month:
+- Ownership risks:
+- Next-month focus:
+```
+
+Mantén el resumen corto y accionable.
+
+## Checks de calidad de datos
+
+Antes de confiar en el dashboard:
+
+- ratio de timestamps faltantes
+- incident IDs duplicados
+- etiquetas de severidad inconsistentes
+- latencia de refresco de fuentes
+
+Métrica precisa sobre datos rotos sigue siendo engañosa.
+
+## Reglas anti-gaming
+
+- no evaluar equipos por ranking de una sola métrica
+- exigir enlaces de evidencia para mejoras grandes
+- revisar percentiles de cola antes de celebrar promedios
+- premiar tendencia sostenida, no picos de una semana
+
+Estas reglas preservan integridad de métricas bajo presión organizacional.
+
+<!-- expansion:depth-v3 -->
+## Regla operativa del board de métricas
+
+El board mensual solo produce tres salidas:
+
+1. **keep** — la métrica sigue guiando acción
+2. **change** — requiere ajuste de definición/umbral
+3. **remove** — no aporta valor de decisión
+
+Así se evita crecimiento de dashboard sin valor.
+
+## Seguimiento de riesgo de cola
+
+Además del promedio, rastrea:
+
+- p90 / p95 / p99 para MTTD y MTTR
+- edad del follow-up más antiguo abierto
+- intervalo de recurrencia del breach más severo
+
+La cola muestra el riesgo real de incidente.
+
+## Playbook de breach SLO
+
+Cuando ocurre breach:
+
+- abrir registro el mismo día
+- asignar owner y verifier
+- definir control correctivo candidato
+- fijar checkpoint de revisión en 7 días
+
+Cierra solo con evidencia de efecto del control.
+
+## Criterios para retirar métricas
+
+Retira una métrica cuando se cumpla todo:
+
+- 2 trimestres sin acciones derivadas
+- solapamiento alto con otra métrica
+- stakeholders no explican uso práctico
+
+Retira con nota explícita, no borrado silencioso.
+

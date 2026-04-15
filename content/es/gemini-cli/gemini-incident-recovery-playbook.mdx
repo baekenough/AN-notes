@@ -110,3 +110,145 @@ Antes de cerrar:
 - seguimiento de hardening asignado
 
 Gemini acelera la respuesta. Este playbook mantiene la respuesta gobernable.
+
+<!-- expansion:depth-v2 -->
+## Biblioteca de escenarios (patrones de presión real)
+
+Usa esta biblioteca para practicar el playbook con presión real, no con caminos ideales.
+
+### Escenario A — Falla de tokens de auth tras release
+
+- **Señal:** pico súbito de 401/403 en un servicio.
+- **Riesgo:** degradación de confianza + carga de soporte.
+- **Rama de decisión:** rollback por flag vs hotfix acotado.
+- **Evidencia mínima:** endpoints fallando, primer hash defectuoso, check de seguridad de rollback.
+- **Handoff:** owner de investigación → owner de mitigación → owner de verificación.
+
+### Escenario B — Descuadre de estado de billing
+
+- **Señal:** eventos de revenue no cuadran con ledger.
+- **Riesgo:** exposición financiera/legal.
+- **Rama de decisión:** freeze de escrituras vs replay selectivo.
+- **Evidencia mínima:** tamaño de muestra, radio de impacto, frontera segura de replay.
+- **Handoff:** doble aprobación de data owner + commander.
+
+### Escenario C — Fuga de permisos en flujo edge
+
+- **Señal:** bypass de autorización de bajo volumen pero alto impacto.
+- **Riesgo:** escalación a incidente de seguridad.
+- **Rama de decisión:** rollback + revocación primero, parche después.
+- **Evidencia mínima:** caso mínimo reproducible, prueba de revocación, snapshot de auditoría.
+
+## Bundle de artefactos de war-room (plantillas)
+
+```md
+### Incident Command Snapshot
+- Incident ID:
+- Severity:
+- Incident commander:
+- Current phase: detection | containment | recovery | hardening
+- Latest stable revision:
+- Candidate mitigation path:
+- Risk if we wait 30 minutes:
+- Next checkpoint at:
+- Next owner:
+```
+
+```md
+### Checkpoint Decision Record
+- Timestamp:
+- Evidence reviewed:
+- Decision: continue mitigation | rollback | escalate+pause
+- Why this decision now:
+- Rejected alternatives:
+- Owner for execution:
+- Owner for verification:
+```
+
+## Plantillas de escalación
+
+### Escalación interna de ingeniería
+
+```md
+[INCIDENT][SEV-X] <short summary>
+Impact: <users/systems>
+Current decision: <path>
+Immediate ask: <approval/resource>
+Next update: <time>
+Owner: <name>
+```
+
+### Update para stakeholders
+
+```md
+Status: investigating/mitigating/recovered
+Customer impact: <plain language>
+Current mitigation: <plain language>
+Known unknowns: <top 1-2>
+Next committed update time: <time>
+```
+
+## Criterios de cierre (gate duro)
+
+Cerrar response solo cuando todo sea verdadero:
+
+1. mitigación ejecutada + verificada con evidencia fresca
+2. trigger de rollback + owner documentados para ventana de 24h
+3. riesgos residuales explícitos
+4. owners y fechas de hardening asignados
+5. timeline de comunicación completo
+
+Si falta uno, el incidente sigue activo.
+
+## Revisión de 30 minutos tras cierre
+
+Ejecuta revisión corta inmediata:
+
+- ¿qué señal llegó primero pero se ignoró?
+- ¿qué checkpoint demoró más?
+- ¿dónde se volvió ambiguo el ownership?
+- ¿qué guardrail habría reducido más el tiempo de resolución?
+- ¿qué métrica debemos agregar o redefinir?
+
+Convierte respuestas en backlog antes de perder contexto.
+
+<!-- expansion:depth-v3 -->
+## Checklist previo por proveedor
+
+Antes de ejecutar el playbook, fuerza estos prechecks:
+
+- **Estado del repositorio:** identificar revisión estable y validar rollback ejecutable ahora.
+- **Grafo de ownership:** commander, mitigation owner, verifier owner y comms owner nombrados.
+- **Canal de evidencia:** un único hilo/documento para todos los checkpoints.
+
+### Set mínimo de comandos previos
+
+```bash
+git rev-parse --short HEAD
+git log --oneline -n 5
+# agrega tu check de salud de servicio
+```
+
+Adjunta salida en el primer checkpoint.
+
+## Guardrails de calidad de decisión
+
+Cada decisión debe incluir tres frases:
+
+1. **reversibilidad** — ¿qué tan rápido deshacemos esto?
+2. **radio de impacto** — ¿qué empeora si fallamos?
+3. **verificación** — ¿qué señal exacta confirma éxito?
+
+Si falta una, la decisión no cumple nivel avanzado.
+
+## Test de aceptación de handoff
+
+Antes de pasar ownership:
+
+- límite de alcance explícito
+- unknowns abiertos listados
+- próximo checkpoint comprometido
+- trigger de rollback inmediato escrito
+
+Este test reduce pérdida de contexto entre lanes.
+

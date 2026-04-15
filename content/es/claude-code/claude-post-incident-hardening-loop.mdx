@@ -111,3 +111,125 @@ Antes de cerrar el bucle:
 - confirmación de owners registrada
 
 Claude acelera la recuperación. El hardening es lo que acumula confiabilidad.
+
+<!-- expansion:depth-v2 -->
+## Matriz de priorización de hardening
+
+Prioriza acciones con dos ejes:
+
+- **Magnitud de reducción de riesgo**
+- **Tiempo hasta adopción operativa**
+
+| Banda | Reducción de riesgo | Velocidad de adopción | Acción típica |
+|---|---|---|---|
+| P0 | alta | rápida | policy check bloqueante, gate de validación de rollback |
+| P1 | alta | media | suite de regresión por clase raíz |
+| P2 | media | rápida | mejoras de runbook y plantillas de handoff |
+| P3 | media/baja | lenta | limpieza estructural |
+
+Cierra P0/P1 antes de optimizar redacción.
+
+## Diseño de experimentos de hardening
+
+Gestiona cada acción como experimento:
+
+1. **Hipótesis:** "Si añadimos X, la clase Y baja Z%."
+2. **Medida:** métrica + ventana de observación.
+3. **Guardrail:** condición de rollback del propio control.
+4. **Owner:** uno de ejecución y otro de verificación.
+5. **Fecha de revisión:** fecha fija.
+
+### Ejemplo
+
+- hipótesis: rehearsal obligatorio de rollback reduce varianza de MTTR SEV-1
+- medida: p95 MTTR en próximos 4 incidentes/simulacros
+- guardrail: si lead time empeora >20% en 2 ciclos, recalibrar gate
+
+## Ritmo operativo de ownership
+
+### Standup semanal de confiabilidad (20 min)
+
+- revisar items vencidos
+- revisar items sin evidencia sólida
+- reasignar bloqueados en la sesión
+- prohibir cierre sin enlace de evidencia
+
+### Auditoría mensual de controles
+
+- validar que controles siguen activos
+- validar owners vigentes
+- retirar controles sin impacto medible
+
+## Rúbrica de calidad de hardening (0–2)
+
+| Dimensión | 0 | 1 | 2 |
+|---|---|---|---|
+| Claridad | vaga | parcial | precisa con límites |
+| Evidencia | nula | visual parcial | comandos/logs enlazados |
+| Ownership | ausente | un owner | owner+verifier+fecha |
+| Adopción | no verificada | anecdótica | observada en flujo real |
+| Impacto | desconocido | asumido | medido en tendencia |
+
+Mínimo de aprobación: 7/10. Si no, el loop sigue abierto.
+
+## Plantilla de backlog
+
+```md
+### Hardening Item
+- Incident reference:
+- Failure class:
+- Proposed control:
+- Priority band: P0/P1/P2/P3
+- Execution owner:
+- Verifier owner:
+- Due date:
+- Evidence link(s):
+- Adoption check date:
+- Status: open | in_progress | verified | retired
+```
+
+## Fallos comunes del programa
+
+- se cierran items sin efecto en métricas
+- se agregan controles sin socialización operativa
+- se actualiza runbook pero no checklist on-call
+- ownership queda en persona no disponible
+
+Resuélvelo con auditoría mensual explícita.
+
+<!-- expansion:depth-v3 -->
+## Mapeo hallazgo → diseño de control
+
+| Tipo de hallazgo | Control candidato | Estilo de verificación |
+|---|---|---|
+| detección fallida | regla de alerta + ruteo | replay sintético de alertas |
+| decisión tardía | SLA de checkpoint + script de commander | auditoría de tiempos de simulacro |
+| recuperación lenta | gate de rehearsal de rollback | rollback cronometrado |
+| regresión repetida | harness de pruebas + policy check | tendencia de suite de regresión |
+
+Este mapeo mantiene hardening concreto.
+
+## Plantilla sprint de hardening (14 días)
+
+- **Día 1–2:** priorizar por riesgo y reversibilidad
+- **Día 3–5:** implementar controles P0/P1
+- **Día 6–8:** añadir cobertura de verificación y links
+- **Día 9–11:** validar adopción en flujo real
+- **Día 12–14:** publicar resumen + owners de riesgo residual
+
+Si hay retraso, reduce alcance pero no recortes verificación.
+
+## Formato de registro de riesgo residual
+
+```md
+### Residual Risk
+- Risk statement:
+- Why not fully solved yet:
+- Temporary control in place:
+- Trigger for re-prioritization:
+- Owner:
+- Target resolution date:
+```
+
+Riesgo residual sin trigger/fecha es riesgo sin gestión.
+

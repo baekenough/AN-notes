@@ -111,3 +111,127 @@ Before closing hardening loop:
 - owner acknowledgement recorded
 
 Claude accelerates recovery work. Hardening is what compounds reliability.
+
+<!-- expansion:depth-v2 -->
+## Hardening portfolio prioritization matrix
+
+Prioritize hardening actions with two axes:
+
+- **Risk reduction magnitude** (how much future incident probability drops)
+- **Time to reliable adoption** (how quickly teams can run this in normal flow)
+
+| Priority band | Risk reduction | Adoption speed | Typical action |
+|---|---|---|---|
+| P0 | high | fast | add blocking policy check, add rollback validation gate |
+| P1 | high | medium | add regression suite for root-cause class |
+| P2 | medium | fast | improve runbook clarity, handoff templates |
+| P3 | medium/low | slow | broader architecture cleanups |
+
+Start with P0/P1 before polishing documentation language.
+
+## Hardening experiment design
+
+Treat each hardening action as a small experiment:
+
+1. **Hypothesis:** "If we add X control, Y failure class drops by Z%."
+2. **Measure:** define metric and observation window.
+3. **Guardrail:** define rollback condition for the control itself.
+4. **Owner:** one execution owner and one verifier owner.
+5. **Review date:** fixed date, not "later".
+
+### Example
+
+- hypothesis: mandatory pre-release rollback rehearsal reduces SEV-1 MTTR variance
+- measure: p95 MTTR over next 4 incidents/drills
+- guardrail: if release lead time regresses >20% for 2 cycles, recalibrate gate
+
+## Ownership operating rhythm
+
+### Weekly reliability standup (20 minutes)
+
+- review overdue hardening items
+- review items with weak evidence links
+- reassign blocked items immediately
+- close items only with proof artifact links
+
+### Monthly control audit
+
+- confirm controls are still running (not silently bypassed)
+- confirm owners are still valid (team changes happen)
+- retire controls that no longer reduce observed risk
+
+## Hardening quality rubric (0–2 per row)
+
+| Dimension | 0 | 1 | 2 |
+|---|---|---|---|
+| Clarity | vague task | partial scope | precise change + boundary |
+| Evidence | none | screenshot only | command/log/proof links |
+| Ownership | missing | single owner only | owner + verifier + due date |
+| Adoption | unverified | anecdotal | observed in real workflow |
+| Risk impact | unknown | assumed | measured trend impact |
+
+Minimum passing total: 7/10. Otherwise keep loop open.
+
+## Hardening backlog template
+
+```md
+### Hardening Item
+- Incident reference:
+- Failure class:
+- Proposed control:
+- Priority band: P0/P1/P2/P3
+- Execution owner:
+- Verifier owner:
+- Due date:
+- Evidence link(s):
+- Adoption check date:
+- Status: open | in_progress | verified | retired
+```
+
+## Common failure modes in hardening programs
+
+- backlog closes with no measurable effect on metrics
+- controls are added but not socialized to operators
+- runbook updates happen without updating on-call checklists
+- ownership stays with a departed engineer
+
+Solve these with explicit monthly audit, not ad-hoc memory.
+
+<!-- expansion:depth-v3 -->
+## From incident finding to control design
+
+Convert findings with this mapping:
+
+| Finding type | Control candidate | Verification style |
+|---|---|---|
+| missed detection | alert rule + routing update | synthetic alert replay |
+| late decision | checkpoint SLA + commander script | drill timing audit |
+| slow recovery | rollback rehearsal gate | timed rollback run |
+| repeated regression | test harness + policy check | regression suite trend |
+
+This mapping keeps hardening concrete.
+
+## 14-day hardening sprint template
+
+- **Day 1–2:** rank findings by risk and reversibility
+- **Day 3–5:** implement top P0/P1 controls
+- **Day 6–8:** add verification coverage and evidence links
+- **Day 9–11:** run adoption checks in real workflow
+- **Day 12–14:** publish summary + residual risk owners
+
+If schedule slips, reduce scope but keep verification intact.
+
+## Residual risk register format
+
+```md
+### Residual Risk
+- Risk statement:
+- Why not fully solved yet:
+- Temporary control in place:
+- Trigger for re-prioritization:
+- Owner:
+- Target resolution date:
+```
+
+Residual risk without trigger/date is unmanaged risk.
+

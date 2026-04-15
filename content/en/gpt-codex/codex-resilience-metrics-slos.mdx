@@ -119,3 +119,135 @@ Before monthly resilience review:
 - follow-up closure trend reviewed
 
 Codex accelerates execution speed. Metrics preserve reliability integrity.
+
+<!-- expansion:depth-v2 -->
+## Metric dictionary (required fields)
+
+Define each metric with the same schema:
+
+```md
+### Metric Definition
+- Name:
+- Purpose:
+- Formula:
+- Data source:
+- Collection cadence:
+- Owner:
+- Red threshold:
+- Yellow threshold:
+- Expected action on breach:
+```
+
+Ambiguous metric definitions create endless debate during incidents.
+
+## Error-budget style SLO policy
+
+For each severity class, define an operational budget:
+
+- allowed breach count per quarter
+- mandatory escalation threshold
+- freeze rule when budget is exhausted
+
+### Example policy
+
+- SEV-1: zero tolerance for missed containment window
+- SEV-2: two breaches per quarter before mandatory control review
+- SEV-3: tracked for trend, not immediate freeze
+
+## Trend review prompts (weekly)
+
+Use consistent prompts in weekly review:
+
+1. Which metric moved most versus baseline?
+2. Is the movement signal or noise (sample size check)?
+3. Which owner needs to act this week?
+4. Which control portfolio bucket receives the action?
+5. What result should be visible by next review?
+
+## Escalation mapping table
+
+| Breach type | Immediate owner | Secondary owner | SLA for response |
+|---|---|---|---|
+| Detection breach (MTTD red) | observability owner | incident commander | 24h |
+| Decision delay (MTTC red) | incident commander | release owner | same day |
+| Recovery delay (MTTR red) | platform owner | service owner | 24h |
+| Freshness breach | verifier owner | commander | same day |
+| Follow-up closure breach | reliability owner | team lead | 72h |
+
+## Executive summary format (monthly)
+
+```md
+### Monthly Resilience Summary
+- Top improving metric:
+- Top regressing metric:
+- Repeated breach classes:
+- Controls added this month:
+- Controls retired this month:
+- Ownership risks:
+- Next-month focus:
+```
+
+Keep this short and decision-oriented.
+
+## Data quality checks
+
+Before trusting metric dashboards, verify:
+
+- missing timestamps ratio
+- duplicate incident IDs
+- inconsistent severity labels
+- stale data source refresh time
+
+A precise metric on broken data is still misleading.
+
+## Advanced anti-gaming rules
+
+- never grade teams by single metric rank
+- require evidence links for major metric improvements
+- review tail percentiles before celebrating averages
+- tie rewards to sustained trend, not one-week spikes
+
+This preserves metric integrity under organizational pressure.
+
+<!-- expansion:depth-v3 -->
+## Metric review board operating rule
+
+Run a monthly reliability board with three outputs only:
+
+1. **keep** — metric still drives action
+2. **change** — metric definition/threshold needs revision
+3. **remove** — metric has no decision value
+
+This avoids dashboard sprawl.
+
+## Tail-risk tracking
+
+In addition to average values, track:
+
+- p90 / p95 / p99 for MTTD and MTTR
+- longest open follow-up age
+- worst-severity breach recurrence interval
+
+Tail views expose the incidents that matter most.
+
+## SLO breach playbook
+
+When breach occurs:
+
+- open breach record within same day
+- assign owner and verifier
+- define corrective control candidate
+- set review checkpoint within 7 days
+
+Close breach records only with evidence of control effect.
+
+## Metric retirement criteria
+
+Retire a metric when all are true:
+
+- no action taken from it for 2 quarters
+- overlaps strongly with another metric
+- stakeholders cannot explain how they use it
+
+Retire with a note, not silent deletion.
+

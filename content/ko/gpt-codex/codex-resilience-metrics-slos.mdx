@@ -119,3 +119,133 @@ red 도달 시 필수 항목:
 - 후속 종료율 추세 점검
 
 Codex는 실행 속도를 높입니다. 지표는 신뢰성 무결성을 지켜줍니다.
+
+<!-- expansion:depth-v2 -->
+## 지표 사전 템플릿 (필수 필드)
+
+각 지표를 동일 스키마로 정의하세요.
+
+```md
+### Metric Definition
+- Name:
+- Purpose:
+- Formula:
+- Data source:
+- Collection cadence:
+- Owner:
+- Red threshold:
+- Yellow threshold:
+- Expected action on breach:
+```
+
+정의가 모호하면 사고 중 해석 논쟁이 반복됩니다.
+
+## Error-budget형 SLO 정책
+
+심각도 클래스마다 운영 예산을 설정합니다.
+
+- 분기당 허용 breach 횟수
+- 의무 에스컬레이션 임계값
+- 예산 소진 시 freeze 규칙
+
+### 예시 정책
+
+- SEV-1: containment window 미달 0회 허용
+- SEV-2: 분기 2회 breach 초과 시 통제 리뷰 필수
+- SEV-3: 즉시 동결 대신 추세 관리
+
+## 주간 리뷰 질문 세트
+
+1. 기준선 대비 가장 크게 움직인 지표는?
+2. 샘플 수 기준으로 signal인가 noise인가?
+3. 이번 주 action owner는 누구인가?
+4. 어느 통제 포트폴리오 버킷에 반영할 것인가?
+5. 다음 리뷰까지 기대되는 관측 변화는?
+
+## 에스컬레이션 매핑 테이블
+
+| breach 유형 | 1차 오너 | 2차 오너 | 응답 SLA |
+|---|---|---|---|
+| MTTD red | observability owner | incident commander | 24h |
+| MTTC red | incident commander | release owner | same day |
+| MTTR red | platform owner | service owner | 24h |
+| freshness breach | verifier owner | commander | same day |
+| follow-up closure breach | reliability owner | team lead | 72h |
+
+## 월간 요약 템플릿
+
+```md
+### Monthly Resilience Summary
+- Top improving metric:
+- Top regressing metric:
+- Repeated breach classes:
+- Controls added this month:
+- Controls retired this month:
+- Ownership risks:
+- Next-month focus:
+```
+
+짧고 의사결정 중심으로 유지하세요.
+
+## 데이터 품질 체크
+
+대시보드를 신뢰하기 전 아래를 확인합니다.
+
+- 누락 타임스탬프 비율
+- 중복 incident ID
+- 심각도 라벨 불일치
+- 데이터 소스 갱신 지연
+
+잘못된 데이터 위의 정밀 지표는 여전히 오해를 만듭니다.
+
+## 안티-게이밍 규칙
+
+- 단일 지표 순위로 팀 평가 금지
+- 지표 개선 주장 시 근거 링크 의무화
+- 평균 개선 전 tail percentile 우선 확인
+- 보상은 1주 스파이크가 아니라 지속 추세 기준
+
+이 규칙이 조직 압박 속에서도 지표 무결성을 지킵니다.
+
+<!-- expansion:depth-v3 -->
+## 지표 리뷰 보드 운영 규칙
+
+월간 신뢰성 보드 출력은 3개만 허용합니다.
+
+1. **keep** — 여전히 액션을 유도함
+2. **change** — 정의/임계값 수정 필요
+3. **remove** — 의사결정 가치 없음
+
+이 규칙이 대시보드 비대화를 막습니다.
+
+## tail-risk 추적
+
+평균 외에 반드시 추적:
+
+- MTTD/MTTR의 p90/p95/p99
+- 가장 오래 열린 follow-up 나이
+- 최악 심각도 breach 재발 간격
+
+tail 지표가 진짜 사고 리스크를 보여줍니다.
+
+## SLO breach 플레이북
+
+breach 발생 시:
+
+- same day breach 기록 생성
+- owner + verifier 지정
+- 교정 통제 후보 정의
+- 7일 내 리뷰 체크포인트 지정
+
+통제 효과 근거 없이는 breach 기록을 닫지 않습니다.
+
+## 지표 폐기 기준
+
+아래를 모두 만족할 때 폐기:
+
+- 2분기 동안 액션 유도 없음
+- 다른 지표와 중복 강함
+- 이해관계자가 활용 방식을 설명 못함
+
+조용히 삭제하지 말고 폐기 노트를 남기세요.
+

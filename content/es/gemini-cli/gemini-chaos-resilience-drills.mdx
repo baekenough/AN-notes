@@ -122,3 +122,138 @@ Antes de cerrar ciclo de simulacro:
 - owners de seguimiento asignados
 
 Gemini CLI acelera ejecución. Los simulacros aseguran que la confiabilidad siga el ritmo.
+
+<!-- expansion:depth-v2 -->
+## Catálogo de escenarios de simulacro
+
+Rota escenarios para evitar respuestas memorizadas.
+
+### Set de confiabilidad
+
+1. **Tormenta de timeout en dependencia** — latencia API principal fuera de SLO.
+2. **Release con drift de configuración** — un entorno usa flags desactualizados.
+3. **Saturación de backlog de colas** — retraso de procesamiento en cascada.
+4. **Apagón de observabilidad** — panel crítico cae durante incidente.
+5. **Owner no disponible** — on-call principal ausente en primer checkpoint.
+
+Combina 1 fallo técnico + 1 fallo de coordinación por ciclo.
+
+## Paquete de scoring para observadores
+
+Evalúa comportamiento, no carisma.
+
+| Dimensión | Observación |
+|---|---|
+| Detección | ¿se reconoció y clasificó bien la primera señal? |
+| Decisión | ¿se tomó una decisión reversible a tiempo? |
+| Ownership | ¿cada checkpoint tuvo next owner explícito? |
+| Evidencia | ¿hubo comandos/logs por checkpoint? |
+| Cadencia de comunicación | ¿se cumplieron tiempos prometidos? |
+
+Incluye enlaces de evidencia por score.
+
+## Plantilla de timeline (45 min)
+
+- 00:00–05:00 briefing + criterios de éxito
+- 05:00–15:00 primera señal + decisión de triage
+- 15:00–30:00 ejecución de mitigación
+- 30:00–40:00 verificación de estabilidad
+- 40:00–45:00 debrief + asignación de seguimiento
+
+Si se excede tiempo, registra causa como deuda de proceso.
+
+## Scripts de comunicación bajo presión
+
+### Update de primeros 5 minutos
+
+```md
+Incident drill started at <time>
+Observed signal: <summary>
+Current branch: triage/mitigate/rollback
+Next checkpoint: <time>
+Commander: <name>
+```
+
+### Update de checkpoint de escalación
+
+```md
+Escalation reason: <threshold breach>
+Decision: continue | rollback | pause
+Immediate owner: <name>
+Verification owner: <name>
+Next update at: <time>
+```
+
+## Matriz de decisiones de debrief
+
+Clasifica hallazgos en:
+
+- **Fix now** (alto riesgo + bajo esfuerzo)
+- **Next cycle** (alto riesgo + esfuerzo medio)
+- **Observe** (impacto incierto)
+- **Drop** (sin valor medible)
+
+No dejes hallazgos sin categoría.
+
+## Política de mutación de escenarios
+
+Mutar al menos una variable por ciclo:
+
+- timing del fallo
+- tipo de dependencia que falla
+- disponibilidad de owners
+- restricción de canal de comunicación
+
+Documenta el porqué de la mutación para interpretar cambios de score.
+
+## Gate de cierre del ciclo
+
+Cierra ciclo solo cuando:
+
+- scorecard + evidencia archivados
+- al menos una acción con owner asignado
+- próximo escenario mutado borrador listo
+- comandante firma notas de calidad de decisiones
+
+Sin gate, los simulacros se vuelven eventos aislados.
+
+<!-- expansion:depth-v3 -->
+## Normalización de score de simulacros
+
+Para comparar semanas, normaliza score:
+
+- en escenarios estilo SEV-1 pondera más detección y decisión
+- en escenarios multi-stakeholder pondera más comms
+- publica score crudo y score ponderado
+
+### Ponderación ejemplo
+
+- detection quality: 30%
+- decision quality: 25%
+- ownership clarity: 20%
+- evidence quality: 15%
+- communication cadence: 10%
+
+Si cambias pesos, documenta el motivo.
+
+## Regla del commander para simulacro estancado
+
+Si pasan >5 minutos sin decisión:
+
+1. detener debate adicional
+2. forzar rama explícita (continue/rollback/escalate)
+3. asignar owner de ejecución
+4. fijar checkpoint en 5 minutos
+
+Esto evita parálisis analítica.
+
+## Regla de conversión de debrief
+
+Todo hallazgo debe terminar como:
+
+- control mergeado
+- control planificado con owner/fecha
+- rechazo documentado con razón
+
+No dejes hallazgos huérfanos.
+

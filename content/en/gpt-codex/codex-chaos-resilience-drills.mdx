@@ -131,3 +131,138 @@ Before closing a drill cycle:
 - follow-up owners and deadlines assigned
 
 Codex accelerates response execution. Drills verify response reliability.
+
+<!-- expansion:depth-v2 -->
+## Drill scenario catalog (starter set)
+
+Rotate scenarios to avoid memorized responses.
+
+### Reliability scenario set
+
+1. **Dependency timeout storm** — primary API latency spikes beyond SLO.
+2. **Config drift release** — one environment receives stale flag values.
+3. **Queue backlog saturation** — processing lag creates cascading failures.
+4. **Observability blackout** — one critical dashboard panel fails during incident.
+5. **Owner unavailable** — primary on-call unavailable at first checkpoint.
+
+Each cycle: pick one technical failure + one coordination failure.
+
+## Observer scoring pack
+
+Observers should score behavior, not personality.
+
+| Dimension | What to observe |
+|---|---|
+| Detection quality | Was the first signal recognized and triaged correctly? |
+| Decision quality | Was a reversible decision made quickly? |
+| Ownership clarity | Did every checkpoint name a next owner? |
+| Evidence quality | Were commands/logs captured at each checkpoint? |
+| Communication cadence | Were updates sent on promised cadence? |
+
+Add evidence links for every score.
+
+## Drill timeline template (45 minutes)
+
+- 00:00–05:00 scenario brief + success criteria
+- 05:00–15:00 first signal + triage decision
+- 15:00–30:00 mitigation path execution
+- 30:00–40:00 verification and stability checks
+- 40:00–45:00 debrief capture + follow-up assignment
+
+If timeline overruns, log reason as process debt.
+
+## Communication scripts for pressure moments
+
+### First 5-minute update
+
+```md
+Incident drill started at <time>
+Observed signal: <summary>
+Current branch: triage/mitigate/rollback
+Next checkpoint: <time>
+Commander: <name>
+```
+
+### Escalation checkpoint update
+
+```md
+Escalation reason: <threshold breach>
+Decision: continue | rollback | pause
+Immediate owner: <name>
+Verification owner: <name>
+Next update at: <time>
+```
+
+## Debrief decision matrix
+
+After drill, classify every finding:
+
+- **Fix now** (high-risk + low effort)
+- **Schedule next cycle** (high-risk + medium effort)
+- **Observe** (unclear impact; collect more evidence)
+- **Drop** (no measurable reliability value)
+
+Never leave findings uncategorized.
+
+## Mutation planning for next cycle
+
+Design next drill by mutating one factor intentionally:
+
+- failure starts 10 minutes earlier/later
+- key dependency fails differently
+- comms channel is delayed
+- backup owner must lead
+
+Write mutation rationale so score changes are interpretable.
+
+## Drill completion gate
+
+A drill cycle is complete only when:
+
+- scorecard + evidence links are archived
+- at least one follow-up action is owner-assigned
+- next mutation scenario is drafted
+- commander signs off on decision quality notes
+
+Without this gate, drills become one-off events.
+
+<!-- expansion:depth-v3 -->
+## Drill scoring normalization
+
+To compare drills across weeks, normalize scores:
+
+- weight detection and decision quality higher for SEV-1 style scenarios
+- weight comms cadence higher for multi-stakeholder scenarios
+- always publish both raw score and weighted score
+
+### Example weighting
+
+- detection quality: 30%
+- decision quality: 25%
+- ownership clarity: 20%
+- evidence quality: 15%
+- communication cadence: 10%
+
+Adjust weights by scenario class, but document changes.
+
+## Commander playbook for stalled drills
+
+If the drill stalls for >5 minutes without decision:
+
+1. freeze additional discussion
+2. force explicit branch selection (continue/rollback/escalate)
+3. assign execution owner immediately
+4. schedule next checkpoint in 5 minutes
+
+This prevents analysis paralysis during rehearsal.
+
+## Debrief conversion rule
+
+Every debrief output must become one of:
+
+- merged control
+- scheduled control with owner/date
+- documented rejection with reason
+
+No orphan findings.
+

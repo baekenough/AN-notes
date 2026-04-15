@@ -110,3 +110,145 @@ Before closure:
 - hardening follow-up assigned
 
 Gemini can accelerate response. This playbook keeps the response governable.
+
+<!-- expansion:depth-v2 -->
+## Scenario library (real pressure patterns)
+
+Use this library to practice the playbook under realistic pressure instead of ideal paths.
+
+### Scenario A — Auth token failure after release
+
+- **Signal:** sudden spike in 401/403 from one service after deployment.
+- **Risk:** support load surge + customer trust degradation.
+- **Decision branch:** feature-flag rollback vs targeted hotfix.
+- **Evidence minimum:** failing endpoint list, first bad deploy hash, rollback safety check output.
+- **Owner handoff:** investigation owner → mitigation owner → verification owner.
+
+### Scenario B — Billing state mismatch
+
+- **Signal:** dashboard revenue events diverge from transaction ledger.
+- **Risk:** financial and legal exposure.
+- **Decision branch:** immediate write freeze vs selective replay.
+- **Evidence minimum:** mismatch sample size, blast radius estimate, safe replay boundary.
+- **Owner handoff:** data owner + incident commander dual sign-off required.
+
+### Scenario C — Permission leak in edge flow
+
+- **Signal:** low-volume but severe authorization bypass report.
+- **Risk:** security incident escalation.
+- **Decision branch:** emergency rollback and access revocation first, then patch.
+- **Evidence minimum:** reproducible minimal case, revocation completion proof, audit trail snapshot.
+
+## War-room artifact bundle (copy/paste)
+
+```md
+### Incident Command Snapshot
+- Incident ID:
+- Severity:
+- Incident commander:
+- Current phase: detection | containment | recovery | hardening
+- Latest stable revision:
+- Candidate mitigation path:
+- Risk if we wait 30 minutes:
+- Next checkpoint at:
+- Next owner:
+```
+
+```md
+### Checkpoint Decision Record
+- Timestamp:
+- Evidence reviewed:
+- Decision: continue mitigation | rollback | escalate+pause
+- Why this decision now:
+- Rejected alternatives:
+- Owner for execution:
+- Owner for verification:
+```
+
+## Escalation message templates
+
+### Internal engineering escalation
+
+```md
+[INCIDENT][SEV-X] <short summary>
+Impact: <users/systems>
+Current decision: <path>
+Immediate ask: <approval/resource>
+Next update: <time>
+Owner: <name>
+```
+
+### Stakeholder update
+
+```md
+Status: investigating/mitigating/recovered
+Customer impact: <plain language>
+Current mitigation: <plain language>
+Known unknowns: <top 1-2>
+Next committed update time: <time>
+```
+
+## Closure acceptance criteria (hard gate)
+
+Close incident response only when all conditions are true:
+
+1. mitigation path executed and verified with fresh command evidence
+2. rollback trigger and owner are still documented for 24h watch window
+3. residual risks are explicit (not "none" by default)
+4. hardening backlog item owners and due dates are assigned
+5. communications timeline is complete and reviewable
+
+If one condition is missing, status stays active.
+
+## 30-minute post-closure review
+
+Run a short review immediately after closure:
+
+- what signal was first but ignored?
+- which decision checkpoint took longest?
+- where did ownership become ambiguous?
+- what one guardrail would have reduced resolution time most?
+- what one metric should be added or redefined?
+
+Turn answers into backlog items before context fades.
+
+<!-- expansion:depth-v3 -->
+## Provider-specific readiness checks
+
+Before running this playbook, enforce these prechecks:
+
+- **Repository state:** identify last known-good revision and confirm rollback path is executable now.
+- **Owner graph:** commander, mitigation owner, verifier owner, and communications owner are all named.
+- **Evidence channel:** one canonical thread/document where all checkpoint records are written.
+
+### Minimal precheck command set
+
+```bash
+git rev-parse --short HEAD
+git log --oneline -n 5
+# add your service health check here
+```
+
+Store command output in the first checkpoint record.
+
+## Decision quality guardrails
+
+For each checkpoint decision, require three statements:
+
+1. **reversibility statement** — how quickly can we undo this decision?
+2. **blast-radius statement** — what can get worse if this is wrong?
+3. **verification statement** — what exact signal proves this worked?
+
+If one statement is missing, decision quality is below advanced standard.
+
+## Handoff acceptance test
+
+Before handing to next owner, verify:
+
+- scope boundary is explicit (what is included/excluded)
+- unresolved unknowns are listed (not hidden in chat history)
+- next checkpoint time is committed
+- failure trigger for immediate rollback is written
+
+Use this quick test to reduce context loss across lanes.
+
