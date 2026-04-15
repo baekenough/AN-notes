@@ -1,0 +1,121 @@
+---
+title: Codex Resilience Metrics and SLOs — Measuring Reliability Before It Fails
+description: Advanced measurement model for Codex teams to quantify resilience, enforce severity-based SLOs, and escalate on threshold breaches with explicit ownership.
+difficulty: advanced
+tags:
+- advanced
+- operations
+- reliability
+- metrics
+connections:
+- slug: codex-chaos-resilience-drills
+  tool: gpt-codex
+  type: prerequisite
+- slug: codex-post-incident-hardening-loop
+  tool: gpt-codex
+  type: combines
+- slug: codex-operating-manual
+  tool: gpt-codex
+  type: enhances
+- slug: claude-resilience-metrics-slos
+  tool: claude-code
+  type: compare
+featured: false
+order: 20
+date: '2026-04-16'
+---
+
+> **Official References**: [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [Review](https://developers.openai.com/codex/app/review) · [Worktrees](https://developers.openai.com/codex/app/worktrees) · [Automations](https://developers.openai.com/codex/app/automations)
+
+## Why measurement is a resilience control
+
+Reliability drifts gradually before it breaks visibly.
+Metrics are the early-warning system for that drift.
+
+## Core resilience metric set
+
+| Metric | Decision question | Typical source |
+|---|---|---|
+| MTTD | are we detecting fast enough? | alert timeline |
+| MTTC | are decisions delayed? | incident command log |
+| MTTR | how fast do we restore stable service? | deploy/verification timeline |
+| Evidence freshness | is closure proof current? | verification artifact log |
+| Follow-up closure rate | are hardening commitments actually closing? | post-incident backlog |
+
+## Severity-based SLO design
+
+- **SEV-1**: strict containment and rollback activation window
+- **SEV-2**: major degradation stabilization window
+- **SEV-3**: planned corrective release completion window
+
+SLO definitions must be numeric and owner-assigned.
+
+## Measurement protocol
+
+Record these timestamps every incident:
+
+- incident start
+- first detection
+- first mitigation decision
+- stable-state confirmation
+- closure
+
+Incomplete timestamp chains reduce analysis credibility.
+
+## Weekly reliability operating review
+
+1. examine threshold breaches
+2. inspect tail-latency outliers
+3. map misses to control portfolio buckets
+4. assign owner + due date for highest-impact regressions
+
+## Threshold escalation model
+
+Per metric, define green/yellow/red boundaries.
+Red boundary hit requires:
+
+- immediate escalation record
+- named reliability owner
+- forced re-check in the next cycle
+
+## Dashboard quality rules
+
+- show trend and percentile bands
+- separate severity classes
+- include denominator and sample size
+- link each spike to incident notes
+
+## Quarterly calibration loop
+
+Every quarter:
+
+- raise SLO targets only after sustained attainment
+- retire non-actionable metrics
+- add one metric for newly observed failure class
+
+The goal is decision quality, not dashboard size.
+
+## Advanced anti-patterns
+
+### Averaging away tail risk
+
+Mean values hide the events that cause incidents.
+
+### SLOs with no accountable owner
+
+Unowned SLOs degrade into status theater.
+
+### Closing with stale evidence
+
+Old proof cannot justify present-state confidence.
+
+## Quick checklist
+
+Before monthly resilience review:
+
+- metric definitions current
+- severity SLOs published and owned
+- red/yellow breaches explicitly assigned
+- follow-up closure trend reviewed
+
+Codex accelerates execution speed. Metrics preserve reliability integrity.

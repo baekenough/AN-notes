@@ -1,0 +1,121 @@
+---
+title: Métricas de Resiliencia y SLO en Codex — Medir Confiabilidad Antes del Fallo
+description: Modelo avanzado de medición para equipos Codex que cuantifica resiliencia, aplica SLO por severidad y escala breaches con ownership explícito.
+difficulty: advanced
+tags:
+- advanced
+- operations
+- reliability
+- metrics
+connections:
+- slug: codex-chaos-resilience-drills
+  tool: gpt-codex
+  type: prerequisite
+- slug: codex-post-incident-hardening-loop
+  tool: gpt-codex
+  type: combines
+- slug: codex-operating-manual
+  tool: gpt-codex
+  type: enhances
+- slug: claude-resilience-metrics-slos
+  tool: claude-code
+  type: compare
+featured: false
+order: 20
+date: '2026-04-16'
+---
+
+> **Official References**: [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [Review](https://developers.openai.com/codex/app/review) · [Worktrees](https://developers.openai.com/codex/app/worktrees) · [Automations](https://developers.openai.com/codex/app/automations)
+
+## Por qué medir es un control de resiliencia
+
+La confiabilidad deriva gradualmente antes de romperse de forma visible.
+Las métricas son el sistema de alerta temprana para esa deriva.
+
+## Set central de métricas
+
+| Métrica | Pregunta de decisión | Fuente típica |
+|---|---|---|
+| MTTD | ¿detectamos suficientemente rápido? | timeline de alertas |
+| MTTC | ¿las decisiones se demoran? | log de comando de incidente |
+| MTTR | ¿qué tan rápido restauramos estado estable? | timeline de deploy/verificación |
+| Evidence freshness | ¿la prueba de cierre es actual? | log de artefactos de verificación |
+| Follow-up closure rate | ¿se cierran realmente los compromisos de hardening? | backlog post-incidente |
+
+## Diseño de SLO por severidad
+
+- **SEV-1**: ventana estricta de contención + activación de rollback
+- **SEV-2**: ventana de estabilización para degradación mayor
+- **SEV-3**: ventana de cierre para release correctivo planificado
+
+Los SLO deben ser numéricos y con owner asignado.
+
+## Protocolo de medición
+
+Registra estos timestamps en cada incidente:
+
+- inicio de incidente
+- primera detección
+- primera decisión de mitigación
+- confirmación de estado estable
+- cierre
+
+Cadenas incompletas de timestamps reducen credibilidad analítica.
+
+## Revisión operativa semanal
+
+1. revisar breaches de umbral
+2. inspeccionar outliers de cola
+3. mapear misses a buckets de control
+4. asignar owner + fecha para regresiones de mayor impacto
+
+## Modelo de escalación por umbral
+
+Define límites green/yellow/red por métrica.
+Si se toca red, exige:
+
+- registro inmediato de escalación
+- owner de confiabilidad nombrado
+- re-check forzado en el siguiente ciclo
+
+## Reglas de calidad de dashboard
+
+- mostrar tendencia y bandas percentiles
+- separar clases de severidad
+- incluir denominador y tamaño de muestra
+- enlazar cada pico a notas de incidente
+
+## Bucle trimestral de calibración
+
+Cada trimestre:
+
+- elevar SLO solo tras logro sostenido
+- retirar métricas no accionables
+- agregar una métrica para nueva clase de fallo
+
+El objetivo es calidad de decisión, no tamaño de dashboard.
+
+## Anti-patrones avanzados
+
+### Promediar el riesgo de cola
+
+Los promedios ocultan eventos que causan incidentes.
+
+### SLO sin owner responsable
+
+Un SLO sin owner deriva en teatro de estado.
+
+### Cierre con evidencia obsoleta
+
+Pruebas antiguas no justifican confianza del estado actual.
+
+## Checklist rápido
+
+Antes de revisión mensual de resiliencia:
+
+- definiciones de métricas vigentes
+- SLO por severidad publicados y con owner
+- breaches red/yellow asignados explícitamente
+- tendencia de cierre de follow-up revisada
+
+Codex acelera ejecución. Las métricas protegen integridad de confiabilidad.

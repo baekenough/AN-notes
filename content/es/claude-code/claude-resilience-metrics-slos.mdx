@@ -1,0 +1,121 @@
+---
+title: "Claude Métricas de Resiliencia y SLO"
+description: "Marco avanzado para equipos Claude que mide deriva de confiabilidad, define SLO de incidentes y toma decisiones de resiliencia basadas en evidencia."
+difficulty: advanced
+tags: ["advanced", "operations", "reliability", "metrics"]
+connections:
+  - slug: "claude-chaos-resilience-drills"
+    tool: "claude-code"
+    type: "prerequisite"
+  - slug: "claude-post-incident-hardening-loop"
+    tool: "claude-code"
+    type: "combines"
+  - slug: "claude-operating-manual"
+    tool: "claude-code"
+    type: "enhances"
+  - slug: "codex-resilience-metrics-slos"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 14
+date: "2026-04-16"
+---
+
+> **Referencias oficiales**: [Best Practices](https://docs.anthropic.com/en/docs/claude-code/best-practices) · [Hooks](https://docs.anthropic.com/en/docs/claude-code/hooks) · [Security](https://docs.anthropic.com/en/docs/claude-code/security) · [GitHub Actions](https://docs.anthropic.com/en/docs/claude-code/github-actions)
+
+## Por qué importan estas métricas
+
+Los simulacros y runbooks son necesarios, pero no suficientes.
+Sin métricas, no puedes saber si la resiliencia mejora o empeora.
+
+## Stack central de métricas de resiliencia
+
+| Métrica | Qué mide | Fuente típica |
+|---|---|---|
+| MTTD | latencia de detección | timeline de alertas |
+| MTTC | tiempo hasta decisión de contención | log de decisiones |
+| MTTR | tiempo para restaurar estado estable | logs de deploy + verificación |
+| Verification freshness | antigüedad de la prueba final antes del cierre | registros de evidencia |
+| Follow-up closure rate | % de hardening cerrado a tiempo | backlog de hardening |
+
+## Modelo SLO por severidad
+
+- **SEV-1**: decisión de contención y activación de rollback bajo presupuesto estricto
+- **SEV-2**: degradación con impacto al usuario estabilizada en ventana definida
+- **SEV-3**: release correctivo completado en ciclo planificado
+
+Define SLO en números explícitos, no en adjetivos.
+
+## Protocolo de recolección de datos
+
+En cada incidente registra:
+
+- timestamp de inicio
+- timestamp de primera alerta
+- timestamp de primera decisión de mitigación
+- timestamp de confirmación de estado estable
+- timestamp de cierre
+
+Sin timestamps completos, el análisis de tendencia se degrada.
+
+## Revisión semanal de resiliencia
+
+Cada semana:
+
+1. revisar outliers de MTTD/MTTR
+2. inspeccionar seguimientos retrasados o perdidos
+3. mapear fallos a buckets de control
+4. asignar owner y fecha para regresiones prioritarias
+
+## Reglas de escalación por umbral
+
+Define umbrales red/yellow/green por métrica.
+Cuando se alcance red:
+
+- abrir escalación de inmediato
+- asignar owner de confiabilidad
+- forzar re-check la semana siguiente
+
+## Reglas de diseño de dashboard
+
+- mostrar tendencia, no solo valor reciente
+- separar clases de severidad
+- incluir denominador y contexto
+- enlazar cada pico al incidente asociado
+
+Métricas sin contexto crean narrativas falsas.
+
+## Calibración trimestral
+
+Cada trimestre:
+
+- subir objetivos SLO solo tras estabilidad comprobada
+- retirar métricas que no influyen decisiones
+- añadir una métrica para la nueva clase de fallo observada
+
+Un dashboard pequeño y útil supera uno grande ignorado.
+
+## Anti-patrones avanzados
+
+### Reportar solo promedios
+
+Los promedios esconden comportamiento de cola.
+
+### SLO sin ownership
+
+SLO sin owner termina como número decorativo.
+
+### Cerrar incidentes sin freshness check
+
+Evidencia vieja no sostiene confianza de cierre actual.
+
+## Checklist rápido
+
+Antes de revisión mensual de confiabilidad:
+
+- definiciones de métricas documentadas
+- SLO por severidad visibles
+- breaches de umbral mapeados a owners
+- tendencia de cierre de follow-up revisada
+
+Claude acelera equipos. Las métricas aseguran mejora segura.

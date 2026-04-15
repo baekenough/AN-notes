@@ -1,0 +1,121 @@
+---
+title: Codex 복원력 지표와 SLO — 실패 전에 신뢰성을 측정하기
+description: Codex 팀이 복원력을 정량화하고 심각도 기반 SLO를 강제하며 임계값 위반 시 명시적 오너십으로 에스컬레이션하기 위한 고급 측정 모델.
+difficulty: advanced
+tags:
+- advanced
+- operations
+- reliability
+- metrics
+connections:
+- slug: codex-chaos-resilience-drills
+  tool: gpt-codex
+  type: prerequisite
+- slug: codex-post-incident-hardening-loop
+  tool: gpt-codex
+  type: combines
+- slug: codex-operating-manual
+  tool: gpt-codex
+  type: enhances
+- slug: claude-resilience-metrics-slos
+  tool: claude-code
+  type: compare
+featured: false
+order: 20
+date: '2026-04-16'
+---
+
+> **Official References**: [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [Review](https://developers.openai.com/codex/app/review) · [Worktrees](https://developers.openai.com/codex/app/worktrees) · [Automations](https://developers.openai.com/codex/app/automations)
+
+## 왜 측정은 복원력 통제인가
+
+신뢰성은 눈에 띄는 장애 전에 서서히 악화됩니다.
+지표는 그 드리프트를 조기에 알려주는 경보 체계입니다.
+
+## 핵심 복원력 지표 세트
+
+| 지표 | 의사결정 질문 | 대표 소스 |
+|---|---|---|
+| MTTD | 탐지가 충분히 빠른가? | 알림 타임라인 |
+| MTTC | 의사결정이 지연되는가? | 사고 커맨드 로그 |
+| MTTR | 안정 상태를 얼마나 빨리 복구하는가? | 배포/검증 타임라인 |
+| Evidence freshness | 종료 근거가 최신인가? | 검증 산출물 로그 |
+| Follow-up closure rate | 하드닝 약속이 실제로 닫히는가? | 사고 후 백로그 |
+
+## 심각도 기반 SLO 설계
+
+- **SEV-1**: 엄격한 격리 및 롤백 활성화 시간 창
+- **SEV-2**: 주요 저하 안정화 시간 창
+- **SEV-3**: 계획된 보정 릴리스 완료 시간 창
+
+SLO는 숫자로 정의하고 오너를 지정해야 합니다.
+
+## 측정 프로토콜
+
+모든 사고마다 아래 시각을 기록하세요.
+
+- 사고 시작
+- 최초 탐지
+- 최초 완화 의사결정
+- 안정 상태 확인
+- 종료
+
+타임스탬프 체인이 비면 분석 신뢰도가 떨어집니다.
+
+## 주간 신뢰성 운영 리뷰
+
+1. 임계값 위반 점검
+2. tail-latency 이상치 확인
+3. 실패를 통제 포트폴리오 버킷에 매핑
+4. 영향도가 큰 회귀 항목 오너/기한 지정
+
+## 임계값 에스컬레이션 모델
+
+지표별 green/yellow/red 경계를 정의합니다.
+red 도달 시 필수 항목:
+
+- 즉시 에스컬레이션 기록
+- 명시적 reliability owner 지정
+- 다음 사이클 강제 재검증
+
+## 대시보드 품질 규칙
+
+- 추세와 분위수 대역 표시
+- 심각도 클래스 분리
+- 분모와 표본 수 포함
+- 모든 스파이크를 사고 노트와 연결
+
+## 분기별 보정 루프
+
+분기마다:
+
+- 안정 달성 후에만 SLO 상향
+- 행동으로 이어지지 않는 지표 폐기
+- 신규 실패 클래스용 지표 1개 추가
+
+목표는 대시보드 크기가 아니라 의사결정 품질입니다.
+
+## 고급 안티패턴
+
+### tail-risk를 평균으로 덮어버리기
+
+평균값은 사고를 만드는 이벤트를 숨깁니다.
+
+### 책임 오너 없는 SLO
+
+오너 없는 SLO는 상태 보고용 수치가 됩니다.
+
+### 오래된 근거로 종료 선언
+
+오래된 증거는 현재 상태 신뢰도를 보장하지 못합니다.
+
+## 빠른 체크리스트
+
+월간 복원력 리뷰 전:
+
+- 지표 정의 최신화
+- 심각도별 SLO 공개 + 오너 지정
+- red/yellow 위반 항목 명시 배정
+- 후속 종료율 추세 점검
+
+Codex는 실행 속도를 높입니다. 지표는 신뢰성 무결성을 지켜줍니다.

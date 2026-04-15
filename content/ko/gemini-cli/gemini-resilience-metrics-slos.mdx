@@ -1,0 +1,116 @@
+---
+title: "Gemini 복원력 지표와 SLO"
+description: "Gemini CLI 팀이 측정 가능한 복원력 목표를 설정하고 임계값 기반 에스컬레이션을 운영하기 위한 고급 신뢰성 지표 체계."
+difficulty: advanced
+tags: ["advanced", "operations", "reliability", "metrics"]
+connections:
+  - slug: "gemini-chaos-resilience-drills"
+    tool: "gemini-cli"
+    type: "prerequisite"
+  - slug: "gemini-post-incident-hardening-loop"
+    tool: "gemini-cli"
+    type: "combines"
+  - slug: "gemini-operating-manual"
+    tool: "gemini-cli"
+    type: "enhances"
+  - slug: "codex-resilience-metrics-slos"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 14
+date: "2026-04-16"
+---
+
+> **공식 참고 자료**: [Get Started](https://geminicli.com/docs/get-started/) · [CLI Commands](https://geminicli.com/docs/cli/commands/) · [Sub-agents](https://geminicli.com/docs/core/subagents/) · [Skills](https://geminicli.com/docs/cli/skills/)
+
+## 왜 지표 규율이 중요한가
+
+지표 규율이 없으면 복원력 작업은 경험담 수준에 머뭅니다.
+팀은 어디에 투자할지 판단할 수 있는 측정 신호가 필요합니다.
+
+## 핵심 지표 모델
+
+| 지표 | 의사결정 활용 | 데이터 소스 |
+|---|---|---|
+| MTTD | 알림 품질/라우팅 점검 | 모니터링 타임라인 |
+| MTTC | 완화 의사결정 속도 | 사고 의사결정 로그 |
+| MTTR | 서비스 복구 효율 | 배포 + 검증 출력 |
+| Evidence freshness | 종료 신뢰도 품질 | 명령 근거 아카이브 |
+| Follow-up burn-down | 하드닝 실행 건전성 | 액션 백로그 |
+
+## 심각도별 SLO 목표
+
+- **SEV-1**: 엄격한 대응 시간 내 격리 및 롤백 경로 활성화
+- **SEV-2**: 주요 성능/품질 저하를 합의된 시간 내 안정화
+- **SEV-3**: 표준 사이클 내 계획된 보정 릴리스 완료
+
+숫자 목표를 사용하고 주간 편차를 검토하세요.
+
+## 데이터 품질 프로토콜
+
+필수 타임스탬프 5개를 수집합니다.
+
+- 사고 시작
+- 최초 탐지
+- 최초 완화 의사결정
+- 안정 상태 검증
+- 종료
+
+타임스탬프 누락은 프로세스 결함으로 간주해야 합니다.
+
+## 주간 복원력 리뷰 주기
+
+- 목표 대비 위반 점검
+- 반복되는 tail-latency 사고 분석
+- 실패를 통제 백로그 카테고리로 매핑
+- 상위 회귀 항목 오너/기한 지정
+
+## 임계값-에스컬레이션 정책
+
+지표마다:
+
+- green: 정상
+- yellow: 관찰
+- red: 즉시 에스컬레이션
+
+red 상태는 명명된 오너 경로를 자동 생성해야 합니다.
+
+## 대시보드 규칙
+
+- 평균만이 아니라 추세와 분위수 표시
+- 심각도 레인 분리
+- 분모/문맥 표시
+- 모든 스파이크를 사고 기록에 연결
+
+## 분기별 SLO 보정
+
+분기마다:
+
+- 안정적 달성 후에만 SLO 조정
+- 의사결정에 쓰이지 않는 지표 제거
+- 새 실패 클래스용 지표 1개 추가
+
+## 고급 안티패턴
+
+### 지표는 많고 액션은 적음
+
+지표가 액션으로 이어지지 않으면 노이즈입니다.
+
+### SLO 오너십 미지정
+
+오너 없는 SLO는 조용히 붕괴합니다.
+
+### 오래된 근거로 종료 선언
+
+오래된 근거는 현재 상태 신뢰도를 보장하지 못합니다.
+
+## 빠른 체크리스트
+
+월간 신뢰성 협의체 전:
+
+- 지표 정의 최신화
+- 심각도별 SLO 공개
+- red/yellow 위반 항목 오너 지정
+- follow-up burn-down 추세 점검
+
+Gemini CLI는 실행 속도를 올립니다. 지표는 신뢰성 책임을 유지시킵니다.

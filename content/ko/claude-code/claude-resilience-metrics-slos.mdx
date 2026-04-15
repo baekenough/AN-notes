@@ -1,0 +1,121 @@
+---
+title: "Claude 복원력 지표와 SLO"
+description: "Claude 팀이 신뢰성 드리프트를 추적하고 사고 SLO를 설정하며 근거 기반으로 복원력 의사결정을 수행하기 위한 고급 지표 프레임워크."
+difficulty: advanced
+tags: ["advanced", "operations", "reliability", "metrics"]
+connections:
+  - slug: "claude-chaos-resilience-drills"
+    tool: "claude-code"
+    type: "prerequisite"
+  - slug: "claude-post-incident-hardening-loop"
+    tool: "claude-code"
+    type: "combines"
+  - slug: "claude-operating-manual"
+    tool: "claude-code"
+    type: "enhances"
+  - slug: "codex-resilience-metrics-slos"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 14
+date: "2026-04-16"
+---
+
+> **공식 참고 자료**: [Best Practices](https://docs.anthropic.com/en/docs/claude-code/best-practices) · [Hooks](https://docs.anthropic.com/en/docs/claude-code/hooks) · [Security](https://docs.anthropic.com/en/docs/claude-code/security) · [GitHub Actions](https://docs.anthropic.com/en/docs/claude-code/github-actions)
+
+## 왜 복원력 지표가 중요한가
+
+드릴과 런북은 필요하지만 그것만으로는 충분하지 않습니다.
+지표가 없으면 복원력이 개선되는지 악화되는지 판단할 수 없습니다.
+
+## 핵심 복원력 지표 스택
+
+| 지표 | 측정 대상 | 대표 소스 |
+|---|---|---|
+| MTTD | 탐지 지연 | 알림 타임라인 |
+| MTTC | 격리/완화 의사결정까지의 시간 | 사고 의사결정 로그 |
+| MTTR | 안정 상태 복구까지의 시간 | 배포 + 검증 로그 |
+| Verification freshness | 종료 직전 최종 근거의 최신성 | 명령 근거 기록 |
+| Follow-up closure rate | 기한 내 하드닝 후속 항목 종료율 | 하드닝 백로그 |
+
+## 심각도별 SLO 모델
+
+- **SEV-1**: 엄격한 시간 예산 내 격리 의사결정 및 롤백 경로 트리거
+- **SEV-2**: 사용자 영향 저하를 팀 합의 시간 내 안정화
+- **SEV-3**: 계획된 사이클 내 보정 릴리스 완료
+
+SLO는 형용사가 아니라 숫자로 명시하세요.
+
+## 데이터 수집 프로토콜
+
+모든 사고에서 아래를 기록합니다.
+
+- 시작 시각
+- 첫 알림 시각
+- 첫 완화 의사결정 시각
+- 안정 상태 확인 시각
+- 종료 시각
+
+타임스탬프가 비면 추세 분석이 무효화됩니다.
+
+## 주간 복원력 리뷰
+
+매주:
+
+1. MTTD/MTTR 이상치 점검
+2. 누락/지연된 후속 작업 확인
+3. 실패를 통제 백로그 버킷에 매핑
+4. 상위 회귀 항목 오너/기한 지정
+
+## 임계값 기반 에스컬레이션 규칙
+
+지표별 red/yellow/green 임계값을 정의하세요.
+red 도달 시:
+
+- 즉시 에스컬레이션 오픈
+- reliability owner 지정
+- 다음 주 재검증 강제
+
+## 대시보드 설계 규칙
+
+- 최신값만이 아니라 추세를 표시
+- 심각도 클래스를 분리
+- 분모/문맥을 함께 제공
+- 스파이크를 사고 기록과 연결
+
+문맥 없는 지표는 잘못된 내러티브를 만듭니다.
+
+## 분기별 보정
+
+분기마다:
+
+- 안정 달성 후에만 SLO 상향
+- 의사결정에 기여하지 않는 지표 폐기
+- 신규 실패 클래스용 지표 1개 추가
+
+무시되는 큰 대시보드보다 작고 유용한 대시보드가 낫습니다.
+
+## 고급 안티패턴
+
+### 평균값만 보고
+
+평균은 tail-risk를 숨깁니다.
+
+### 오너 없는 SLO
+
+오너십 없는 SLO는 장식용 숫자가 됩니다.
+
+### freshness 검증 없는 사고 종료
+
+오래된 근거로는 현재 종료 신뢰도를 뒷받침할 수 없습니다.
+
+## 빠른 체크리스트
+
+월간 신뢰성 리뷰 전:
+
+- 지표 정의 문서화
+- 심각도별 SLO 가시화
+- 임계값 위반 항목 오너 매핑
+- 후속 종료율 추세 점검
+
+Claude는 팀의 속도를 높여줍니다. 지표는 그 속도가 안전하게 개선되도록 만듭니다.

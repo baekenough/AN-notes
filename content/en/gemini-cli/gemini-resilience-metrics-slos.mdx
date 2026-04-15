@@ -1,0 +1,116 @@
+---
+title: "Gemini Resilience Metrics and SLOs"
+description: "Advanced reliability metric system for Gemini CLI teams to set measurable resilience targets and run threshold-based escalation." 
+difficulty: advanced
+tags: ["advanced", "operations", "reliability", "metrics"]
+connections:
+  - slug: "gemini-chaos-resilience-drills"
+    tool: "gemini-cli"
+    type: "prerequisite"
+  - slug: "gemini-post-incident-hardening-loop"
+    tool: "gemini-cli"
+    type: "combines"
+  - slug: "gemini-operating-manual"
+    tool: "gemini-cli"
+    type: "enhances"
+  - slug: "codex-resilience-metrics-slos"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 14
+date: "2026-04-16"
+---
+
+> **Official References**: [Get Started](https://geminicli.com/docs/get-started/) · [CLI Commands](https://geminicli.com/docs/cli/commands/) · [Sub-agents](https://geminicli.com/docs/core/subagents/) · [Skills](https://geminicli.com/docs/cli/skills/)
+
+## Why metric discipline matters
+
+Without metric discipline, resilience work becomes anecdotal.
+Teams need measurable signals to decide where to invest effort.
+
+## Core metric model
+
+| Metric | Decision use | Data source |
+|---|---|---|
+| MTTD | alert quality and routing | monitoring timeline |
+| MTTC | mitigation decision speed | incident decision log |
+| MTTR | service restoration efficiency | deploy + verification output |
+| Evidence freshness | closure confidence quality | command evidence archive |
+| Follow-up burn-down | hardening execution health | action backlog |
+
+## Severity-specific SLO targets
+
+- **SEV-1**: containment + rollback path activation in strict response window
+- **SEV-2**: major degradation stabilized in agreed team window
+- **SEV-3**: planned corrective release completed in standard cycle
+
+Use numeric targets and review variance weekly.
+
+## Data quality protocol
+
+Capture five mandatory timestamps:
+
+- incident start
+- first detection
+- first mitigation decision
+- stable-state verification
+- closure
+
+Timestamp gaps should be treated as process defects.
+
+## Weekly resilience review cadence
+
+- inspect breaches vs target
+- analyze repeated tail-latency incidents
+- map misses to control backlog categories
+- assign owner + due date for top regressions
+
+## Threshold-to-escalation policy
+
+Per metric define:
+
+- green: normal
+- yellow: watch
+- red: immediate escalation
+
+Red state must auto-create a named owner path.
+
+## Dashboard rules
+
+- display trend and percentile, not just average
+- separate severity lanes
+- show context denominator
+- link every spike to incident records
+
+## Quarterly SLO calibration
+
+Every quarter:
+
+- adjust SLOs only after sustained attainment
+- remove metrics unused in decisions
+- add one metric for newly emerging failure class
+
+## Advanced anti-patterns
+
+### High metric count, low action rate
+
+If metrics do not drive actions, they are noise.
+
+### SLO ownership not assigned
+
+Unowned SLOs degrade silently.
+
+### Closure with stale verification evidence
+
+Stale evidence cannot justify current-state confidence.
+
+## Quick checklist
+
+Before monthly reliability council:
+
+- metric definitions current
+- severity SLOs published
+- red/yellow breaches owned
+- follow-up burn-down reviewed
+
+Gemini CLI accelerates execution. Metrics keep reliability accountable.
