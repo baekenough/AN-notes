@@ -241,6 +241,43 @@ Track worktree adoption with a few lightweight indicators:
 
 If these metrics improve over 2–4 weeks, your worktree practice is paying off.
 
+## Naming matrix that scales
+
+When teams exceed 3–4 concurrent worktrees, ad-hoc naming breaks discoverability.
+Use a compact naming matrix:
+
+| Purpose | Directory pattern | Branch pattern |
+|---------|-------------------|----------------|
+| Feature implementation | `wt-feat-{topic}` | `feat/{topic}` |
+| Hotfix lane | `wt-fix-{issue}` | `fix/{issue}` |
+| Migration lane | `wt-mig-{scope}` | `chore/migrate-{scope}` |
+| Docs/release lane | `wt-docs-{topic}` | `docs/{topic}` |
+
+This lets people infer intent from the path alone, which improves review routing and cleanup speed.
+
+## Cross-lane handoff contract
+
+Parallel lanes fail when handoff quality is inconsistent. Standardize what every lane must return:
+
+- **Goal status**: done / partial / blocked
+- **Evidence**: lint/test/build output (or reason omitted)
+- **Diff scope**: which directories changed and why
+- **Risk note**: rollback plan and unresolved edge cases
+- **Next owner**: who should pick it up next (reviewer, verifier, release lane)
+
+Think of this as an internal API between worktrees. Better contract, less coordination drag.
+
+## Weekly operating cadence example
+
+A simple cadence many teams can adopt:
+
+- **Mon**: open implementation and migration worktrees
+- **Tue–Wed**: run implementation lanes + daily verification lane checks
+- **Thu**: merge-ready review pass with branch-vs-base diff focus
+- **Fri**: docs/release lane updates + stale worktree cleanup
+
+The cadence matters less than consistency. Repeating the same weekly rhythm reduces context thrash.
+
 ## Quick checklist
 
 Before opening a worktree:

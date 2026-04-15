@@ -242,6 +242,44 @@ Mide adopción de worktrees con indicadores ligeros:
 
 Si mejoran en 2–4 semanas, la práctica de worktrees está dando retorno.
 
+## Matriz de naming que escala
+
+Cuando un equipo supera 3–4 worktrees simultáneos, el naming ad-hoc deja de ser legible.
+Conviene fijar una matriz corta:
+
+| Propósito | Patrón de directorio | Patrón de branch |
+|-----------|-----------------------|------------------|
+| Implementación de feature | `wt-feat-{tema}` | `feat/{tema}` |
+| Lane de hotfix | `wt-fix-{issue}` | `fix/{issue}` |
+| Lane de migración | `wt-mig-{scope}` | `chore/migrate-{scope}` |
+| Lane de docs/release | `wt-docs-{tema}` | `docs/{tema}` |
+
+Si el propósito se entiende solo con ver la ruta, mejora tanto el enrutado de review como la limpieza.
+
+## Contrato de handoff entre lanes
+
+Muchos fallos de paralelización vienen de handoffs inconsistentes, no de código difícil.
+Define un contrato mínimo para cada entrega entre lanes:
+
+- **Estado de objetivo**: done / partial / blocked
+- **Evidencia**: salida de lint/test/build (o motivo de omisión)
+- **Alcance del diff**: directorios tocados y por qué
+- **Nota de riesgo**: plan de rollback y edge cases abiertos
+- **Siguiente owner**: reviewer, verifier o lane de release
+
+Trátalo como un API interno entre worktrees: mejor contrato, menos fricción de coordinación.
+
+## Ejemplo de cadencia semanal
+
+Una cadencia simple y repetible:
+
+- **Lun**: abrir worktrees de implementación y migración
+- **Mar–Mié**: ejecución de lanes + checks diarios del lane de verificación
+- **Jue**: revisión pre-merge centrada en diff branch-vs-base
+- **Vie**: actualización de docs/release + limpieza de worktrees viejos
+
+Más importante que el día exacto es mantener el ritmo. La repetición reduce el desgaste de contexto.
+
 ## Checklist rápido
 
 Antes de abrir un worktree:
