@@ -1,0 +1,84 @@
+---
+title: "Claude High-Risk Change Governance"
+description: "Advanced governance model for auth, billing, migration, and other high-blast-radius changes with Claude workflows."
+difficulty: advanced
+tags: ["advanced", "governance", "security", "release"]
+connections:
+  - slug: "claude-mid-size-refactor-playbook"
+    tool: "claude-code"
+    type: "prerequisite"
+  - slug: "github-actions-workflows"
+    tool: "claude-code"
+    type: "enhances"
+  - slug: "codex-release-readiness"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 9
+date: "2026-04-15"
+---
+
+> **Official References**: [Security](https://docs.anthropic.com/en/docs/claude-code/security) · [Sub-agents](https://docs.anthropic.com/en/docs/claude-code/sub-agents) · [Best Practices](https://docs.anthropic.com/en/docs/claude-code/best-practices)
+
+## High-risk changes need governance, not just good prompts
+
+For auth, billing, permissions, and data migration surfaces, treat delivery as governance workflow:
+
+- explicit risk class
+- explicit final owner
+- explicit rollback trigger
+
+## Five governance gates
+
+1. code quality gate
+2. security/review gate
+3. operational readiness gate
+4. communication gate
+5. final go/no-go gate
+
+## Advanced release decision record
+
+Every high-risk change should produce one decision block:
+
+- scope
+- risk class
+- gate statuses
+- residual risks
+- rollback trigger + owner
+- final decision + timestamp
+
+## Required escalation rule
+
+If a blocking risk survives two iterations:
+
+- mark status `blocked`
+- escalate with evidence
+- assign new owner and deadline
+
+Unowned blockers are governance failures.
+
+## Advanced anti-patterns
+
+### Test pass treated as deploy permission
+
+Passing tests are necessary, never sufficient.
+
+### Go/no-go without named accountable owner
+
+Ambiguity at this step creates incident-time confusion.
+
+### Rollback exists only in theory
+
+If rollback is not rehearsed, it is not ready.
+
+## Quick checklist
+
+Before production:
+
+- risk class declared
+- governance gates evaluated
+- final owner signed off
+- rollback trigger documented and tested
+- escalation path active
+
+Advanced delivery is not faster by default. It is safer under stress.

@@ -1,0 +1,193 @@
+---
+title: Release Readiness en Codex — Gates Finales Antes de Producción
+description: Aplica un protocolo repetible de release readiness para que cambios
+  generados con Codex se desplieguen con ownership explícito, evidencia sólida,
+  confianza de rollback y criterios claros de go/no-go.
+difficulty: advanced
+tags:
+- release
+- verification
+- operations
+- governance
+connections:
+- slug: codex-verification-loops
+  tool: gpt-codex
+  type: prerequisite
+- slug: codex-handoffs
+  tool: gpt-codex
+  type: combines
+- slug: codex-ci-cd-workflows
+  tool: gpt-codex
+  type: enhances
+- slug: github-actions-workflows
+  tool: claude-code
+  type: compare
+featured: false
+order: 12
+date: '2026-04-15'
+---
+
+> **Referencias Oficiales**: [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [Review](https://developers.openai.com/codex/app/review) · [Automations](https://developers.openai.com/codex/app/automations)
+
+<!-- curriculum:start -->
+## Ruta del currículo
+
+1. [Primeros Pasos con Codex](./codex-getting-started) — primeras victorias locales
+2. [Instrucciones de Codex](./codex-instructions) — reglas y defaults estables
+3. [Sandboxing en Codex](./codex-sandbox) — límites de ejecución seguros
+4. [Diseño de Tareas en Codex](./codex-task-design) — dar forma revisable al trabajo
+5. [Skills de Codex](./codex-skills) — empaquetar procedimientos repetidos
+6. [Subagentes de Codex](./codex-subagents) — exploración paralela y delegación
+7. [MCP en Codex](./codex-mcp) — conectar contexto externo
+8. [Reviews y Automatizaciones con Codex](./codex-ci-cd-workflows) — volver repetible el workflow
+9. [Codex Worktrees](./codex-worktrees) — aislar ejecución paralela larga
+10. [Handoffs en Codex](./codex-handoffs) — transferir contexto y ownership limpiamente
+11. [Loops de Verificación en Codex](./codex-verification-loops) — probar claims con evidencia fresca
+12. **Release Readiness en Codex** — ejecutar gates finales de go/no-go antes de producción ← **Estás aquí**
+
+### Documentación oficial usada en esta guía
+- **Done criteria explícitos y ejecución según riesgo** — [Best Practices](https://developers.openai.com/codex/learn/best-practices)
+- **Alcance final de diff antes de merge/deploy** — [Review](https://developers.openai.com/codex/app/review)
+- **Checks repetibles automatizados para release prep** — [Automations](https://developers.openai.com/codex/app/automations)
+<!-- curriculum:end -->
+
+## Por qué release readiness necesita su propio paso
+
+Muchos equipos tratan release como "verificación una vez más".
+Eso suele omitir preguntas operativas clave:
+
+- ¿quién es dueño del go/no-go final?
+- ¿qué riesgo queda abierto?
+- ¿cuál es el trigger de rollback?
+- ¿quién comunica si se pausa el rollout?
+
+Release readiness no es solo estado de tests. Es una decisión con ownership, evidencia y contingencia.
+
+## Stack de gates de release
+
+Un stack práctico tiene cinco capas:
+
+1. **Code gates** — lint/tests/build y checks de calidad requeridos
+2. **Review gates** — alcance de diff auditado y aprobado
+3. **Operational gates** — ruta de rollback, owner on-call, ventana de release
+4. **Communication gates** — release notes + plan de comunicación a stakeholders
+5. **Decision gate** — sign-off explícito de go/no-go con owner nombrado
+
+Saltar una capa aumenta riesgo de incidente incluso con buena calidad de código.
+
+## Matriz de release por clase de riesgo
+
+| Clase de riesgo | Cambios típicos | Profundidad de gate requerida |
+|-----------------|-----------------|-------------------------------|
+| Baja | docs, copy, polish UI no crítico | code + review gates estándar |
+| Media | cambios de comportamiento en flujos core | code + review + owner de rollback |
+| Alta | auth, billing, permisos, migración | 5 capas completas + rehearsal + panel go/no-go explícito |
+
+La clase de riesgo debe declararse antes de la verificación final para evitar debate tardío sobre profundidad de gates.
+
+## Plantilla de decisión de release (copy-ready)
+
+```md
+### Release Decision
+
+- Release scope: <services/modules/features>
+- Risk class: low | medium | high
+- Gate results:
+  - code gates: pass | fail
+  - review gates: pass | fail
+  - operational gates: pass | fail
+  - communication gates: pass | fail
+  - decision gate: pass | fail
+- Residual risks:
+  - <list or none>
+- Rollback trigger:
+  - <clear condition>
+- Rollback owner:
+  - <person/role>
+- Final decision owner:
+  - <person/role>
+- Decision:
+  - GO | NO-GO
+- Decision timestamp:
+  - <iso datetime>
+```
+
+Un registro corto pero explícito evita ambigüedad de ownership en release.
+
+## Checklist de drill pre-release
+
+Antes de ventanas de release de alto riesgo, haz un dry drill:
+
+- confirmar comandos críticos limpios en la rama actual
+- validar feature flags/defaults esperados
+- validar que rollback sigue funcionando
+- validar dashboards/alertas sobre superficies cambiadas
+- validar disponibilidad de owner de guardia y backup
+
+Los drills convierten "creemos que podemos recuperar" en "probamos que podemos recuperar".
+
+## Patrón de ensayo de rollback
+
+Para riesgo medio/alto, ensaya rollback en entorno no productivo:
+
+1. aplicar build candidata
+2. simular trigger de rollback
+3. ejecutar ruta de rollback
+4. confirmar recuperación del servicio y normalización de alertas
+5. documentar tiempo de recuperación y puntos de fricción
+
+Si rollback es lento o confuso en ensayo, será peor bajo presión real.
+
+## Mínimo de comunicación de release
+
+Todo paquete de release debe incluir:
+
+- qué cambió (user-facing e interno)
+- limitaciones conocidas
+- foco de monitoreo en primeros 30–60 minutos
+- condiciones de trigger de rollback
+- canal de escalación y owner
+
+Buena comunicación es mecanismo de control, no ritual de anuncio.
+
+## Ejemplos de modos de fallo
+
+### "Todos los tests pasan" pero sin trigger de rollback
+
+El equipo retrasa rollback mientras debate umbrales en pleno incidente.
+
+### Owner final no nombrado
+
+Todos asumen que otra persona tomó la decisión go/no-go.
+
+### Diff revisado, operación no revisada
+
+El deploy sale técnicamente bien, pero falla operativamente por desalineación con runbooks.
+
+## Auditoría rápida de release readiness (10 minutos)
+
+Antes de deploy, pregunta:
+
+- ¿La clase de riesgo está declarada explícitamente?
+- ¿Todas las capas de gate están marcadas pass/fail?
+- ¿Hay owner final de decisión nombrado?
+- ¿El trigger de rollback es concreto y testeable?
+- ¿El paquete de comunicación está listo?
+
+Si alguna respuesta es no, release no está lista.
+
+## Checklist rápido
+
+Antes del go/no-go:
+
+- clase de riesgo declarada
+- cinco capas de gate evaluadas
+- trigger + owner de rollback registrados
+
+Antes de deploy en producción:
+
+- decisión final registrada con timestamp
+- paquete de comunicación preparado
+- owner de escalación localizable
+
+Codex acelera implementación. Release readiness protege el negocio cuando esa implementación toca tráfico real.

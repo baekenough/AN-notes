@@ -18,6 +18,9 @@ connections:
 - slug: codex-sandbox
   tool: gpt-codex
   type: enhances
+- slug: codex-release-readiness
+  tool: gpt-codex
+  type: enhances
 - slug: github-actions-workflows
   tool: claude-code
   type: compare
@@ -42,6 +45,7 @@ date: '2026-04-15'
 9. [Codex Worktrees](./codex-worktrees) — isolate long parallel execution
 10. [Codex Handoffs](./codex-handoffs) — transfer context and ownership cleanly
 11. **Codex Verification Loops** — convert claims into merge-ready proof ← **You are here**
+12. [Codex Release Readiness](./codex-release-readiness) — run final go/no-go gates before production
 
 ### Official docs used in this guide
 - **Task framing with explicit done criteria** — [Best Practices](https://developers.openai.com/codex/learn/best-practices)
@@ -191,3 +195,4 @@ Before merge:
 - residual risks + rollback documented
 
 Codex speed helps you move fast. Verification loops help you move safely.
+Then use [Codex Release Readiness](./codex-release-readiness) to make the final production decision explicit.

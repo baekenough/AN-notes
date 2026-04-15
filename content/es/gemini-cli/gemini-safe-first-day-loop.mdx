@@ -1,0 +1,90 @@
+---
+title: "Gemini Loop Seguro del Primer Día"
+description: "Onboarding de nivel principiante en Gemini CLI: límites de confianza, una tarea segura y cierre basado en evidencia."
+difficulty: beginner
+tags: ["beginner", "onboarding", "workflow", "safety"]
+connections:
+  - slug: "getting-started"
+    tool: "gemini-cli"
+    type: "prerequisite"
+  - slug: "trusted-folders-sandboxing"
+    tool: "gemini-cli"
+    type: "enhances"
+  - slug: "codex-getting-started"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 7
+date: "2026-04-15"
+---
+
+> **Referencias Oficiales**: [Get Started](https://geminicli.com/docs/get-started/) · [Sandboxing](https://geminicli.com/docs/cli/sandbox/) · [Memory & Context](https://geminicli.com/docs/cli/tutorials/memory-management/)
+
+## Prioriza seguridad antes de velocidad
+
+En principiantes, los errores vienen más por alcance y confianza mal definidos que por código.
+
+Objetivo del primer día:
+
+- setup seguro
+- una victoria pequeña
+- evidencia clara
+
+## Loop de 45 minutos
+
+### 0–10 min: límites de confianza
+
+- confirmar trusted folder
+- confirmar sandbox mode
+- definir qué no se toca
+
+### 10–25 min: tarea acotada
+
+Trabaja en una superficie pequeña.
+
+### 25–35 min: verificación
+
+Ejecuta checks mínimos y revisa alcance del diff.
+
+### 35–45 min: registro breve
+
+- resumen del cambio
+- comandos ejecutados
+- riesgos pendientes
+
+## Forma mínima de prompt
+
+```text
+Goal:
+
+Context:
+
+Constraints:
+
+Done when:
+```
+
+`Done when` evita "completitud por intuición".
+
+## Anti-patrones de principiante
+
+### Empezar con refactor grande
+
+Pierdes control demasiado pronto.
+
+### Ejecutar sin límites de trust claros
+
+Primero fallan los límites, luego el código.
+
+### Cerrar sin evidencia
+
+Confianza no sustituye verificación.
+
+## Checklist rápido
+
+- trust/sandbox confirmados
+- tarea acotada completada
+- checks ejecutados
+- nota final registrada
+
+Si estos puntos están en verde, tu primer loop está bien planteado.

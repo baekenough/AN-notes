@@ -1,0 +1,110 @@
+---
+title: "Claude First-Day Safe Loop"
+description: "A beginner-friendly 60-minute workflow to set guardrails, run your first task safely, and leave auditable evidence."
+difficulty: beginner
+tags: ["beginner", "workflow", "safety", "onboarding"]
+connections:
+  - slug: "claude-md-mastery"
+    tool: "claude-code"
+    type: "prerequisite"
+  - slug: "effective-prompting"
+    tool: "claude-code"
+    type: "combines"
+  - slug: "codex-getting-started"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 7
+date: "2026-04-15"
+---
+
+> **Official References**: [Claude Code Overview](https://docs.anthropic.com/en/docs/claude-code/overview) · [Best Practices](https://docs.anthropic.com/en/docs/claude-code/best-practices) · [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code/cli-usage)
+
+## Why this guide exists
+
+Most beginners fail for one reason: they start with a big task before establishing a safe loop.
+
+This guide gives you a first-day loop with three goals:
+
+1. set clear boundaries
+2. run one small task
+3. keep verifiable evidence
+
+## The 60-minute safe loop
+
+### 0–10 min: set project rules
+
+- create/update `CLAUDE.md`
+- define what files can be changed
+- define what commands count as proof
+
+### 10–25 min: run one narrow task
+
+Start with one issue that changes 1–3 files.
+
+Example:
+
+```text
+Goal: fix typo and broken link in onboarding doc.
+Context: docs/onboarding.md
+Constraints: do not change code files.
+Done when: lint + markdown link check pass.
+```
+
+### 25–40 min: verify and review
+
+Run checks, then inspect the actual diff.
+
+- lint/doc checks
+- review changed files
+- revert accidental edits
+
+### 40–60 min: capture handoff note
+
+Write a short note with:
+
+- what changed
+- what passed
+- what remains
+
+## Starter prompt template
+
+```text
+Goal:
+<one concrete outcome>
+
+Context:
+<files, symptoms, references>
+
+Constraints:
+<what must not change>
+
+Done when:
+<commands + expected result>
+```
+
+Use this template until it feels automatic.
+
+## Beginner anti-patterns
+
+### Asking for too much in one prompt
+
+Large prompts hide failures and increase risky edits.
+
+### Skipping verification because diff looks small
+
+Small diffs can still break behavior.
+
+### No explicit done condition
+
+Without `Done when`, completion becomes subjective.
+
+## First-day completion checklist
+
+- `CLAUDE.md` updated with local rules
+- one narrow task completed
+- proof commands executed
+- diff reviewed
+- short handoff note recorded
+
+If these five are done, your onboarding loop is working.

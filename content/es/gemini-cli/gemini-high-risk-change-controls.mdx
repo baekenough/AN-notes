@@ -1,0 +1,83 @@
+---
+title: "Controles de Cambios de Alto Riesgo en Gemini"
+description: "Modelo avanzado de control para workflows Gemini de alto impacto: gates explícitos, ownership de rollback y disciplina de escalación."
+difficulty: advanced
+tags: ["advanced", "risk", "governance", "release"]
+connections:
+  - slug: "gemini-week-scale-delivery-playbook"
+    tool: "gemini-cli"
+    type: "prerequisite"
+  - slug: "sub-agents-and-skills"
+    tool: "gemini-cli"
+    type: "enhances"
+  - slug: "codex-release-readiness"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 9
+date: "2026-04-15"
+---
+
+> **Referencias Oficiales**: [Sandboxing](https://geminicli.com/docs/cli/sandbox/) · [Sub-agents](https://geminicli.com/docs/core/subagents/) · [Tools](https://geminicli.com/docs/cli/commands/)
+
+## En alto riesgo, controla primero
+
+Para permisos, billing, auth o migraciones, exige:
+
+- nivel de riesgo declarado
+- estados de gate visibles
+- trigger + owner de rollback
+- owner final de go/no-go
+
+## Gates de control
+
+1. gate de calidad de implementación
+2. gate de review de seguridad/comportamiento
+3. gate de readiness operacional
+4. gate de comunicación
+5. gate de decisión final
+
+## Registro de control avanzado
+
+Debe capturar:
+
+- alcance + nivel de riesgo
+- resultados de gates
+- riesgos residuales
+- trigger de rollback
+- owner de escalación
+- timestamp de decisión final
+
+## Regla de escalación
+
+Si un riesgo alto sigue abierto tras dos loops:
+
+- marcar `blocked`
+- adjuntar evidencia
+- reasignar owner y deadline
+
+## Anti-patrones avanzados
+
+### Asumir rollback sin verificarlo
+
+Rollback debe ser ejecutable, no supuesto.
+
+### Aprobación técnica sin revisión operativa
+
+Puede pasar CI y fallar en operación real.
+
+### Sin owner final de decisión
+
+Sin dueño, no hay sistema de decisión confiable.
+
+## Checklist rápido
+
+Antes de deploy:
+
+- nivel de riesgo declarado
+- estados de gate registrados
+- rollback trigger + owner confirmados
+- owner de escalación disponible
+- decisión final documentada
+
+La ejecución avanzada se mide por contención de fallos, no solo por velocidad.

@@ -1,0 +1,83 @@
+---
+title: "Gemini 고위험 변경 통제 모델"
+description: "고위험 Gemini 워크플로우를 위한 고급 통제 모델: 명시적 게이트, 롤백 오너십, 에스컬레이션 규율."
+difficulty: advanced
+tags: ["advanced", "risk", "governance", "release"]
+connections:
+  - slug: "gemini-week-scale-delivery-playbook"
+    tool: "gemini-cli"
+    type: "prerequisite"
+  - slug: "sub-agents-and-skills"
+    tool: "gemini-cli"
+    type: "enhances"
+  - slug: "codex-release-readiness"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 9
+date: "2026-04-15"
+---
+
+> **공식 참고 자료**: [Sandboxing](https://geminicli.com/docs/cli/sandbox/) · [Sub-agents](https://geminicli.com/docs/core/subagents/) · [Tools](https://geminicli.com/docs/cli/commands/)
+
+## 고위험 변경은 낙관보다 통제가 우선
+
+권한, billing, auth, migration 영역에서는 아래를 강제하세요.
+
+- 리스크 티어 선언
+- 게이트 상태 추적
+- 롤백 트리거 + 오너
+- 최종 go/no-go 오너
+
+## 통제 게이트
+
+1. 구현 품질 게이트
+2. 보안/행동 리뷰 게이트
+3. 운영 준비도 게이트
+4. 커뮤니케이션 게이트
+5. 최종 의사결정 게이트
+
+## 고급 통제 기록
+
+아래 항목을 단일 의사결정 기록으로 남기세요.
+
+- 범위와 리스크 티어
+- 게이트 결과
+- 잔여 리스크
+- 롤백 트리거
+- 에스컬레이션 오너
+- 최종 결정 시각
+
+## 에스컬레이션 규칙
+
+고위험 이슈가 2회 루프 이후에도 미해결이면:
+
+- `blocked` 전환
+- 근거 첨부
+- 오너 + 기한 지정
+
+## 고급 안티패턴
+
+### 암묵적 롤백 가정으로 배포
+
+롤백은 암묵이 아니라 실행 가능해야 합니다.
+
+### 운영 리뷰 없는 기술 승인
+
+기술적으로 통과해도 운영에서 실패할 수 있습니다.
+
+### 최종 책임 오너 누락
+
+최종 책임자가 없으면 결정 시스템이 없습니다.
+
+## 빠른 체크리스트
+
+배포 전:
+
+- 리스크 티어 선언
+- 게이트 상태 기록 완료
+- 롤백 트리거 + 오너 확인
+- 에스컬레이션 오너 연락 가능
+- 최종 의사결정 로그 작성
+
+고급 운영의 품질은 속도보다 실패 격리 능력으로 측정됩니다.

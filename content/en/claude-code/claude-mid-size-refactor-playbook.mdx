@@ -1,0 +1,100 @@
+---
+title: "Claude Mid-Size Refactor Playbook"
+description: "An intermediate playbook for splitting week-scale refactors into safe lanes with reviewable checkpoints."
+difficulty: intermediate
+tags: ["refactor", "intermediate", "workflow", "review"]
+connections:
+  - slug: "multi-agent-workflow"
+    tool: "claude-code"
+    type: "prerequisite"
+  - slug: "hooks-automation"
+    tool: "claude-code"
+    type: "enhances"
+  - slug: "codex-verification-loops"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 8
+date: "2026-04-15"
+---
+
+> **Official References**: [Sub-agents](https://docs.anthropic.com/en/docs/claude-code/sub-agents) · [Agent Teams](https://docs.anthropic.com/en/docs/claude-code/agent-teams) · [Best Practices](https://docs.anthropic.com/en/docs/claude-code/best-practices)
+
+## Mid-size refactors fail at coordination, not syntax
+
+At intermediate stage, teams usually can write code but struggle to keep scope and evidence aligned.
+
+Use a three-lane model:
+
+- implementation lane
+- verification lane
+- review lane
+
+## Step 1: split by independent surfaces
+
+Split by module boundaries, not by "who is free."
+
+Good split:
+
+- API adapter cleanup
+- service-layer rename
+- test stabilization
+
+Bad split:
+
+- random file ownership with shared edits everywhere
+
+## Step 2: define lane contracts
+
+Each lane must return:
+
+- goal status
+- evidence
+- diff scope
+- risk note
+- next owner
+
+No contract, no handoff.
+
+## Step 3: use checkpoints every meaningful merge chunk
+
+After each chunk:
+
+1. run checks
+2. review scope
+3. capture short handoff
+
+This prevents one giant hard-to-review final diff.
+
+## Step 4: keep rollback simple
+
+Refactors are safest when rollback is obvious:
+
+- avoid mixed feature + refactor commits
+- keep branch history understandable
+- document high-risk rename points
+
+## Intermediate anti-patterns
+
+### "We'll clean up at the end"
+
+Usually means the final diff is unreviewable.
+
+### Shared ownership without declared reviewer
+
+Creates approval ambiguity and delays merge.
+
+### Test updates deferred too late
+
+You lose signal quality when test fixes pile up at the end.
+
+## Quick checklist
+
+Before merge:
+
+- lanes returned full contracts
+- each chunk has fresh evidence
+- final diff aligns with stated refactor scope
+- rollback path is clear
+
+That is the difference between "code changed" and "refactor delivered."

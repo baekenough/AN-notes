@@ -1,0 +1,83 @@
+---
+title: "Gemini High-Risk Change Controls"
+description: "Advanced control model for high-blast-radius Gemini workflows: explicit gates, rollback ownership, and escalation discipline."
+difficulty: advanced
+tags: ["advanced", "risk", "governance", "release"]
+connections:
+  - slug: "gemini-week-scale-delivery-playbook"
+    tool: "gemini-cli"
+    type: "prerequisite"
+  - slug: "sub-agents-and-skills"
+    tool: "gemini-cli"
+    type: "enhances"
+  - slug: "codex-release-readiness"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 9
+date: "2026-04-15"
+---
+
+> **Official References**: [Sandboxing](https://geminicli.com/docs/cli/sandbox/) · [Sub-agents](https://geminicli.com/docs/core/subagents/) · [Tools](https://geminicli.com/docs/cli/commands/)
+
+## High-risk work needs controls, not optimism
+
+For permission, billing, auth, and migration surfaces, require explicit controls:
+
+- risk tier declaration
+- gate status tracking
+- rollback trigger and owner
+- final go/no-go owner
+
+## Control gates
+
+1. implementation quality gate
+2. security/behavior review gate
+3. operations readiness gate
+4. communication gate
+5. final decision gate
+
+## Advanced control record
+
+Keep one decision artifact that captures:
+
+- scope and risk tier
+- gate results
+- residual risks
+- rollback trigger
+- escalation owner
+- final decision timestamp
+
+## Escalation rule
+
+If unresolved high-risk issue survives two loops:
+
+- switch status to blocked
+- attach evidence
+- assign next owner + deadline
+
+## Advanced anti-patterns
+
+### Shipping with implicit rollback assumptions
+
+Rollback must be executable, not implied.
+
+### Diff approved without operations review
+
+Technical pass can still become operational failure.
+
+### Missing final accountable owner
+
+No owner means no reliable decision system.
+
+## Quick checklist
+
+Before deploy:
+
+- risk tier declared
+- all gate statuses recorded
+- rollback trigger + owner confirmed
+- escalation owner reachable
+- final decision logged
+
+Advanced execution is measured by failure containment, not just speed.

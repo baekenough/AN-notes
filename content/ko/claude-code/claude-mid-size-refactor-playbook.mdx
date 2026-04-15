@@ -1,0 +1,86 @@
+---
+title: "Claude 중형 리팩토링 플레이북"
+description: "주 단위 리팩토링을 안전한 레인으로 나누고, 리뷰 가능한 체크포인트로 운영하는 중급 실전 가이드."
+difficulty: intermediate
+tags: ["refactor", "intermediate", "workflow", "review"]
+connections:
+  - slug: "multi-agent-workflow"
+    tool: "claude-code"
+    type: "prerequisite"
+  - slug: "hooks-automation"
+    tool: "claude-code"
+    type: "enhances"
+  - slug: "codex-verification-loops"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 8
+date: "2026-04-15"
+---
+
+> **공식 참고 자료**: [Sub-agents](https://docs.anthropic.com/en/docs/claude-code/sub-agents) · [Agent Teams](https://docs.anthropic.com/en/docs/claude-code/agent-teams) · [Best Practices](https://docs.anthropic.com/en/docs/claude-code/best-practices)
+
+## 중형 리팩토링의 실패 원인은 조율
+
+중급 단계에서는 코드 작성보다 스코프와 근거를 일치시키는 능력이 중요합니다.
+
+추천 3레인:
+
+- 구현 레인
+- 검증 레인
+- 리뷰 레인
+
+## 1단계: 독립 경계로 분할
+
+"남는 사람이 처리" 방식이 아니라 모듈 경계로 쪼개세요.
+
+## 2단계: 레인 계약 고정
+
+각 레인이 반드시 넘길 것:
+
+- 목표 상태
+- 근거
+- diff 범위
+- 리스크 노트
+- 다음 오너
+
+## 3단계: 의미 있는 청크마다 체크포인트
+
+각 청크 후:
+
+1. 검증 실행
+2. 범위 점검
+3. 짧은 핸드오프 기록
+
+최종 거대 diff를 피하는 핵심입니다.
+
+## 4단계: 롤백 단순화
+
+- 기능 변경과 리팩토링 혼합 커밋 금지
+- 브랜치 히스토리 가독성 유지
+- 고위험 rename 지점 문서화
+
+## 중급 안티패턴
+
+### "마지막에 한 번에 정리"
+
+대부분 리뷰 불가능한 diff로 끝납니다.
+
+### 리뷰 오너 미정 상태 공유 작업
+
+승인 책임이 흐려져 머지가 지연됩니다.
+
+### 테스트 보정을 끝으로 미룸
+
+검증 신호 품질이 마지막에 무너집니다.
+
+## 빠른 체크리스트
+
+머지 전:
+
+- 레인 계약 5필드 충족
+- 청크별 최신 근거 존재
+- 최종 diff와 리팩토링 범위 일치
+- 롤백 경로 명확
+
+이 기준을 통과하면 "리팩토링 완료"라고 말할 수 있습니다.

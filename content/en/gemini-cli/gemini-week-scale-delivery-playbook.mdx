@@ -1,0 +1,82 @@
+---
+title: "Gemini Week-Scale Delivery Playbook"
+description: "Intermediate playbook for turning multi-day Gemini work into auditable lanes with clear handoffs."
+difficulty: intermediate
+tags: ["intermediate", "delivery", "orchestration", "handoff"]
+connections:
+  - slug: "headless-automation"
+    tool: "gemini-cli"
+    type: "combines"
+  - slug: "sub-agents-and-skills"
+    tool: "gemini-cli"
+    type: "enhances"
+  - slug: "codex-handoffs"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 8
+date: "2026-04-15"
+---
+
+> **Official References**: [Sub-agents](https://geminicli.com/docs/core/subagents/) · [Skills](https://geminicli.com/docs/cli/skills/) · [Automation](https://geminicli.com/docs/cli/commands/)
+
+## Intermediate delivery is mostly workflow discipline
+
+At week-scale, most failures are not model quality issues.
+They are handoff and sequencing issues.
+
+Use a repeatable lane structure:
+
+- planning lane
+- implementation lane
+- verification lane
+
+## Step 1: freeze scope before execution
+
+Write down:
+
+- in-scope modules
+- out-of-scope modules
+- acceptance checks
+
+## Step 2: run subagents where independence exists
+
+Delegate noisy exploration and keep the main thread clean.
+
+## Step 3: standardize handoff fields
+
+Minimum handoff:
+
+- goal status
+- evidence
+- changed scope
+- residual risk
+- next owner
+
+## Step 4: end each day with evidence snapshot
+
+Do not rely on memory between sessions.
+Capture command output and unresolved items daily.
+
+## Intermediate anti-patterns
+
+### Subagents for tightly coupled work
+
+Parallelism adds overhead when dependencies are sequential.
+
+### Daily progress without verification
+
+Progress reports become narrative, not evidence.
+
+### Scope drift accepted as normal
+
+Week-scale work collapses when boundaries blur.
+
+## Quick checklist
+
+- scope frozen and visible
+- lane ownership explicit
+- daily evidence snapshots captured
+- final verifier lane run before merge
+
+Intermediate reliability comes from repeatable rhythm, not heroic effort.

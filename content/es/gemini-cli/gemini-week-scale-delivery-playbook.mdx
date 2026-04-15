@@ -1,0 +1,81 @@
+---
+title: "Playbook Gemini para Entregas de Escala Semanal"
+description: "Guía intermedia para organizar trabajo de varios días con lanes auditables y handoffs claros en Gemini CLI."
+difficulty: intermediate
+tags: ["intermediate", "delivery", "orchestration", "handoff"]
+connections:
+  - slug: "headless-automation"
+    tool: "gemini-cli"
+    type: "combines"
+  - slug: "sub-agents-and-skills"
+    tool: "gemini-cli"
+    type: "enhances"
+  - slug: "codex-handoffs"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 8
+date: "2026-04-15"
+---
+
+> **Referencias Oficiales**: [Sub-agents](https://geminicli.com/docs/core/subagents/) · [Skills](https://geminicli.com/docs/cli/skills/) · [Automation](https://geminicli.com/docs/cli/commands/)
+
+## En nivel intermedio gana la disciplina de workflow
+
+A escala semanal, la mayoría de fallos no son del modelo: son de secuencia y handoff.
+
+Lanes sugeridos:
+
+- lane de planeación
+- lane de implementación
+- lane de verificación
+
+## Paso 1: congelar alcance antes de ejecutar
+
+Define:
+
+- módulos in-scope
+- módulos out-of-scope
+- checks de aceptación
+
+## Paso 2: delegar solo trabajo realmente independiente
+
+Usa subagentes para ruido exploratorio; conserva limpio el hilo principal.
+
+## Paso 3: contrato estándar de handoff
+
+Incluye siempre:
+
+- estado de objetivo
+- evidencia
+- alcance de cambio
+- riesgo residual
+- siguiente owner
+
+## Paso 4: snapshot diario de evidencia
+
+No dependas de memoria entre sesiones.
+Registra output y pendientes cada día.
+
+## Anti-patrones intermedios
+
+### Paralelizar trabajo fuertemente acoplado
+
+Solo agrega fricción.
+
+### Reportes diarios sin verificación
+
+Terminan siendo narrativa sin prueba.
+
+### Aceptar scope drift por costumbre
+
+La entrega semanal se desordena rápido.
+
+## Checklist rápido
+
+- alcance congelado y visible
+- ownership de lanes explícito
+- evidencia diaria registrada
+- lane verifier ejecutado antes de merge
+
+La confiabilidad intermedia nace del ritmo repetible.

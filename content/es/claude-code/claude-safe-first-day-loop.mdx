@@ -1,0 +1,93 @@
+---
+title: "Claude Loop Seguro del Primer Día"
+description: "Loop de 60 minutos para principiantes: define guardrails, ejecuta una tarea pequeña y deja evidencia verificable."
+difficulty: beginner
+tags: ["beginner", "workflow", "safety", "onboarding"]
+connections:
+  - slug: "claude-md-mastery"
+    tool: "claude-code"
+    type: "prerequisite"
+  - slug: "effective-prompting"
+    tool: "claude-code"
+    type: "combines"
+  - slug: "codex-getting-started"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 7
+date: "2026-04-15"
+---
+
+> **Referencias Oficiales**: [Claude Code Overview](https://docs.anthropic.com/en/docs/claude-code/overview) · [Best Practices](https://docs.anthropic.com/en/docs/claude-code/best-practices) · [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code/cli-usage)
+
+## Por qué existe esta guía
+
+El fallo más común en principiantes: empezar con una tarea grande sin un loop seguro.
+
+Objetivo del primer día:
+
+1. fijar límites
+2. cerrar una tarea pequeña
+3. guardar evidencia de verificación
+
+## Loop seguro de 60 minutos
+
+### 0–10 min: fijar reglas
+
+- actualizar `CLAUDE.md`
+- declarar alcance editable
+- definir comandos de prueba
+
+### 10–25 min: ejecutar una tarea acotada
+
+Empieza con algo que toque 1–3 archivos.
+
+### 25–40 min: verificar y revisar diff
+
+- checks de lint/docs
+- revisar alcance de cambios
+- revertir ediciones accidentales
+
+### 40–60 min: nota breve de handoff
+
+- qué cambió
+- qué pasó
+- qué queda pendiente
+
+## Plantilla inicial de prompt
+
+```text
+Goal:
+
+Context:
+
+Constraints:
+
+Done when:
+```
+
+No omitas `Done when`; evita completitud ambigua.
+
+## Anti-patrones de principiante
+
+### Pedir demasiado en un solo prompt
+
+Aumenta riesgo y oculta fallos.
+
+### Saltar verificación por diff pequeño
+
+Un diff pequeño también puede romper comportamiento.
+
+### Declarar "listo" sin criterio explícito
+
+La calidad queda en intuición.
+
+## Checklist de primer día
+
+- `CLAUDE.md` actualizado
+- tarea pequeña completada
+- comandos de verificación ejecutados
+- diff revisado
+- nota de handoff registrada
+
+Si esos cinco puntos se cumplen, tu loop inicial es saludable.

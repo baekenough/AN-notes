@@ -18,6 +18,9 @@ connections:
 - slug: codex-sandbox
   tool: gpt-codex
   type: enhances
+- slug: codex-release-readiness
+  tool: gpt-codex
+  type: enhances
 - slug: github-actions-workflows
   tool: claude-code
   type: compare
@@ -42,6 +45,7 @@ date: '2026-04-15'
 9. [Codex Worktrees](./codex-worktrees) — 장기 병렬 실행 격리
 10. [Codex 핸드오프](./codex-handoffs) — 컨텍스트와 오너십 전달
 11. **Codex 검증 루프** — 주장(claim)을 머지 가능한 증명으로 바꾸기 ← **현재 문서**
+12. [Codex 릴리스 준비도](./codex-release-readiness) — 프로덕션 전 최종 go/no-go 게이트
 
 ### 이 문서에서 참고한 공식 문서
 - **명시적 done criteria 기반의 작업 프레이밍** — [Best Practices](https://developers.openai.com/codex/learn/best-practices)
@@ -191,3 +195,4 @@ lint는 필요조건이지 충분조건이 아닙니다.
 - 잔여 리스크 + 롤백 문서화
 
 Codex의 속도는 빠른 이동을 돕습니다. 검증 루프는 안전한 이동을 보장합니다.
+최종 프로덕션 의사결정을 명확히 하려면 [Codex 릴리스 준비도](./codex-release-readiness)로 이어서 보세요.

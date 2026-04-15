@@ -1,0 +1,84 @@
+---
+title: "Claude 고위험 변경 거버넌스"
+description: "auth, billing, migration 같은 고위험 변경을 Claude 워크플로우로 운영할 때 필요한 고급 거버넌스 모델."
+difficulty: advanced
+tags: ["advanced", "governance", "security", "release"]
+connections:
+  - slug: "claude-mid-size-refactor-playbook"
+    tool: "claude-code"
+    type: "prerequisite"
+  - slug: "github-actions-workflows"
+    tool: "claude-code"
+    type: "enhances"
+  - slug: "codex-release-readiness"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 9
+date: "2026-04-15"
+---
+
+> **공식 참고 자료**: [Security](https://docs.anthropic.com/en/docs/claude-code/security) · [Sub-agents](https://docs.anthropic.com/en/docs/claude-code/sub-agents) · [Best Practices](https://docs.anthropic.com/en/docs/claude-code/best-practices)
+
+## 고위험 변경은 프롬프트보다 거버넌스가 먼저
+
+auth/billing/권한/migration 영역은 아래를 반드시 명시하세요.
+
+- 리스크 클래스
+- 최종 결정 오너
+- 롤백 트리거
+
+## 5개 거버넌스 게이트
+
+1. 코드 품질 게이트
+2. 보안/행동 리뷰 게이트
+3. 운영 준비도 게이트
+4. 커뮤니케이션 게이트
+5. 최종 go/no-go 게이트
+
+## 고급 의사결정 기록
+
+모든 고위험 변경에는 아래가 있어야 합니다.
+
+- 범위
+- 리스크 클래스
+- 게이트 상태
+- 잔여 리스크
+- 롤백 트리거 + 오너
+- 최종 결정 + 시각
+
+## 에스컬레이션 규칙
+
+차단 리스크가 2회 반복되면:
+
+- `blocked` 표시
+- 근거 첨부
+- 새 오너 + 기한 지정
+
+오너 없는 blocker는 거버넌스 실패입니다.
+
+## 고급 안티패턴
+
+### 테스트 통과를 배포 허가로 오해
+
+필요조건일 뿐 충분조건이 아닙니다.
+
+### 책임자 없는 go/no-go
+
+사고 시 의사결정 공백이 발생합니다.
+
+### 이론상 롤백만 존재
+
+리허설 없는 롤백은 준비되지 않은 롤백입니다.
+
+## 빠른 체크리스트
+
+프로덕션 전:
+
+- 리스크 클래스 선언
+- 게이트 평가 완료
+- 최종 오너 승인
+- 롤백 트리거 문서화/테스트
+- 에스컬레이션 경로 활성화
+
+고급 운영의 핵심은 속도가 아니라 압박 상황에서의 안전성입니다.

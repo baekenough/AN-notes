@@ -1,0 +1,93 @@
+---
+title: "Claude 첫날 안전 루프"
+description: "입문자를 위한 60분 온보딩 루프: 가드레일 설정, 첫 작업 실행, 검증 근거 기록까지 한 번에."
+difficulty: beginner
+tags: ["beginner", "workflow", "safety", "onboarding"]
+connections:
+  - slug: "claude-md-mastery"
+    tool: "claude-code"
+    type: "prerequisite"
+  - slug: "effective-prompting"
+    tool: "claude-code"
+    type: "combines"
+  - slug: "codex-getting-started"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 7
+date: "2026-04-15"
+---
+
+> **공식 참고 자료**: [Claude Code Overview](https://docs.anthropic.com/en/docs/claude-code/overview) · [Best Practices](https://docs.anthropic.com/en/docs/claude-code/best-practices) · [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code/cli-usage)
+
+## 이 문서가 필요한 이유
+
+입문 단계에서 가장 흔한 실패는 가드레일 없이 큰 작업부터 시작하는 것입니다.
+
+첫날 목표는 세 가지면 충분합니다.
+
+1. 경계 설정
+2. 작은 작업 1개 완료
+3. 검증 근거 남기기
+
+## 60분 안전 루프
+
+### 0~10분: 규칙 고정
+
+- `CLAUDE.md` 작성/정리
+- 수정 가능 파일 범위 명시
+- 성공 증명 커맨드 정의
+
+### 10~25분: 좁은 작업 1개 실행
+
+1~3개 파일만 건드리는 작업으로 시작하세요.
+
+### 25~40분: 검증 + diff 점검
+
+- lint/문서 체크 실행
+- 변경 파일 범위 확인
+- 실수 수정 즉시 되돌리기
+
+### 40~60분: 짧은 핸드오프 메모 작성
+
+- 무엇을 바꿨는지
+- 무엇이 통과했는지
+- 무엇이 남았는지
+
+## 입문 프롬프트 템플릿
+
+```text
+Goal:
+
+Context:
+
+Constraints:
+
+Done when:
+```
+
+`Done when`을 생략하지 마세요. 완료 기준이 흐려지면 실패율이 급격히 올라갑니다.
+
+## 입문 안티패턴
+
+### 첫 프롬프트부터 범위를 과하게 키움
+
+작은 성공 루프를 만들기 전에 컨트롤을 잃게 됩니다.
+
+### diff가 작으니 검증 생략
+
+작은 diff도 동작을 깨뜨릴 수 있습니다.
+
+### 완료 조건 미정의
+
+완료 판단이 감(느낌)으로 바뀝니다.
+
+## 첫날 체크리스트
+
+- `CLAUDE.md`에 로컬 규칙 반영
+- 좁은 작업 1개 완료
+- 검증 커맨드 실행
+- diff 범위 검토
+- 짧은 핸드오프 기록
+
+이 다섯 가지가 되면 첫날 루프는 성공입니다.

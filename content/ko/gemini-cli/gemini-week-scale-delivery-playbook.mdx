@@ -1,0 +1,78 @@
+---
+title: "Gemini 주간 단위 딜리버리 플레이북"
+description: "멀티데이 Gemini 작업을 레인 기반으로 운영하고, 감사 가능한 핸드오프로 마무리하는 중급 실전 가이드."
+difficulty: intermediate
+tags: ["intermediate", "delivery", "orchestration", "handoff"]
+connections:
+  - slug: "headless-automation"
+    tool: "gemini-cli"
+    type: "combines"
+  - slug: "sub-agents-and-skills"
+    tool: "gemini-cli"
+    type: "enhances"
+  - slug: "codex-handoffs"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 8
+date: "2026-04-15"
+---
+
+> **공식 참고 자료**: [Sub-agents](https://geminicli.com/docs/core/subagents/) · [Skills](https://geminicli.com/docs/cli/skills/) · [Automation](https://geminicli.com/docs/cli/commands/)
+
+## 중급 딜리버리의 핵심은 워크플로우 규율
+
+주간 단위 작업의 실패는 모델 성능보다 핸드오프/시퀀싱 문제에서 많이 발생합니다.
+
+권장 레인:
+
+- 계획 레인
+- 구현 레인
+- 검증 레인
+
+## 1단계: 실행 전 스코프 동결
+
+- in-scope 모듈
+- out-of-scope 모듈
+- acceptance check
+
+## 2단계: 독립 작업만 서브에이전트 위임
+
+노이즈 탐색을 위임해 메인 스레드를 깨끗하게 유지하세요.
+
+## 3단계: 핸드오프 필드 표준화
+
+최소 필드:
+
+- 목표 상태
+- 근거
+- 변경 범위
+- 잔여 리스크
+- 다음 오너
+
+## 4단계: 매일 근거 스냅샷으로 종료
+
+세션 간 기억에 의존하지 말고, 명시적 출력과 미해결 이슈를 남기세요.
+
+## 중급 안티패턴
+
+### 강한 의존 작업까지 병렬 위임
+
+순차 의존 작업에 병렬화는 오버헤드만 늘립니다.
+
+### 검증 없는 일일 진행 보고
+
+보고가 근거가 아닌 서사로 변합니다.
+
+### 스코프 드리프트를 관성으로 허용
+
+주간 작업은 경계가 흐려지는 순간 무너집니다.
+
+## 빠른 체크리스트
+
+- 스코프 동결 및 가시화
+- 레인 오너십 명시
+- 일일 근거 스냅샷 유지
+- 머지 전 검증 레인 실행
+
+중급 안정성은 영웅적 노력보다 반복 리듬에서 나옵니다.

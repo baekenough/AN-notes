@@ -1,0 +1,86 @@
+---
+title: "Playbook Claude para Refactor de Tamaño Medio"
+description: "Guía intermedia para dividir refactors de varios días en lanes seguros con checkpoints revisables."
+difficulty: intermediate
+tags: ["refactor", "intermediate", "workflow", "review"]
+connections:
+  - slug: "multi-agent-workflow"
+    tool: "claude-code"
+    type: "prerequisite"
+  - slug: "hooks-automation"
+    tool: "claude-code"
+    type: "enhances"
+  - slug: "codex-verification-loops"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 8
+date: "2026-04-15"
+---
+
+> **Referencias Oficiales**: [Sub-agents](https://docs.anthropic.com/en/docs/claude-code/sub-agents) · [Agent Teams](https://docs.anthropic.com/en/docs/claude-code/agent-teams) · [Best Practices](https://docs.anthropic.com/en/docs/claude-code/best-practices)
+
+## El problema intermedio es coordinación
+
+En esta etapa, el reto no es escribir código: es alinear alcance, evidencia y ownership.
+
+Lanes recomendados:
+
+- lane de implementación
+- lane de verificación
+- lane de review
+
+## Paso 1: dividir por fronteras independientes
+
+No dividas por disponibilidad de personas; divide por límites de módulo.
+
+## Paso 2: contrato de lane
+
+Cada lane debe entregar:
+
+- estado de objetivo
+- evidencia
+- alcance de diff
+- nota de riesgo
+- siguiente owner
+
+## Paso 3: checkpoints por chunk significativo
+
+Tras cada chunk:
+
+1. correr checks
+2. revisar alcance
+3. registrar handoff corto
+
+Así evitas un diff final imposible de revisar.
+
+## Paso 4: rollback simple
+
+- evitar commits mezclados (feature + refactor)
+- mantener historia legible
+- documentar renames de riesgo
+
+## Anti-patrones intermedios
+
+### "Lo limpiamos al final"
+
+Suele terminar en caos de merge.
+
+### Ownership difuso de review
+
+Retrasa aprobación final.
+
+### Posponer ajustes de tests
+
+Degrada la señal de calidad al cierre.
+
+## Checklist rápido
+
+Antes de merge:
+
+- contrato de lane completo
+- evidencia fresca por chunk
+- diff final alineado con alcance declarado
+- ruta de rollback clara
+
+Eso separa "código cambiado" de "refactor entregado".

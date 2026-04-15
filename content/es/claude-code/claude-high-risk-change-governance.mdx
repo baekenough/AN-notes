@@ -1,0 +1,84 @@
+---
+title: "Gobernanza de Cambios de Alto Riesgo con Claude"
+description: "Modelo avanzado para auth, billing, permisos y migraciones en flujos Claude con gates explícitos y ownership claro."
+difficulty: advanced
+tags: ["advanced", "governance", "security", "release"]
+connections:
+  - slug: "claude-mid-size-refactor-playbook"
+    tool: "claude-code"
+    type: "prerequisite"
+  - slug: "github-actions-workflows"
+    tool: "claude-code"
+    type: "enhances"
+  - slug: "codex-release-readiness"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 9
+date: "2026-04-15"
+---
+
+> **Referencias Oficiales**: [Security](https://docs.anthropic.com/en/docs/claude-code/security) · [Sub-agents](https://docs.anthropic.com/en/docs/claude-code/sub-agents) · [Best Practices](https://docs.anthropic.com/en/docs/claude-code/best-practices)
+
+## En cambios de alto riesgo, primero gobernanza
+
+Para auth/billing/permisos/migraciones, exige siempre:
+
+- clase de riesgo explícita
+- owner final de go/no-go
+- trigger de rollback concreto
+
+## Cinco gates de gobernanza
+
+1. gate de calidad de código
+2. gate de review de seguridad/comportamiento
+3. gate de readiness operacional
+4. gate de comunicación
+5. gate de decisión final
+
+## Registro de decisión avanzada
+
+Debe incluir:
+
+- alcance
+- clase de riesgo
+- estado de gates
+- riesgos residuales
+- trigger + owner de rollback
+- decisión final + timestamp
+
+## Regla de escalación
+
+Si un bloqueo crítico persiste por dos ciclos:
+
+- marcar `blocked`
+- adjuntar evidencia
+- asignar owner y deadline nuevos
+
+Bloqueos sin owner son fallos de gobernanza.
+
+## Anti-patrones avanzados
+
+### Tests en verde = permiso de deploy
+
+No es suficiente.
+
+### Go/no-go sin responsable nombrado
+
+Genera vacío de decisión en incidentes.
+
+### Rollback solo teórico
+
+Sin ensayo, no existe de verdad.
+
+## Checklist rápido
+
+Antes de producción:
+
+- clase de riesgo declarada
+- gates evaluados
+- owner final firmó
+- rollback documentado y testeado
+- escalación activa
+
+La madurez avanzada se mide por seguridad bajo presión, no por velocidad aparente.
