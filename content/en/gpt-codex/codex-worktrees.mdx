@@ -1,0 +1,177 @@
+---
+title: Codex Worktrees — Isolated Parallel Execution Without Branch Chaos
+description: Learn when to use git worktrees with Codex, how to name and clean them,
+  and how to run long tasks in parallel without breaking your main branch.
+difficulty: intermediate
+tags:
+- worktrees
+- git
+- parallel-work
+- codex
+connections:
+- slug: codex-subagents
+  tool: gpt-codex
+  type: prerequisite
+- slug: codex-ci-cd-workflows
+  tool: gpt-codex
+  type: enhances
+- slug: multi-agent-workflow
+  tool: claude-code
+  type: compare
+featured: false
+order: 9
+date: '2026-04-15'
+---
+
+> **Official References**: [Codex Worktrees](https://developers.openai.com/codex/app/worktrees) · [Subagents](https://developers.openai.com/codex/subagents) · [Best Practices](https://developers.openai.com/codex/learn/best-practices)
+
+<!-- curriculum:start -->
+## Curriculum path
+
+1. [Codex Getting Started](./codex-getting-started) — first local wins
+2. [Codex Instructions](./codex-instructions) — stable rules
+3. [Codex Sandboxing](./codex-sandbox) — safe execution boundaries
+4. [Codex Task Design](./codex-task-design) — shape work for reviewability
+5. [Codex Skills](./codex-skills) — package repeated procedure
+6. [Codex Subagents](./codex-subagents) — parallel exploration and delegation
+7. [Codex MCP](./codex-mcp) — connect outside context
+8. [Codex Reviews and Automations](./codex-ci-cd-workflows) — operational review loops
+9. **Codex Worktrees** — isolated parallel execution without branch chaos ← **You are here**
+
+### Official docs used in this guide
+- **Worktree behavior in Codex and Git repos** — [Codex Worktrees](https://developers.openai.com/codex/app/worktrees)
+- **How this differs from subagent parallelism** — [Subagents](https://developers.openai.com/codex/subagents)
+- **Task decomposition and workflow sizing** — [Best Practices](https://developers.openai.com/codex/learn/best-practices)
+<!-- curriculum:end -->
+
+## Why worktrees matter for Codex users
+
+When you use Codex heavily, the bottleneck is often **branch context**, not coding speed.
+
+You want to:
+
+- keep your current task stable
+- run a second task in parallel
+- avoid stashing and popping changes all day
+
+A git worktree gives you a second (or third) checkout of the same repository, each with its own branch and working directory.
+
+Think of it as **parallel doing** (isolated filesystem + branch), while subagents are more about **parallel thinking**.
+
+## When to choose worktrees vs subagents
+
+| Need | Better default |
+|------|----------------|
+| Explore ideas, compare approaches quickly | Subagents |
+| Run long implementation tracks in parallel | Worktrees |
+| Keep uncommitted changes isolated by task | Worktrees |
+| Generate multiple analyses and pick one | Subagents |
+
+In practice, teams often combine both:
+
+1. Use subagents for fast exploration.
+2. Move the chosen approach into a dedicated worktree.
+3. Let Codex execute and verify there.
+
+## Practical setup pattern
+
+### 1) Create a task-named worktree
+
+```bash
+git fetch origin
+git worktree add ../wt-auth-retry -b feat/auth-retry origin/main
+```
+
+Naming tip:
+
+- Directory: `wt-{topic}`
+- Branch: `feat/{topic}` or `fix/{topic}`
+
+Consistent naming makes cleanup and review much easier.
+
+### 2) Open Codex inside that worktree
+
+Start Codex from the worktree directory so all edits, tests, and commits stay scoped to that task.
+
+```bash
+cd ../wt-auth-retry
+codex
+```
+
+### 3) Verify before merge
+
+In the worktree:
+
+- run lint/typecheck/tests
+- review the diff for only task-relevant files
+- commit and push
+
+Then open a PR as usual.
+
+## Lightweight operations you should memorize
+
+```bash
+# List active worktrees
+git worktree list
+
+# Remove a finished worktree directory
+git worktree remove ../wt-auth-retry
+
+# Delete the branch after merge
+git branch -d feat/auth-retry
+```
+
+If Git says a branch is still "checked out," run `git worktree list` first and remove the related worktree.
+
+## Operational guardrails
+
+### Keep each worktree single-purpose
+
+Do not mix unrelated changes. One worktree should map to one reviewable task.
+
+### Keep AGENTS.md visible in each path
+
+Codex follows instruction files by directory scope. If your repo uses nested `AGENTS.md` files, verify the worktree path still inherits the intended rules.
+
+### Avoid stale long-lived trees
+
+Old worktrees cause branch drift and merge friction. Prefer short-lived, task-focused lifecycles.
+
+## Team playbook example
+
+- `main repo`: hotfix triage and release prep
+- `wt-feature-a`: Codex handles new feature implementation
+- `wt-migration-b`: Codex runs migration + tests
+- `wt-docs-c`: Codex updates docs and release notes
+
+Each lane is isolated, but all lanes share the same remote repository and review pipeline.
+
+## Common mistakes
+
+### Reusing one worktree for many tasks
+
+This recreates the same context collisions worktrees are supposed to solve.
+
+### Forgetting cleanup
+
+Unused worktrees accumulate quickly and confuse branch ownership.
+
+### Mixing “exploration” and “execution” in one lane
+
+If you are still comparing options, stay in subagent mode first. Create a worktree once you commit to one path.
+
+## Quick checklist
+
+Before opening a worktree:
+
+- Is this task likely to run longer than one focused session?
+- Does it need branch isolation from your current work?
+- Can you give it a clear task name and exit condition?
+
+Before deleting a worktree:
+
+- Is the branch merged or safely pushed?
+- Are lint/tests done and evidence recorded?
+- Has the related PR or issue been linked?
+
+Use worktrees when you need clean parallel execution with strong branch boundaries. They are one of the highest-leverage habits for advanced Codex workflows.

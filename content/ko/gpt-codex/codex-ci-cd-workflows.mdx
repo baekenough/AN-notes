@@ -18,6 +18,9 @@ connections:
 - slug: codex-skills
   tool: gpt-codex
   type: enhances
+- slug: codex-worktrees
+  tool: gpt-codex
+  type: combines
 - slug: multi-agent-workflow
   tool: claude-code
   type: compare
@@ -39,6 +42,7 @@ date: "2026-03-28"
 6. [Codex 서브에이전트](./codex-subagents) — 병렬 실행과 위임
 7. [Codex MCP](./codex-mcp) — 외부 컨텍스트 연결
 8. **Codex 리뷰와 자동화** — review, worktree, background 운영 ← **현재 문서**
+9. [Codex Worktrees](./codex-worktrees) — 격리된 병렬 실행 운영 심화
 
 ### 이 문서에서 참고한 공식 문서
 - **review pane이 기본적으로 uncommitted changes를 보는 방식** — [Review](https://developers.openai.com/codex/app/review)

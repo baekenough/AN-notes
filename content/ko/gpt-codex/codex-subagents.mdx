@@ -18,6 +18,9 @@ connections:
 - slug: codex-sandbox
   tool: gpt-codex
   type: enhances
+- slug: codex-worktrees
+  tool: gpt-codex
+  type: enhances
 - slug: sub-agents-and-skills
   tool: gemini-cli
   type: compare
@@ -39,6 +42,7 @@ date: '2026-03-24'
 6. **Codex 서브에이전트** — 병렬 실행과 위임 ← **현재 문서**
 7. [Codex MCP](./codex-mcp) — 외부 시스템 연결
 8. [Codex 리뷰와 자동화](./codex-ci-cd-workflows) — 반복 작업 운영
+9. [Codex Worktrees](./codex-worktrees) — 장기 병렬 실행을 안전하게 분리
 
 ### 이 문서에서 참고한 공식 문서
 - **서브에이전트 생성 시점과 방법** — [Subagents](https://developers.openai.com/codex/subagents)
@@ -124,6 +128,7 @@ lint, 테스트, 보안 검사를 순차가 아닌 동시에 실행하고 싶을
 서브에이전트는 **병렬 사고**입니다. 워크트리는 **격리된 병렬 실행**입니다.
 
 탐색 작업에는 서브에이전트를 먼저 쓰세요. Git 격리가 필요한 프로덕션 자동화에는 워크트리를 선택하세요.
+워크트리 네이밍/수명주기/정리 패턴이 필요하면 [Codex Worktrees](./codex-worktrees) 문서로 이어서 보세요.
 
 ## 서브에이전트와 skills
 

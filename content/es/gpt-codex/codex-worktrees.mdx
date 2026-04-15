@@ -1,0 +1,178 @@
+---
+title: Codex Worktrees — Ejecución Paralela Aislada Sin Caos de Branches
+description: Aprende cuándo usar git worktree con Codex, cómo nombrar y limpiar worktrees,
+  y cómo llevar tareas largas en paralelo sin romper tu flujo principal.
+difficulty: intermediate
+tags:
+- worktrees
+- git
+- trabajo-paralelo
+- codex
+connections:
+- slug: codex-subagents
+  tool: gpt-codex
+  type: prerequisite
+- slug: codex-ci-cd-workflows
+  tool: gpt-codex
+  type: enhances
+- slug: multi-agent-workflow
+  tool: claude-code
+  type: compare
+featured: false
+order: 9
+date: '2026-04-15'
+---
+
+> **Referencias Oficiales**: [Codex Worktrees](https://developers.openai.com/codex/app/worktrees) · [Subagents](https://developers.openai.com/codex/subagents) · [Best Practices](https://developers.openai.com/codex/learn/best-practices)
+
+<!-- curriculum:start -->
+## Ruta del currículo
+
+1. [Primeros Pasos con Codex](./codex-getting-started) — primeras victorias locales
+2. [Instrucciones de Codex](./codex-instructions) — reglas estables
+3. [Sandboxing en Codex](./codex-sandbox) — límites de ejecución seguros
+4. [Diseño de Tareas en Codex](./codex-task-design) — dar forma revisable al trabajo
+5. [Skills de Codex](./codex-skills) — empaquetar procedimientos repetidos
+6. [Subagentes de Codex](./codex-subagents) — exploración paralela y delegación
+7. [MCP en Codex](./codex-mcp) — conectar contexto externo
+8. [Reviews y Automatizaciones con Codex](./codex-ci-cd-workflows) — loops operativos de revisión
+9. **Codex Worktrees** — ejecución paralela aislada sin caos de branches ← **Estás aquí**
+
+### Documentación oficial usada en esta guía
+- **Comportamiento de worktrees en Codex y repos Git** — [Codex Worktrees](https://developers.openai.com/codex/app/worktrees)
+- **Diferencias frente a la paralelización con subagentes** — [Subagents](https://developers.openai.com/codex/subagents)
+- **Descomposición de tareas y tamaño de workflow** — [Best Practices](https://developers.openai.com/codex/learn/best-practices)
+<!-- curriculum:end -->
+
+## Por qué importan los worktrees para usuarios de Codex
+
+Cuando usas Codex intensivamente, el cuello de botella suele ser el **contexto de branch**, no la velocidad de escritura.
+
+Necesitas:
+
+- mantener estable la tarea actual
+- ejecutar otra tarea en paralelo
+- evitar el ciclo constante de stash/pop
+
+Un git worktree te da un segundo (o tercer) checkout del mismo repositorio, cada uno con su branch y directorio de trabajo.
+
+Piensa así:
+
+- subagentes = **pensar en paralelo**
+- worktrees = **ejecutar en paralelo con aislamiento**
+
+## Cuándo elegir worktrees vs subagentes
+
+| Necesidad | Mejor opción inicial |
+|-----------|----------------------|
+| Explorar ideas y comparar enfoques | Subagentes |
+| Ejecutar implementación larga en paralelo | Worktrees |
+| Aislar cambios sin commit por tarea | Worktrees |
+| Obtener varios análisis y elegir uno | Subagentes |
+
+En práctica, muchos equipos combinan ambos:
+
+1. Exploran con subagentes.
+2. Mueven el enfoque elegido a un worktree dedicado.
+3. Ejecutan y verifican con Codex ahí.
+
+## Patrón práctico de setup
+
+### 1) Crear un worktree con nombre de tarea
+
+```bash
+git fetch origin
+git worktree add ../wt-auth-retry -b feat/auth-retry origin/main
+```
+
+Tip de naming:
+
+- Directorio: `wt-{tema}`
+- Branch: `feat/{tema}` o `fix/{tema}`
+
+Con una convención consistente, limpiar y revisar se vuelve mucho más fácil.
+
+### 2) Abrir Codex dentro de ese worktree
+
+Inicia Codex desde el directorio del worktree para que ediciones, pruebas y commits queden dentro del scope correcto.
+
+```bash
+cd ../wt-auth-retry
+codex
+```
+
+### 3) Verificar antes de merge
+
+Dentro del worktree:
+
+- ejecutar lint/typecheck/tests
+- revisar que el diff solo toque archivos de esa tarea
+- hacer commit, push y abrir PR
+
+## Comandos mínimos que conviene memorizar
+
+```bash
+# Ver worktrees activos
+git worktree list
+
+# Eliminar un worktree terminado
+git worktree remove ../wt-auth-retry
+
+# Borrar branch después del merge
+git branch -d feat/auth-retry
+```
+
+Si Git dice que el branch sigue "checked out", primero revisa `git worktree list` y elimina el worktree asociado.
+
+## Guardrails operativos
+
+### Un worktree por objetivo
+
+No mezcles cambios sin relación. Un worktree debe corresponder a una sola tarea revisable.
+
+### Validar alcance de AGENTS.md
+
+Codex sigue instrucciones por alcance de directorio. Si tu repo usa `AGENTS.md` anidados, confirma que la ruta del worktree siga heredando las reglas correctas.
+
+### Evitar worktrees viejos
+
+Los worktrees largos y olvidados generan drift de branches y fricción de merge. Mejor ciclos cortos y orientados a una meta.
+
+## Ejemplo de playbook de equipo
+
+- `repo principal`: hotfixes y preparación de release
+- `wt-feature-a`: implementación de nueva feature
+- `wt-migration-b`: migración + validación
+- `wt-docs-c`: documentación y notas de release
+
+Cada lane queda aislado, pero todos convergen al mismo repositorio remoto y pipeline de revisión.
+
+## Errores comunes
+
+### Reusar un worktree para múltiples tareas
+
+Eso recrea la misma colisión de contexto que los worktrees buscan evitar.
+
+### Olvidar la limpieza
+
+Los worktrees no usados se acumulan rápido y confunden ownership de branches.
+
+### Mezclar exploración y ejecución
+
+Si aún estás comparando enfoques, usa subagentes primero. Crea el worktree cuando ya elegiste una ruta.
+
+## Checklist rápido
+
+Antes de abrir un worktree:
+
+- ¿La tarea durará más de una sesión corta?
+- ¿Necesita aislamiento de branch respecto al trabajo actual?
+- ¿Tiene nombre de tarea y condición de cierre claras?
+
+Antes de eliminar un worktree:
+
+- ¿El branch ya fue mergeado o está push de forma segura?
+- ¿Lint/tests están verificados con evidencia?
+- ¿PR o issue relacionado está enlazado?
+
+Los worktrees son uno de los hábitos de mayor impacto para ejecutar trabajo paralelo en Codex con límites claros.

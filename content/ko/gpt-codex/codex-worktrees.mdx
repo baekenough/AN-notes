@@ -1,0 +1,178 @@
+---
+title: Codex Worktrees — 브랜치 충돌 없이 병렬 실행하기
+description: git worktree를 Codex와 함께 사용할 때의 판단 기준, 네이밍/정리 습관,
+  장기 작업 병렬 운영 패턴을 정리합니다.
+difficulty: intermediate
+tags:
+- worktrees
+- git
+- 병렬작업
+- codex
+connections:
+- slug: codex-subagents
+  tool: gpt-codex
+  type: prerequisite
+- slug: codex-ci-cd-workflows
+  tool: gpt-codex
+  type: enhances
+- slug: multi-agent-workflow
+  tool: claude-code
+  type: compare
+featured: false
+order: 9
+date: '2026-04-15'
+---
+
+> **공식 참고 자료**: [Codex Worktrees](https://developers.openai.com/codex/app/worktrees) · [Subagents](https://developers.openai.com/codex/subagents) · [Best Practices](https://developers.openai.com/codex/learn/best-practices)
+
+<!-- curriculum:start -->
+## 커리큘럼 흐름
+
+1. [Codex 시작하기](./codex-getting-started) — 작은 로컬 성공 루프
+2. [Codex 지시문](./codex-instructions) — 규칙을 고정
+3. [Codex 샌드박싱](./codex-sandbox) — 안전한 실행 경계
+4. [Codex 작업 설계](./codex-task-design) — 리뷰 가능한 task shape
+5. [Codex Skills](./codex-skills) — 반복 절차를 재사용 자산으로
+6. [Codex 서브에이전트](./codex-subagents) — 병렬 탐색과 위임
+7. [Codex MCP](./codex-mcp) — 외부 컨텍스트 연결
+8. [Codex 리뷰와 자동화](./codex-ci-cd-workflows) — 운영 루프 고정
+9. **Codex Worktrees** — 브랜치 충돌 없이 병렬 실행하기 ← **현재 문서**
+
+### 이 문서에서 참고한 공식 문서
+- **Codex와 Git 저장소에서 worktree를 다루는 기본 동작** — [Codex Worktrees](https://developers.openai.com/codex/app/worktrees)
+- **서브에이전트 병렬성과의 차이점** — [Subagents](https://developers.openai.com/codex/subagents)
+- **작업 분해와 워크플로우 크기 조절 원칙** — [Best Practices](https://developers.openai.com/codex/learn/best-practices)
+<!-- curriculum:end -->
+
+## 왜 Codex에서 worktree가 중요한가
+
+Codex를 자주 쓰다 보면 병목은 코딩 속도가 아니라 **브랜치 컨텍스트 관리**에서 생깁니다.
+
+우리는 보통 이런 상황을 동시에 겪습니다.
+
+- 지금 하던 작업은 안정적으로 유지하고 싶다
+- 다른 작업을 병렬로 돌리고 싶다
+- stash/pop를 반복하며 컨텍스트를 흔들고 싶지 않다
+
+git worktree는 같은 저장소를 여러 작업 디렉터리로 체크아웃해서, 각 디렉터리마다 독립 브랜치를 가질 수 있게 해줍니다.
+
+핵심은 이렇게 기억하면 쉽습니다.
+
+- 서브에이전트: **병렬 사고**
+- 워크트리: **병렬 실행(격리된 파일/브랜치)**
+
+## worktree vs subagent 선택 기준
+
+| 필요 | 기본 선택 |
+|------|-----------|
+| 아이디어 탐색/접근법 비교 | 서브에이전트 |
+| 구현 트랙을 장시간 병렬 진행 | worktree |
+| 미커밋 변경을 작업별로 분리 | worktree |
+| 여러 분석 결과를 비교 후 선택 | 서브에이전트 |
+
+실무에서는 두 방식을 함께 쓰는 경우가 많습니다.
+
+1. 서브에이전트로 후보 접근법을 빠르게 탐색
+2. 선택한 접근법을 전용 worktree로 이동
+3. 해당 worktree에서 Codex로 구현·검증
+
+## 실전 셋업 패턴
+
+### 1) 작업명 기반으로 worktree 생성
+
+```bash
+git fetch origin
+git worktree add ../wt-auth-retry -b feat/auth-retry origin/main
+```
+
+네이밍 팁:
+
+- 디렉터리: `wt-{주제}`
+- 브랜치: `feat/{주제}` 또는 `fix/{주제}`
+
+이 규칙만 지켜도 정리/리뷰 난이도가 확 내려갑니다.
+
+### 2) 해당 worktree에서 Codex 실행
+
+Codex를 worktree 디렉터리에서 시작해야 수정/테스트/커밋이 해당 작업 경계 안에 머뭅니다.
+
+```bash
+cd ../wt-auth-retry
+codex
+```
+
+### 3) 머지 전 검증
+
+worktree 안에서:
+
+- lint/typecheck/tests 실행
+- diff가 작업 범위 파일만 포함하는지 확인
+- 커밋 후 push, PR 생성
+
+## 자주 쓰는 최소 명령어
+
+```bash
+# 현재 활성 worktree 목록
+git worktree list
+
+# 끝난 worktree 디렉터리 제거
+git worktree remove ../wt-auth-retry
+
+# 머지 후 브랜치 정리
+git branch -d feat/auth-retry
+```
+
+Git이 "branch is checked out"를 표시하면 먼저 `git worktree list`로 해당 브랜치를 점유한 worktree를 확인하세요.
+
+## 운영 가드레일
+
+### worktree 하나 = 작업 하나
+
+서로 무관한 변경을 섞지 마세요. worktree 하나는 리뷰 가능한 단일 태스크와 매핑되어야 합니다.
+
+### AGENTS.md 적용 범위를 확인
+
+Codex는 디렉터리 스코프의 instruction 파일을 따릅니다. 중첩 `AGENTS.md`를 쓰는 저장소라면 worktree 경로에서도 의도한 규칙이 상속되는지 확인하세요.
+
+### 오래된 worktree를 방치하지 않기
+
+오래된 worktree는 브랜치 드리프트와 머지 마찰을 키웁니다. 짧고 목적이 분명한 수명 주기를 유지하세요.
+
+## 팀 운영 예시
+
+- `main repo`: 핫픽스 트리아지/릴리스 준비
+- `wt-feature-a`: 신규 기능 구현
+- `wt-migration-b`: 마이그레이션 + 검증
+- `wt-docs-c`: 문서/릴리스 노트 업데이트
+
+각 트랙은 분리되지만, 동일한 원격 저장소와 리뷰 파이프라인으로 합류합니다.
+
+## 자주 하는 실수
+
+### 하나의 worktree를 여러 작업에 재사용
+
+결국 worktree를 쓰기 전의 컨텍스트 충돌 문제를 다시 만들게 됩니다.
+
+### 정리를 미루기
+
+안 쓰는 worktree가 쌓이면 브랜치 소유권과 진행 상태가 빠르게 혼탁해집니다.
+
+### 탐색 단계와 실행 단계를 한 레인에 섞기
+
+여전히 접근법을 비교 중이라면 먼저 서브에이전트로 좁히고, 구현 확정 후 worktree를 만드세요.
+
+## 빠른 체크리스트
+
+worktree를 만들기 전에:
+
+- 이 작업은 한 번의 짧은 세션보다 길어질 가능성이 높은가?
+- 현재 작업과 브랜치 격리가 필요한가?
+- 작업명과 종료 조건을 명확히 줄 수 있는가?
+
+worktree를 삭제하기 전에:
+
+- 브랜치가 머지되었거나 안전하게 push 되었는가?
+- lint/tests 검증과 근거를 남겼는가?
+- 관련 PR/이슈가 연결되었는가?
+
+worktree는 Codex의 병렬 실행을 깔끔하게 만드는 가장 실전적인 습관 중 하나입니다.

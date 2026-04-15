@@ -18,6 +18,9 @@ connections:
 - slug: codex-sandbox
   tool: gpt-codex
   type: enhances
+- slug: codex-worktrees
+  tool: gpt-codex
+  type: enhances
 - slug: sub-agents-and-skills
   tool: gemini-cli
   type: compare
@@ -39,6 +42,7 @@ date: '2026-03-24'
 6. **Codex Subagents** — parallel execution and delegation ← **You are here**
 7. [Codex MCP](./codex-mcp) — connect outside systems
 8. [Codex Reviews and Automations](./codex-ci-cd-workflows) — run stable workflows repeatedly
+9. [Codex Worktrees](./codex-worktrees) — isolate long parallel execution safely
 
 ### Official docs used in this guide
 - **When and how Codex spawns parallel agents** — [Subagents](https://developers.openai.com/codex/subagents)
@@ -124,6 +128,7 @@ Both enable parallelism, but they solve different problems.
 Subagents are about **parallel thinking**. Worktrees are about **parallel doing in isolation**.
 
 For exploratory work, start with subagents. For production automation that needs Git isolation, reach for worktrees.
+If you want dedicated naming, lifecycle, and cleanup patterns, continue to [Codex Worktrees](./codex-worktrees).
 
 ## Subagents and skills
 
