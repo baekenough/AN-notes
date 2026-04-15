@@ -1,0 +1,109 @@
+---
+title: "Gemini Bucle de Hardening Post-Incidente"
+description: "Bucle avanzado para equipos Gemini CLI que convierte aprendizajes de incidentes en controles aplicables y mejoras medibles de confiabilidad."
+difficulty: advanced
+tags: ["advanced", "incident-response", "hardening", "operations"]
+connections:
+  - slug: "gemini-incident-recovery-playbook"
+    tool: "gemini-cli"
+    type: "prerequisite"
+  - slug: "gemini-high-risk-change-controls"
+    tool: "gemini-cli"
+    type: "combines"
+  - slug: "gemini-operating-manual"
+    tool: "gemini-cli"
+    type: "enhances"
+  - slug: "codex-post-incident-hardening-loop"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 12
+date: "2026-04-15"
+---
+
+> **Referencias oficiales**: [Get Started](https://geminicli.com/docs/get-started/) · [CLI Commands](https://geminicli.com/docs/cli/commands/) · [Sub-agents](https://geminicli.com/docs/core/subagents/) · [Skills](https://geminicli.com/docs/cli/skills/)
+
+## Por qué importa este bucle
+
+Un incidente puede resolverse en horas y repetirse la semana siguiente.
+El hardening es el bucle que evita la recurrencia.
+
+## Ventanas de hardening
+
+| Ventana | Prioridad | Resultado obligatorio |
+|---|---|---|
+| 0–24h | preservar calidad de evidencia | timeline + decisiones por lane |
+| 24–72h | bloquear el fallo dominante | 1 guardrail automatizado + 1 prueba de regresión |
+| 3–14d | fortalecer el contrato operativo | actualización de runbook/proceso + verificación de adopción |
+
+## Buckets del backlog de control
+
+- **Detección**: reglas de alerta, visibilidad de triage, ruteo de ownership
+- **Prevención**: checks de política, checks estáticos, cobertura de pruebas
+- **Recuperación**: confiabilidad de rollback, plantillas de handoff, mapas de escalación
+
+Cada ítem necesita owner, fecha límite y condición de verificación.
+
+## Arquitectura de lanes
+
+- **Lane de controles**: guardrails y enforcement de políticas
+- **Lane de calidad**: regresión y mejoras de reproducibilidad
+- **Lane de operaciones**: actualización de runbook/comunicación
+
+Evita colisiones en archivos compartidos salvo que haya merge owner explícito.
+
+## Scorecard de confiabilidad
+
+Registra 0/1 por control:
+
+- clase raíz cubierta por pruebas
+- rehearsal de rollback completado
+- ownership de escalación documentado
+- alertas/dashboard ajustados
+- runbook actualizado + confirmado
+
+5/5 es ideal. 4/5 es el umbral mínimo para cierre.
+
+## Gate de cierre
+
+Cierra hardening solo cuando:
+
+- se alcanza el umbral del scorecard
+- los controles están activos en el flujo real
+- owners de seguimiento confirman adopción
+- no queda acción de alto riesgo sin resolver
+
+## Bundle de evidencia
+
+Guarda un bundle de cierre:
+
+- id del incidente + resumen corto
+- controles implementados
+- enlaces de evidencia de pruebas
+- referencias de diff de runbook
+- owners + fechas de acciones residuales
+
+## Anti-patrones avanzados
+
+### “Ya arreglamos producción”
+
+Arreglar producción es recovery, no hardening.
+
+### Controles sin ownership
+
+Un guardrail sin owner se degrada sin aviso.
+
+### Cierre sin evidencia de adopción
+
+Si el equipo no usa el cambio, el riesgo permanece.
+
+## Checklist rápido
+
+Antes de cerrar:
+
+- 1 control automatizado mergeado
+- 1 prueba de regresión mergeada
+- actualización de runbook compartida
+- adopción por owners registrada
+
+Gemini CLI acelera la recuperación. El hardening vuelve confiable esa velocidad.

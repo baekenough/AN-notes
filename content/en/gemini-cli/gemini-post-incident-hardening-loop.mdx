@@ -1,0 +1,109 @@
+---
+title: "Gemini Post-Incident Hardening Loop"
+description: "Advanced hardening loop for Gemini CLI teams to convert incident learnings into enforceable controls and measurable reliability gains."
+difficulty: advanced
+tags: ["advanced", "incident-response", "hardening", "operations"]
+connections:
+  - slug: "gemini-incident-recovery-playbook"
+    tool: "gemini-cli"
+    type: "prerequisite"
+  - slug: "gemini-high-risk-change-controls"
+    tool: "gemini-cli"
+    type: "combines"
+  - slug: "gemini-operating-manual"
+    tool: "gemini-cli"
+    type: "enhances"
+  - slug: "codex-post-incident-hardening-loop"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 12
+date: "2026-04-15"
+---
+
+> **Official References**: [Get Started](https://geminicli.com/docs/get-started/) · [CLI Commands](https://geminicli.com/docs/cli/commands/) · [Sub-agents](https://geminicli.com/docs/core/subagents/) · [Skills](https://geminicli.com/docs/cli/skills/)
+
+## Why this loop matters
+
+An incident can be solved in hours and still repeat next week.
+Hardening is the loop that prevents recurrence.
+
+## Hardening windows
+
+| Window | Priority | Mandatory output |
+|---|---|---|
+| 0–24h | preserve evidence quality | timeline + lane decisions |
+| 24–72h | block the dominant failure mode | one automation guardrail + one regression test |
+| 3–14d | strengthen operational contract | runbook/process update + owner adoption check |
+
+## Control backlog buckets
+
+- **Detection**: alert rules, triage visibility, ownership routing
+- **Prevention**: policy checks, static checks, test coverage
+- **Recovery**: rollback reliability, handoff templates, escalation maps
+
+All backlog items need owner, due date, and verification condition.
+
+## Hardening lane architecture
+
+- **Controls lane**: guardrails and policy enforcement
+- **Quality lane**: regression and reproducibility improvements
+- **Operations lane**: runbook/communication updates
+
+Avoid shared-file collisions unless a merge owner is assigned.
+
+## Reliability scorecard
+
+Track 0/1 per control:
+
+- root-cause class now test-covered
+- rollback path rehearsal completed
+- escalation ownership documented
+- alerting/dashboard adjusted
+- runbook updated + acknowledged
+
+Score 5/5 is ideal. 4/5 is minimum closure threshold.
+
+## Closure gate
+
+Declare hardening complete only when:
+
+- scorecard threshold is met
+- controls are active in routine workflow
+- follow-up owners acknowledge adoption
+- no unresolved high-risk action remains
+
+## Evidence bundle
+
+Store one completion bundle:
+
+- incident id + short narrative
+- controls shipped
+- test evidence links
+- runbook diff references
+- residual action owners + deadlines
+
+## Advanced anti-patterns
+
+### "We already fixed production"
+
+Fixing production is recovery, not hardening.
+
+### Controls without ownership
+
+An unowned guardrail will decay silently.
+
+### Closing with no adoption proof
+
+If teams do not use the update, risk stays.
+
+## Quick checklist
+
+Before closure:
+
+- one automation control merged
+- one regression test merged
+- runbook update shared
+- owner adoption recorded
+
+Gemini CLI can speed recovery. Hardening makes that speed reliable.

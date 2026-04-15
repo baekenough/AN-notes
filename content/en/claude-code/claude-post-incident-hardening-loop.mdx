@@ -1,0 +1,113 @@
+---
+title: "Claude Post-Incident Hardening Loop"
+description: "Advanced hardening loop that converts incident recovery learnings into durable guardrails, tests, and ownership commitments."
+difficulty: advanced
+tags: ["advanced", "incident-response", "hardening", "operations"]
+connections:
+  - slug: "claude-incident-recovery-playbook"
+    tool: "claude-code"
+    type: "prerequisite"
+  - slug: "claude-high-risk-change-governance"
+    tool: "claude-code"
+    type: "combines"
+  - slug: "claude-operating-manual"
+    tool: "claude-code"
+    type: "enhances"
+  - slug: "codex-post-incident-hardening-loop"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 12
+date: "2026-04-15"
+---
+
+> **Official References**: [Best Practices](https://docs.anthropic.com/en/docs/claude-code/best-practices) · [Hooks](https://docs.anthropic.com/en/docs/claude-code/hooks) · [Security](https://docs.anthropic.com/en/docs/claude-code/security) · [GitHub Actions](https://docs.anthropic.com/en/docs/claude-code/github-actions)
+
+## Why this loop matters
+
+Incident response restores service.
+Hardening prevents repeat incidents.
+
+Without a hardening loop, every incident stays expensive.
+
+## Time-boxed hardening timeline
+
+| Window | Objective | Required output |
+|---|---|---|
+| 0–24h | preserve signal | timeline + evidence packet |
+| 24–72h | close the top failure mode | one guardrail automation + one regression test |
+| 3–14d | reduce class-level risk | runbook/process update + owner-confirmed checklist |
+
+## Hardening backlog model
+
+Classify actions into three buckets:
+
+- **Detect faster**: alert thresholds, dashboard hints, pager routing
+- **Prevent recurrence**: tests, static checks, policy hooks
+- **Recover faster**: rollback script reliability, handoff templates, owner maps
+
+Each item must have one owner and one due date.
+
+## Three-lane hardening execution
+
+- **Controls lane**: adds hooks, checks, and CI guardrails
+- **Quality lane**: adds regression coverage for root-cause class
+- **Operations lane**: updates runbook + communication protocol
+
+Keep lanes independent when possible to reduce merge friction.
+
+## Readiness scorecard
+
+Use a compact scorecard (0 or 1 per row):
+
+- root-cause class covered by test
+- rollback path rehearsed
+- escalation owner documented
+- dashboard/alerts updated
+- runbook updated and acknowledged
+
+Score < 4 means hardening is incomplete.
+
+## Closure decision rule
+
+Close hardening only when all are true:
+
+- scorecard reaches target
+- new guardrails are running in normal workflow
+- follow-up owners confirm adoption
+- no unresolved high-risk action remains
+
+## Evidence packet template
+
+At hardening completion, archive:
+
+- incident id + summary
+- implemented controls
+- test evidence links
+- runbook diff
+- owners + due dates for residual work
+
+## Advanced anti-patterns
+
+### Retro written, controls not shipped
+
+Learning without controls does not change risk.
+
+### Test added without ownership update
+
+The system improves, but the team contract stays weak.
+
+### Marking done before adoption check
+
+Guardrails not used in real workflow do not protect production.
+
+## Quick checklist
+
+Before closing hardening loop:
+
+- one new automation guardrail merged
+- one regression test merged
+- runbook update published
+- owner acknowledgement recorded
+
+Claude accelerates recovery work. Hardening is what compounds reliability.

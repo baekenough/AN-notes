@@ -1,0 +1,117 @@
+---
+title: Bucle de Hardening Post-Incidente en Codex — De la Recuperación a Controles Duraderos
+description: Marco avanzado para equipos Codex que convierte aprendizajes de incidentes en mejoras medibles de confiabilidad y ownership exigible.
+difficulty: advanced
+tags:
+- advanced
+- incident-response
+- hardening
+- operations
+connections:
+- slug: codex-incident-recovery-playbook
+  tool: gpt-codex
+  type: prerequisite
+- slug: codex-high-risk-change-governance
+  tool: gpt-codex
+  type: combines
+- slug: codex-operating-manual
+  tool: gpt-codex
+  type: enhances
+- slug: claude-post-incident-hardening-loop
+  tool: claude-code
+  type: compare
+featured: false
+order: 18
+date: '2026-04-15'
+---
+
+> **Official References**: [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [Review](https://developers.openai.com/codex/app/review) · [Worktrees](https://developers.openai.com/codex/app/worktrees) · [Automations](https://developers.openai.com/codex/app/automations)
+
+## Por qué el hardening es un bucle separado
+
+La respuesta a incidentes te devuelve a verde.
+El hardening define si te quedas en verde.
+
+Trata hardening como un bucle dedicado, no como tarea de cierre opcional.
+
+## Modelo de timeline de hardening
+
+| Ventana | Objetivo | Artefacto obligatorio |
+|---|---|---|
+| 0–24h | preservar fidelidad de decisión | timeline del incidente + paquete de evidencia |
+| 24–72h | bloquear la clase de fallo dominante | 1 control automatizado + 1 prueba de regresión |
+| 3–14d | institucionalizar aprendizaje | actualización de runbook/proceso + confirmación de ownership |
+
+## Buckets del portafolio de control
+
+Sigue acciones de hardening en:
+
+- **Controles de detección**: ruteo de alertas, calidad de señal, claridad de dashboard
+- **Controles de prevención**: pruebas, checks de política, salvaguardas estáticas
+- **Controles de recuperación**: rehearsals de rollback, contratos de handoff, mapas de escalación
+
+Cada acción necesita owner, fecha límite y evidencia de verificación.
+
+## Modelo de ejecución por lanes
+
+- **Lane de controles**: implementa enforcement y automatización
+- **Lane de calidad**: fija cobertura de regresión para la clase raíz
+- **Lane de operaciones**: actualiza runbooks y protocolo de comunicación
+
+Cuando varios lanes toquen archivos compartidos, asigna un merge owner único.
+
+## Scorecard de confiabilidad
+
+Usa scoring binario por control:
+
+- clase raíz cubierta por pruebas
+- rollback rehearseado y cronometrado
+- ownership de escalación documentado
+- monitoreo/alertas actualizados
+- runbook actualizado y confirmado por owners
+
+Umbral mínimo de cierre: 4/5.
+
+## Gate de cierre de hardening
+
+Hardening termina solo cuando:
+
+- se alcanza el umbral del scorecard
+- los controles están activos en flujo regular
+- la adopción por owners está confirmada
+- no queda seguimiento de alto riesgo sin resolver
+
+## Bundle de evidencia de cierre
+
+Archiva un bundle con:
+
+- id del incidente + resumen
+- controles implementados
+- enlaces de evidencia de pruebas
+- diffs de runbook/proceso
+- owners + fechas de acciones residuales
+
+## Anti-patrones avanzados
+
+### Declarar “recuperado” sin backlog de hardening
+
+Esto asegura repetición del incidente.
+
+### Controles agregados pero no ejercitados
+
+Controles no ensayados fallan bajo presión real.
+
+### Documentación actualizada sin contrato de ownership
+
+Existe el documento, pero no existe responsabilidad operativa.
+
+## Checklist rápido
+
+Antes de cerrar hardening:
+
+- 1 control automatizado mergeado
+- 1 prueba de regresión mergeada
+- actualización de runbook/proceso publicada
+- confirmaciones de ownership registradas
+
+Codex ayuda a recuperar rápido. Hardening hace que la recuperación mejore con cada ciclo.

@@ -1,0 +1,113 @@
+---
+title: "Claude Bucle de Hardening Post-Incidente"
+description: "Bucle avanzado que convierte el aprendizaje de incidentes en guardrails duraderos, pruebas de regresión y compromisos de ownership."
+difficulty: advanced
+tags: ["advanced", "incident-response", "hardening", "operations"]
+connections:
+  - slug: "claude-incident-recovery-playbook"
+    tool: "claude-code"
+    type: "prerequisite"
+  - slug: "claude-high-risk-change-governance"
+    tool: "claude-code"
+    type: "combines"
+  - slug: "claude-operating-manual"
+    tool: "claude-code"
+    type: "enhances"
+  - slug: "codex-post-incident-hardening-loop"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 12
+date: "2026-04-15"
+---
+
+> **Referencias oficiales**: [Best Practices](https://docs.anthropic.com/en/docs/claude-code/best-practices) · [Hooks](https://docs.anthropic.com/en/docs/claude-code/hooks) · [Security](https://docs.anthropic.com/en/docs/claude-code/security) · [GitHub Actions](https://docs.anthropic.com/en/docs/claude-code/github-actions)
+
+## Por qué importa este bucle
+
+La respuesta a incidentes restaura el servicio.
+El hardening reduce la repetición del incidente.
+
+Sin bucle de hardening, cada incidente vuelve a costar caro.
+
+## Línea de tiempo de hardening
+
+| Ventana | Objetivo | Resultado obligatorio |
+|---|---|---|
+| 0–24h | preservar señal | timeline + paquete de evidencia |
+| 24–72h | cerrar el modo de fallo principal | 1 guardrail automatizado + 1 prueba de regresión |
+| 3–14d | reducir riesgo por clase | actualización de runbook/proceso + checklist confirmado por owner |
+
+## Modelo de backlog de hardening
+
+Clasifica acciones en tres buckets:
+
+- **Detección más rápida**: umbrales de alerta, pistas de dashboard, ruteo de pager
+- **Prevención de recurrencia**: pruebas, checks estáticos, hooks de política
+- **Recuperación más rápida**: confiabilidad de rollback, plantillas de handoff, mapa de owners
+
+Cada ítem debe tener un owner y una fecha límite.
+
+## Ejecución en tres lanes
+
+- **Lane de controles**: agrega hooks, checks y guardrails de CI
+- **Lane de calidad**: agrega cobertura de regresión para la clase raíz
+- **Lane de operaciones**: actualiza runbook y protocolo de comunicación
+
+Mantén independencia entre lanes para reducir fricción de merge.
+
+## Scorecard de preparación
+
+Usa score 0 o 1 por fila:
+
+- clase raíz cubierta por prueba
+- rollback ensayado
+- owner de escalación documentado
+- dashboard/alertas actualizados
+- runbook actualizado y confirmado
+
+Si el score es < 4, el hardening está incompleto.
+
+## Regla de cierre
+
+Cierra solo cuando todo sea verdadero:
+
+- scorecard en objetivo
+- guardrails nuevos en uso real
+- owners de seguimiento confirman adopción
+- no queda acción de alto riesgo sin resolver
+
+## Plantilla de paquete de evidencia
+
+Al cerrar hardening, archiva:
+
+- id del incidente + resumen
+- controles implementados
+- enlaces a evidencia de pruebas
+- diff del runbook
+- owners + fechas de trabajo residual
+
+## Anti-patrones avanzados
+
+### Retro escrita, controles no enviados
+
+Aprender sin controles no cambia el riesgo.
+
+### Prueba añadida sin actualización de ownership
+
+El sistema mejora, pero el contrato del equipo sigue débil.
+
+### Cierre antes de verificar adopción
+
+Un guardrail no usado en el flujo real no protege producción.
+
+## Checklist rápido
+
+Antes de cerrar el bucle:
+
+- mínimo 1 guardrail automatizado mergeado
+- mínimo 1 prueba de regresión mergeada
+- actualización de runbook publicada
+- confirmación de owners registrada
+
+Claude acelera la recuperación. El hardening es lo que acumula confiabilidad.

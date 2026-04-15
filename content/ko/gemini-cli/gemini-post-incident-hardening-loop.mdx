@@ -1,0 +1,109 @@
+---
+title: "Gemini 사고 후 하드닝 루프"
+description: "Gemini CLI 팀이 사고 학습을 강제 가능한 통제와 측정 가능한 신뢰성 개선으로 전환하기 위한 고급 하드닝 루프."
+difficulty: advanced
+tags: ["advanced", "incident-response", "hardening", "operations"]
+connections:
+  - slug: "gemini-incident-recovery-playbook"
+    tool: "gemini-cli"
+    type: "prerequisite"
+  - slug: "gemini-high-risk-change-controls"
+    tool: "gemini-cli"
+    type: "combines"
+  - slug: "gemini-operating-manual"
+    tool: "gemini-cli"
+    type: "enhances"
+  - slug: "codex-post-incident-hardening-loop"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 12
+date: "2026-04-15"
+---
+
+> **공식 참고 자료**: [Get Started](https://geminicli.com/docs/get-started/) · [CLI Commands](https://geminicli.com/docs/cli/commands/) · [Sub-agents](https://geminicli.com/docs/core/subagents/) · [Skills](https://geminicli.com/docs/cli/skills/)
+
+## 왜 이 루프가 중요한가
+
+사고는 몇 시간 안에 복구해도, 다음 주에 같은 방식으로 다시 발생할 수 있습니다.
+재발을 줄이는 루프가 하드닝입니다.
+
+## 하드닝 시간 구간
+
+| 구간 | 우선순위 | 필수 산출물 |
+|---|---|---|
+| 0–24시간 | 근거 품질 보존 | 타임라인 + 레인 의사결정 기록 |
+| 24–72시간 | 지배적 실패 모드 차단 | 자동화 가드레일 1개 + 회귀 테스트 1개 |
+| 3–14일 | 운영 계약 강화 | 런북/프로세스 업데이트 + 오너 채택 확인 |
+
+## 통제 백로그 버킷
+
+- **탐지**: 알림 규칙, 트리아지 가시성, 오너 라우팅
+- **예방**: 정책 체크, 정적 체크, 테스트 커버리지
+- **복구**: 롤백 신뢰성, 핸드오프 템플릿, 에스컬레이션 맵
+
+모든 백로그 항목에 오너/기한/검증 조건을 넣으세요.
+
+## 하드닝 레인 아키텍처
+
+- **Controls 레인**: 가드레일 및 정책 강제
+- **Quality 레인**: 회귀 및 재현성 개선
+- **Operations 레인**: 런북/커뮤니케이션 업데이트
+
+공유 파일 충돌은 merge owner 지정 전까지 피하세요.
+
+## 신뢰성 스코어카드
+
+각 통제 항목을 0/1로 기록합니다.
+
+- 원인 클래스 테스트 커버 확보
+- 롤백 경로 리허설 완료
+- 에스컬레이션 오너 문서화
+- 알림/대시보드 조정 완료
+- 런북 업데이트 + 확인 완료
+
+5/5가 이상적이며, 종료 최소 기준은 4/5입니다.
+
+## 종료 게이트
+
+아래 조건을 모두 만족할 때만 종료합니다.
+
+- 스코어카드 기준 충족
+- 통제가 일상 워크플로우에서 실제 동작
+- 후속 오너가 채택 확인
+- 미해결 고위험 항목 없음
+
+## 근거 번들
+
+하나의 완료 번들을 남기세요.
+
+- incident id + 요약 내러티브
+- 반영된 통제 항목
+- 테스트 근거 링크
+- 런북 diff 참조
+- 잔여 항목 오너 + 기한
+
+## 고급 안티패턴
+
+### "프로덕션은 이미 고쳤다"
+
+프로덕션 복구는 recovery이고, hardening은 아닙니다.
+
+### 오너십 없는 통제 항목
+
+오너 없는 가드레일은 조용히 붕괴합니다.
+
+### 채택 증거 없는 종료
+
+팀이 사용하지 않으면 리스크는 그대로입니다.
+
+## 빠른 체크리스트
+
+종료 전:
+
+- 자동화 통제 1개 이상 머지
+- 회귀 테스트 1개 이상 머지
+- 런북 업데이트 공유
+- 오너 채택 확인 기록
+
+Gemini CLI는 복구 속도를 높입니다. 그 속도를 신뢰성으로 바꾸는 단계가 하드닝입니다.

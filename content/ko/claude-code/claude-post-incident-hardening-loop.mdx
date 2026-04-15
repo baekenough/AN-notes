@@ -1,0 +1,113 @@
+---
+title: "Claude 사고 후 하드닝 루프"
+description: "사고 복구에서 얻은 학습을 가드레일, 테스트, 오너십 약속으로 전환하는 고급 하드닝 루프."
+difficulty: advanced
+tags: ["advanced", "incident-response", "hardening", "operations"]
+connections:
+  - slug: "claude-incident-recovery-playbook"
+    tool: "claude-code"
+    type: "prerequisite"
+  - slug: "claude-high-risk-change-governance"
+    tool: "claude-code"
+    type: "combines"
+  - slug: "claude-operating-manual"
+    tool: "claude-code"
+    type: "enhances"
+  - slug: "codex-post-incident-hardening-loop"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 12
+date: "2026-04-15"
+---
+
+> **공식 참고 자료**: [Best Practices](https://docs.anthropic.com/en/docs/claude-code/best-practices) · [Hooks](https://docs.anthropic.com/en/docs/claude-code/hooks) · [Security](https://docs.anthropic.com/en/docs/claude-code/security) · [GitHub Actions](https://docs.anthropic.com/en/docs/claude-code/github-actions)
+
+## 왜 이 루프가 중요한가
+
+사고 대응은 서비스를 복구합니다.
+하드닝은 사고 재발을 줄입니다.
+
+하드닝 루프가 없으면 같은 사고는 계속 비싼 비용으로 반복됩니다.
+
+## 시간 구간별 하드닝 타임라인
+
+| 구간 | 목적 | 필수 산출물 |
+|---|---|---|
+| 0–24시간 | 신호 보존 | 타임라인 + 근거 패킷 |
+| 24–72시간 | 최상위 실패 모드 차단 | 가드레일 자동화 1개 + 회귀 테스트 1개 |
+| 3–14일 | 클래스 단위 리스크 축소 | 런북/프로세스 업데이트 + 오너 확인 체크리스트 |
+
+## 하드닝 백로그 모델
+
+액션을 3개 버킷으로 분류하세요.
+
+- **탐지 가속**: 알림 임계치, 대시보드 힌트, 페이저 라우팅
+- **재발 방지**: 테스트, 정적 체크, 정책 훅
+- **복구 가속**: 롤백 스크립트 신뢰성, 핸드오프 템플릿, 오너 맵
+
+각 항목에는 반드시 오너 1명과 기한 1개가 필요합니다.
+
+## 3-레인 하드닝 실행
+
+- **Controls 레인**: 훅/체크/CI 가드레일 추가
+- **Quality 레인**: 원인 클래스 회귀 커버리지 추가
+- **Operations 레인**: 런북 + 커뮤니케이션 프로토콜 업데이트
+
+가능하면 레인 독립성을 유지해 merge 마찰을 줄이세요.
+
+## 준비도 스코어카드
+
+행마다 0 또는 1로 기록합니다.
+
+- 원인 클래스가 테스트로 커버됨
+- 롤백 경로 리허설 완료
+- 에스컬레이션 오너 문서화
+- 대시보드/알림 업데이트
+- 런북 업데이트 및 확인 완료
+
+점수 4 미만이면 하드닝은 미완료입니다.
+
+## 종료 의사결정 규칙
+
+아래를 모두 만족해야 하드닝을 종료합니다.
+
+- 스코어카드 목표 달성
+- 신규 가드레일이 실제 워크플로우에서 동작
+- 후속 오너가 채택 사실을 확인
+- 미해결 고위험 항목이 없음
+
+## 근거 패킷 템플릿
+
+하드닝 종료 시 아래를 보관합니다.
+
+- incident id + 요약
+- 구현한 통제 항목
+- 테스트 근거 링크
+- 런북 diff
+- 잔여 작업 오너 + 기한
+
+## 고급 안티패턴
+
+### 회고만 쓰고 통제는 미반영
+
+학습이 통제로 연결되지 않으면 리스크는 그대로입니다.
+
+### 테스트만 추가하고 오너십은 미정리
+
+시스템은 개선돼도 팀 계약은 약한 상태로 남습니다.
+
+### 채택 확인 전 조기 종료
+
+실제 워크플로우에서 쓰이지 않는 가드레일은 프로덕션을 보호하지 못합니다.
+
+## 빠른 체크리스트
+
+하드닝 루프 종료 전:
+
+- 자동화 가드레일 1개 이상 머지
+- 회귀 테스트 1개 이상 머지
+- 런북 업데이트 공개
+- 오너 확인 기록
+
+Claude는 복구 속도를 높여줍니다. 신뢰성을 누적시키는 건 하드닝입니다.

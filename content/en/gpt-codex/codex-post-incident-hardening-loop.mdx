@@ -1,0 +1,117 @@
+---
+title: Codex Post-Incident Hardening Loop — From Recovery to Durable Controls
+description: Advanced hardening framework for Codex teams to convert incident learnings into measurable reliability upgrades and enforceable ownership.
+difficulty: advanced
+tags:
+- advanced
+- incident-response
+- hardening
+- operations
+connections:
+- slug: codex-incident-recovery-playbook
+  tool: gpt-codex
+  type: prerequisite
+- slug: codex-high-risk-change-governance
+  tool: gpt-codex
+  type: combines
+- slug: codex-operating-manual
+  tool: gpt-codex
+  type: enhances
+- slug: claude-post-incident-hardening-loop
+  tool: claude-code
+  type: compare
+featured: false
+order: 18
+date: '2026-04-15'
+---
+
+> **Official References**: [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [Review](https://developers.openai.com/codex/app/review) · [Worktrees](https://developers.openai.com/codex/app/worktrees) · [Automations](https://developers.openai.com/codex/app/automations)
+
+## Why hardening is a separate operating loop
+
+Incident response gets you back to green.
+Hardening determines whether you stay green.
+
+Treat hardening as a dedicated loop, not an afterthought.
+
+## Hardening timeline model
+
+| Window | Objective | Mandatory artifact |
+|---|---|---|
+| 0–24h | preserve decision fidelity | incident timeline + evidence packet |
+| 24–72h | block dominant failure class | one automation control + one regression test |
+| 3–14d | institutionalize learning | runbook/process update + ownership confirmation |
+
+## Control portfolio buckets
+
+Track hardening actions across:
+
+- **Detection controls**: alert routing, signal quality, dashboard clarity
+- **Prevention controls**: tests, policy checks, static safeguards
+- **Recovery controls**: rollback rehearsals, handoff contracts, escalation maps
+
+Each action needs owner, deadline, and verification evidence.
+
+## Lane-based execution model
+
+- **Controls lane**: implement enforcement and automation
+- **Quality lane**: lock regression coverage for root-cause class
+- **Operations lane**: update runbooks and communication protocol
+
+Assign one merge owner whenever lanes must touch shared files.
+
+## Reliability scorecard
+
+Use binary scoring per control:
+
+- root-cause class now test-covered
+- rollback path rehearsed and timed
+- escalation ownership documented
+- monitoring/alerts updated
+- runbook update acknowledged by owners
+
+Minimum closure threshold: 4/5.
+
+## Hardening closure gate
+
+Hardening is complete only when:
+
+- scorecard threshold is met
+- controls are active in routine delivery workflow
+- owner adoption is confirmed
+- no unresolved high-risk follow-up remains
+
+## Completion evidence bundle
+
+Archive one bundle containing:
+
+- incident id + short summary
+- controls shipped
+- test evidence links
+- runbook/process diffs
+- residual action owners + due dates
+
+## Advanced anti-patterns
+
+### Recovery declared “done” with no hardening backlog
+
+This guarantees recurring incidents.
+
+### Controls added but not exercised
+
+Unrehearsed controls fail under real pressure.
+
+### Documentation updated without ownership contract
+
+The document exists, but execution accountability is still missing.
+
+## Quick checklist
+
+Before closing hardening loop:
+
+- one automation control merged
+- one regression test merged
+- runbook/process update published
+- ownership confirmations recorded
+
+Codex helps teams recover quickly. Hardening is how teams recover better over time.
