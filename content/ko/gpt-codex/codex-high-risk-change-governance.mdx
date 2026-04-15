@@ -1,0 +1,113 @@
+---
+title: Codex 고위험 변경 거버넌스 — 크리티컬 릴리스를 위한 고급 통제
+description: auth, billing, 권한, migration 같은 고위험 변경을 Codex 워크플로우에서
+  안전하게 운영하기 위한 고급 거버넌스 모델.
+difficulty: advanced
+tags:
+- advanced
+- governance
+- release
+- risk
+connections:
+- slug: codex-release-readiness
+  tool: gpt-codex
+  type: prerequisite
+- slug: codex-team-delivery-playbook
+  tool: gpt-codex
+  type: combines
+- slug: codex-ci-cd-workflows
+  tool: gpt-codex
+  type: enhances
+- slug: claude-high-risk-change-governance
+  tool: claude-code
+  type: compare
+featured: false
+order: 15
+date: '2026-04-15'
+---
+
+> **공식 참고 자료**: [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [Review](https://developers.openai.com/codex/app/review) · [Sandboxing](https://developers.openai.com/codex/concepts/sandboxing)
+
+## 고급 운영의 핵심은 실패 격리
+
+auth/billing/권한/migration 같은 고위험 영역에서는 속도보다 실패 격리 예측 가능성이 핵심 지표입니다.
+
+## 필수 거버넌스 선언
+
+구현 전에 아래를 고정합니다.
+
+- 리스크 클래스 (medium/high/critical)
+- 최종 go/no-go 오너
+- 롤백 트리거 조건
+- 에스컬레이션 채널/기한 정책
+
+이게 없으면 통제된 실행이 아닙니다.
+
+## 5개 필수 게이트
+
+1. 코드 품질 게이트
+2. 보안/행동 게이트
+3. 운영 준비도 게이트
+4. 커뮤니케이션 게이트
+5. 최종 의사결정 게이트
+
+각 게이트는 pass/fail 상태를 반드시 남겨야 합니다.
+
+## 고급 의사결정 기록
+
+```md
+### Critical Change Decision
+
+- Scope:
+- Risk class:
+- Gate statuses:
+- Residual risks:
+- Rollback trigger:
+- Rollback owner:
+- Escalation channel:
+- Final decision owner:
+- GO/NO-GO + timestamp:
+```
+
+사고 시 이 기록이 감사 근거가 됩니다.
+
+## 에스컬레이션 규칙
+
+고위험 blocker가 2회 루프를 넘기면:
+
+1. `blocked` 전환
+2. 커맨드 레벨 근거 첨부
+3. 새 오너 지정
+4. 강제 기한 설정
+5. 수정 후 게이트 재평가
+
+## 롤백 리허설 필수
+
+high/critical 클래스는 비프로덕션 롤백 리허설이 필수입니다.
+이론적 롤백은 유효한 롤백이 아닙니다.
+
+## 고급 안티패턴
+
+### 테스트 통과 = 자동 배포
+
+운영/커뮤니케이션 게이트를 무시하게 됩니다.
+
+### 최종 오너 미지정
+
+사고 시 의사결정 마비가 발생합니다.
+
+### 기한 없는 에스컬레이션
+
+모두가 누군가 처리 중이라 가정하며 리스크가 방치됩니다.
+
+## 빠른 체크리스트
+
+프로덕션 전:
+
+- 거버넌스 선언 완료
+- 5개 게이트 상태 기록
+- 롤백 리허설 완료
+- 최종 오너 승인
+- 에스컬레이션 경로 활성화
+
+고급 Codex 운영은 생성 능력이 아니라 압박 상황의 통제 능력으로 평가됩니다.

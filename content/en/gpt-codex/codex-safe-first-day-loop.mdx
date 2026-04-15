@@ -1,0 +1,112 @@
+---
+title: Codex Safe First-Day Loop — Beginner Workflow That Avoids Early Mistakes
+description: >-
+  A beginner-safe Codex workflow for day one: define boundaries, complete one
+  narrow task, verify with evidence, and leave an auditable handoff note.
+difficulty: beginner
+tags:
+- beginner
+- onboarding
+- safety
+- workflow
+connections:
+- slug: codex-getting-started
+  tool: gpt-codex
+  type: prerequisite
+- slug: codex-instructions
+  tool: gpt-codex
+  type: combines
+- slug: codex-sandbox
+  tool: gpt-codex
+  type: enhances
+- slug: claude-safe-first-day-loop
+  tool: claude-code
+  type: compare
+featured: false
+order: 13
+date: '2026-04-15'
+---
+
+> **Official References**: [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [Instructions](https://developers.openai.com/codex/guides/agents-md) · [Sandboxing](https://developers.openai.com/codex/concepts/sandboxing)
+
+## Why a second beginner guide is useful
+
+Beginners rarely fail because Codex is weak.
+They fail because they start with an oversized first task.
+
+This guide gives a safe first-day loop focused on control and evidence.
+
+## 45-minute first-day loop
+
+### 0–10 min: set boundaries
+
+- confirm `AGENTS.md` rules
+- confirm sandbox and approval mode
+- define files that must not change
+
+### 10–25 min: run one narrow task
+
+Pick something that touches only a few files.
+
+Good starter examples:
+
+- fix a broken doc link
+- tighten a README section
+- rename one confusing label
+
+### 25–35 min: verify and review
+
+Run a small verification set and inspect the diff.
+
+- lint or docs checks
+- scope check on changed files
+- revert accidental edits
+
+### 35–45 min: leave handoff evidence
+
+Record:
+
+- what changed
+- what passed
+- what remains
+- who owns next action
+
+## Beginner prompt template
+
+```text
+Goal:
+<one concrete outcome>
+
+Context:
+<relevant files and constraints>
+
+Constraints:
+<what must not change>
+
+Done when:
+<commands and expected pass criteria>
+```
+
+## Beginner anti-patterns
+
+### Starting with a large refactor
+
+Big first tasks hide mistakes and destroy feedback quality.
+
+### Skipping sandbox check
+
+Most early incidents come from boundary mistakes, not code complexity.
+
+### Declaring done without command output
+
+"Looks good" is not evidence.
+
+## Quick checklist
+
+- boundaries defined
+- one narrow task completed
+- verification commands executed
+- diff scope reviewed
+- handoff note recorded
+
+If these are true, your Codex onboarding loop is healthy.

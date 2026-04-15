@@ -1,0 +1,107 @@
+---
+title: Codex 첫날 안전 루프 — 초반 실수를 줄이는 입문 워크플로우
+description: >-
+  첫날 Codex 사용 시 경계 설정, 좁은 작업 완료, 근거 기반 검증,
+  핸드오프 기록까지 한 번에 수행하는 입문 안전 루프.
+difficulty: beginner
+tags:
+- beginner
+- onboarding
+- safety
+- workflow
+connections:
+- slug: codex-getting-started
+  tool: gpt-codex
+  type: prerequisite
+- slug: codex-instructions
+  tool: gpt-codex
+  type: combines
+- slug: codex-sandbox
+  tool: gpt-codex
+  type: enhances
+- slug: claude-safe-first-day-loop
+  tool: claude-code
+  type: compare
+featured: false
+order: 13
+date: '2026-04-15'
+---
+
+> **공식 참고 자료**: [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [Instructions](https://developers.openai.com/codex/guides/agents-md) · [Sandboxing](https://developers.openai.com/codex/concepts/sandboxing)
+
+## 왜 두 번째 입문 가이드가 필요한가
+
+입문 실패의 대부분은 모델 성능이 아니라 첫 작업의 범위를 과하게 잡는 데서 시작됩니다.
+
+이 문서는 첫날에 필요한 최소 루프를 제공합니다.
+
+## 45분 첫날 루프
+
+### 0~10분: 경계 설정
+
+- `AGENTS.md` 규칙 확인
+- sandbox/approval 모드 확인
+- 수정 금지 파일 범위 명시
+
+### 10~25분: 좁은 작업 1개 실행
+
+몇 개 파일만 건드리는 작업으로 시작하세요.
+
+예:
+
+- 문서 링크 깨짐 수정
+- README 문구 정리
+- UI 라벨 하나 명확화
+
+### 25~35분: 검증 + diff 점검
+
+- lint/문서 체크 실행
+- 변경 파일 범위 확인
+- 실수 수정 즉시 되돌리기
+
+### 35~45분: 핸드오프 근거 기록
+
+- 무엇이 바뀌었는지
+- 무엇이 통과했는지
+- 무엇이 남았는지
+- 다음 오너
+
+## 입문 프롬프트 템플릿
+
+```text
+Goal:
+<하나의 구체적 결과>
+
+Context:
+<관련 파일/제약>
+
+Constraints:
+<절대 바꾸면 안 되는 것>
+
+Done when:
+<검증 커맨드와 통과 조건>
+```
+
+## 입문 안티패턴
+
+### 첫날부터 대형 리팩토링
+
+초반 피드백 품질이 무너집니다.
+
+### sandbox 확인 생략
+
+초기 사고는 코드보다 경계 실수에서 더 많이 납니다.
+
+### 커맨드 출력 없는 완료 선언
+
+"문제 없어 보임"은 근거가 아닙니다.
+
+## 빠른 체크리스트
+
+- 경계 설정 완료
+- 좁은 작업 1개 완료
+- 검증 커맨드 실행
+- diff 범위 점검
+- 핸드오프 기록
+
+이 다섯 가지가 되면 Codex 입문 루프는 정상입니다.

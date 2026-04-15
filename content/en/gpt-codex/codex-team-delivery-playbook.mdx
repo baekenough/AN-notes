@@ -1,0 +1,106 @@
+---
+title: Codex Team Delivery Playbook — Intermediate Lane Operations
+description: An intermediate operating playbook for week-scale Codex delivery using
+  lanes, handoff contracts, and evidence snapshots.
+difficulty: intermediate
+tags:
+- intermediate
+- delivery
+- teamwork
+- handoff
+connections:
+- slug: codex-handoffs
+  tool: gpt-codex
+  type: prerequisite
+- slug: codex-worktrees
+  tool: gpt-codex
+  type: combines
+- slug: codex-verification-loops
+  tool: gpt-codex
+  type: enhances
+- slug: gemini-week-scale-delivery-playbook
+  tool: gemini-cli
+  type: compare
+featured: false
+order: 14
+date: '2026-04-15'
+---
+
+> **Official References**: [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [Subagents](https://developers.openai.com/codex/subagents) · [Worktrees](https://developers.openai.com/codex/app/worktrees)
+
+## Intermediate delivery fails at rhythm
+
+At this stage, teams usually write fine code.
+What breaks is delivery rhythm: unclear lane ownership, stale evidence, and messy handoffs.
+
+## Recommended lane model
+
+Use three lanes by default:
+
+1. implementation lane
+2. verification lane
+3. review/release lane
+
+Add exploration lane only when uncertainty is still high.
+
+## Weekly operating pattern
+
+- **Mon**: lock scope and lane owners
+- **Tue–Wed**: implementation + daily verification checkpoints
+- **Thu**: branch-vs-base review pass
+- **Fri**: merge decision and cleanup
+
+Consistency is more valuable than aggressive speed.
+
+## Daily evidence snapshot contract
+
+Every lane leaves one daily snapshot:
+
+- current goal status
+- commands run + results
+- diff scope
+- blockers
+- next owner
+
+No snapshot means no reliable handoff.
+
+## Merge packet template
+
+```md
+### Merge Packet
+
+- Scope summary:
+- Risk class:
+- Verification summary:
+- Diff scope confirmation:
+- Residual risks:
+- Rollback path:
+- Final owner:
+```
+
+Treat the merge packet as the minimum release artifact for intermediate projects.
+
+## Intermediate anti-patterns
+
+### Parallelizing dependent tasks
+
+If tasks are sequentially coupled, splitting lanes slows delivery.
+
+### Evidence only at the end
+
+Late verification compresses risk into one fragile step.
+
+### Reviewer assigned after coding is complete
+
+Ownership should be declared before implementation starts.
+
+## Quick checklist
+
+Before merge:
+
+- lane ownership explicit
+- daily evidence snapshots present
+- verifier lane reran checks
+- merge packet complete
+
+Intermediate maturity is a process discipline problem, not a prompting problem.

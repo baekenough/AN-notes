@@ -1,0 +1,114 @@
+---
+title: Gobernanza de Cambios de Alto Riesgo en Codex — Controles Avanzados para Releases Críticas
+description: Modelo avanzado de gobernanza para auth, billing, permisos y migraciones
+  en workflows Codex con gates explícitos y reglas de escalación.
+difficulty: advanced
+tags:
+- advanced
+- governance
+- release
+- risk
+connections:
+- slug: codex-release-readiness
+  tool: gpt-codex
+  type: prerequisite
+- slug: codex-team-delivery-playbook
+  tool: gpt-codex
+  type: combines
+- slug: codex-ci-cd-workflows
+  tool: gpt-codex
+  type: enhances
+- slug: claude-high-risk-change-governance
+  tool: claude-code
+  type: compare
+featured: false
+order: 15
+date: '2026-04-15'
+---
+
+> **Referencias Oficiales**: [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [Review](https://developers.openai.com/codex/app/review) · [Sandboxing](https://developers.openai.com/codex/concepts/sandboxing)
+
+## En modo avanzado, la métrica es contención de fallos
+
+Para auth, billing, permisos y migraciones, la velocidad no es la métrica principal.
+La métrica principal es contención predecible del fallo.
+
+## Declaraciones obligatorias de gobernanza
+
+Antes de implementar, declara:
+
+- clase de riesgo (medium/high/critical)
+- owner final de go/no-go
+- condiciones de trigger de rollback
+- canal de escalación y política de plazos
+
+Sin esto, no hay ejecución controlada.
+
+## Cinco gates obligatorios
+
+1. gate de calidad de código
+2. gate de seguridad/comportamiento
+3. gate de readiness operacional
+4. gate de comunicación
+5. gate de decisión final
+
+Los cinco requieren estado pass/fail explícito.
+
+## Registro de decisión avanzada
+
+```md
+### Critical Change Decision
+
+- Scope:
+- Risk class:
+- Gate statuses:
+- Residual risks:
+- Rollback trigger:
+- Rollback owner:
+- Escalation channel:
+- Final decision owner:
+- GO/NO-GO + timestamp:
+```
+
+Este registro es el artefacto de auditoría cuando aparece un incidente.
+
+## Regla de escalación
+
+Si un blocker de alto riesgo sobrevive dos loops:
+
+1. marcar `blocked`
+2. adjuntar evidencia de comandos
+3. asignar nuevo owner
+4. fijar deadline duro
+5. re-evaluar gates tras la corrección
+
+## Requisito de ensayo de rollback
+
+En clases high/critical, rollback debe ensayarse fuera de producción.
+Rollback teórico no es rollback válido.
+
+## Anti-patrones avanzados
+
+### Tests en verde -> deploy automático
+
+Ignora gates operacionales y de comunicación.
+
+### Sin owner final nombrado
+
+Genera parálisis de decisión en incidentes.
+
+### Escalación sin deadline
+
+El riesgo queda abierto mientras todos asumen que alguien lo cubre.
+
+## Checklist rápido
+
+Antes de producción:
+
+- declaraciones de gobernanza completas
+- estados de los 5 gates registrados
+- rollback ensayado
+- owner final firmó
+- ruta de escalación activa
+
+Operar Codex en nivel avanzado es ejecución gobernada bajo presión, no solo generación capaz.

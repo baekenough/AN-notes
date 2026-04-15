@@ -1,0 +1,105 @@
+---
+title: Playbook de Entrega de Equipo en Codex — Operación Intermedia por Lanes
+description: Playbook intermedio para entregas semanales con Codex usando lanes,
+  contratos de handoff y snapshots de evidencia.
+difficulty: intermediate
+tags:
+- intermediate
+- delivery
+- teamwork
+- handoff
+connections:
+- slug: codex-handoffs
+  tool: gpt-codex
+  type: prerequisite
+- slug: codex-worktrees
+  tool: gpt-codex
+  type: combines
+- slug: codex-verification-loops
+  tool: gpt-codex
+  type: enhances
+- slug: gemini-week-scale-delivery-playbook
+  tool: gemini-cli
+  type: compare
+featured: false
+order: 14
+date: '2026-04-15'
+---
+
+> **Referencias Oficiales**: [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [Subagents](https://developers.openai.com/codex/subagents) · [Worktrees](https://developers.openai.com/codex/app/worktrees)
+
+## El nivel intermedio falla por ritmo operativo
+
+En este nivel, el problema principal no es escribir código sino mantener ownership, evidencia fresca y handoffs claros.
+
+## Modelo de lanes recomendado
+
+Tres lanes base:
+
+1. lane de implementación
+2. lane de verificación
+3. lane de review/release
+
+Añade lane de exploración solo si la incertidumbre sigue alta.
+
+## Patrón semanal
+
+- **Lun**: fijar alcance y owners
+- **Mar–Mié**: implementación + checkpoints diarios
+- **Jue**: revisión branch-vs-base
+- **Vie**: decisión de merge y limpieza
+
+La consistencia vale más que la velocidad agresiva.
+
+## Contrato de snapshot diario
+
+Cada lane deja un snapshot diario:
+
+- estado del objetivo
+- comandos y resultados
+- alcance de diff
+- blockers
+- siguiente owner
+
+Sin snapshot, no hay handoff confiable.
+
+## Plantilla de merge packet
+
+```md
+### Merge Packet
+
+- Scope summary:
+- Risk class:
+- Verification summary:
+- Diff scope confirmation:
+- Residual risks:
+- Rollback path:
+- Final owner:
+```
+
+Úsalo como artefacto mínimo de release en proyectos intermedios.
+
+## Anti-patrones intermedios
+
+### Paralelizar trabajo dependiente
+
+Divide velocidad en lugar de multiplicarla.
+
+### Crear evidencia solo al final
+
+Concentra riesgo en el último paso.
+
+### Asignar reviewer después de implementar
+
+El owner de review se define antes de empezar.
+
+## Checklist rápido
+
+Antes de merge:
+
+- ownership de lanes explícito
+- snapshots diarios presentes
+- lane verifier re-ejecutó checks
+- merge packet completo
+
+La madurez intermedia es disciplina de proceso, no solo buena intención.

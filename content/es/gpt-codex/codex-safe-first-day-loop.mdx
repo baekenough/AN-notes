@@ -1,0 +1,101 @@
+---
+title: Codex Loop Seguro del Primer Día — Flujo Inicial para Evitar Errores Tempranos
+description: >-
+  Flujo seguro de onboarding en Codex: definir límites, cerrar una tarea
+  acotada, verificar con evidencia y dejar handoff auditable.
+difficulty: beginner
+tags:
+- beginner
+- onboarding
+- safety
+- workflow
+connections:
+- slug: codex-getting-started
+  tool: gpt-codex
+  type: prerequisite
+- slug: codex-instructions
+  tool: gpt-codex
+  type: combines
+- slug: codex-sandbox
+  tool: gpt-codex
+  type: enhances
+- slug: claude-safe-first-day-loop
+  tool: claude-code
+  type: compare
+featured: false
+order: 13
+date: '2026-04-15'
+---
+
+> **Referencias Oficiales**: [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [Instructions](https://developers.openai.com/codex/guides/agents-md) · [Sandboxing](https://developers.openai.com/codex/concepts/sandboxing)
+
+## Por qué hace falta una segunda guía de principiante
+
+La mayoría de fallos iniciales no vienen del modelo, sino de arrancar con una tarea demasiado grande.
+
+Este documento define un loop de primer día centrado en control y evidencia.
+
+## Loop de 45 minutos del primer día
+
+### 0–10 min: fijar límites
+
+- validar reglas en `AGENTS.md`
+- validar sandbox y approval mode
+- definir archivos que no se deben tocar
+
+### 10–25 min: ejecutar una tarea acotada
+
+Empieza con una tarea que toque pocos archivos.
+
+### 25–35 min: verificar y revisar diff
+
+- correr checks de lint/docs
+- revisar alcance de cambios
+- revertir ediciones accidentales
+
+### 35–45 min: dejar evidencia de handoff
+
+- qué cambió
+- qué pasó
+- qué falta
+- quién es el siguiente owner
+
+## Plantilla inicial de prompt
+
+```text
+Goal:
+<un resultado concreto>
+
+Context:
+<archivos relevantes y restricciones>
+
+Constraints:
+<qué no debe cambiar>
+
+Done when:
+<comandos y criterio de aprobación>
+```
+
+## Anti-patrones de principiante
+
+### Empezar con un refactor grande
+
+Reduce calidad de feedback desde el inicio.
+
+### Saltar revisión de sandbox
+
+Los incidentes tempranos suelen ser de límites, no de sintaxis.
+
+### Declarar "done" sin output de comandos
+
+"Se ve bien" no es evidencia.
+
+## Checklist rápido
+
+- límites definidos
+- una tarea acotada completada
+- comandos de verificación ejecutados
+- alcance de diff revisado
+- nota de handoff registrada
+
+Si esto se cumple, tu loop inicial en Codex está sano.

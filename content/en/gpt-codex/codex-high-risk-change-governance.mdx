@@ -1,0 +1,114 @@
+---
+title: Codex High-Risk Change Governance — Advanced Controls for Critical Releases
+description: An advanced governance model for auth, billing, permissions, and migration
+  changes in Codex workflows, with explicit gates and escalation rules.
+difficulty: advanced
+tags:
+- advanced
+- governance
+- release
+- risk
+connections:
+- slug: codex-release-readiness
+  tool: gpt-codex
+  type: prerequisite
+- slug: codex-team-delivery-playbook
+  tool: gpt-codex
+  type: combines
+- slug: codex-ci-cd-workflows
+  tool: gpt-codex
+  type: enhances
+- slug: claude-high-risk-change-governance
+  tool: claude-code
+  type: compare
+featured: false
+order: 15
+date: '2026-04-15'
+---
+
+> **Official References**: [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [Review](https://developers.openai.com/codex/app/review) · [Sandboxing](https://developers.openai.com/codex/concepts/sandboxing)
+
+## Advanced mode is about failure containment
+
+For high-risk surfaces (auth, billing, permissions, migration), speed is not the primary metric.
+The primary metric is predictable failure containment.
+
+## Required governance declarations
+
+Before implementation starts, declare:
+
+- risk class (medium/high/critical)
+- final go/no-go owner
+- rollback trigger conditions
+- escalation channel and deadline policy
+
+If these are missing, you are not in controlled execution.
+
+## Five mandatory gates
+
+1. code-quality gate
+2. security/behavior gate
+3. operations-readiness gate
+4. communication gate
+5. final decision gate
+
+All five gates need explicit pass/fail status.
+
+## Advanced decision record
+
+```md
+### Critical Change Decision
+
+- Scope:
+- Risk class:
+- Gate statuses:
+- Residual risks:
+- Rollback trigger:
+- Rollback owner:
+- Escalation channel:
+- Final decision owner:
+- GO/NO-GO + timestamp:
+```
+
+This record is your audit artifact when incidents happen.
+
+## Escalation rule
+
+If a high-risk blocker survives two loops:
+
+1. set status to `blocked`
+2. attach command-level evidence
+3. assign a new owner
+4. set a hard deadline
+5. re-run gate evaluation after fix
+
+## Rollback rehearsal requirement
+
+For high/critical classes, rollback must be rehearsed in non-production.
+A theoretical rollback is not a valid rollback.
+
+## Advanced anti-patterns
+
+### Tests pass -> auto deploy
+
+This ignores operational and communication gates.
+
+### No named final owner
+
+Decision ambiguity causes incident-time paralysis.
+
+### Escalation without deadline
+
+Risk remains open while everyone assumes someone else is handling it.
+
+## Quick checklist
+
+Before production:
+
+- governance declarations complete
+- five gate statuses recorded
+- rollback rehearsed
+- final owner signed off
+- escalation path active
+
+Advanced Codex operation is governed execution under pressure, not just capable generation.

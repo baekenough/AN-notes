@@ -1,0 +1,105 @@
+---
+title: Codex 팀 딜리버리 플레이북 — 중급 레인 운영
+description: 주 단위 Codex 딜리버리를 레인, 핸드오프 계약, 근거 스냅샷 중심으로
+  안정적으로 운영하는 중급 실전 플레이북.
+difficulty: intermediate
+tags:
+- intermediate
+- delivery
+- teamwork
+- handoff
+connections:
+- slug: codex-handoffs
+  tool: gpt-codex
+  type: prerequisite
+- slug: codex-worktrees
+  tool: gpt-codex
+  type: combines
+- slug: codex-verification-loops
+  tool: gpt-codex
+  type: enhances
+- slug: gemini-week-scale-delivery-playbook
+  tool: gemini-cli
+  type: compare
+featured: false
+order: 14
+date: '2026-04-15'
+---
+
+> **공식 참고 자료**: [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [Subagents](https://developers.openai.com/codex/subagents) · [Worktrees](https://developers.openai.com/codex/app/worktrees)
+
+## 중급 딜리버리는 리듬 문제다
+
+중급 구간에서는 코드 작성 능력보다 레인 오너십, 근거 신선도, 핸드오프 품질에서 문제가 납니다.
+
+## 권장 레인 모델
+
+기본 3레인:
+
+1. 구현 레인
+2. 검증 레인
+3. 리뷰/릴리스 레인
+
+불확실성이 높을 때만 탐색 레인을 추가하세요.
+
+## 주간 운영 패턴
+
+- **월**: 스코프/오너십 고정
+- **화~수**: 구현 + 일일 검증 체크포인트
+- **목**: branch-vs-base 리뷰
+- **금**: 머지 결정 + 정리
+
+무리한 속도보다 반복 가능한 리듬이 중요합니다.
+
+## 일일 근거 스냅샷 계약
+
+각 레인은 하루 1회 아래를 남깁니다.
+
+- 목표 상태
+- 실행 커맨드 + 결과
+- diff 범위
+- blocker
+- 다음 오너
+
+스냅샷 없는 핸드오프는 신뢰할 수 없습니다.
+
+## 머지 패킷 템플릿
+
+```md
+### Merge Packet
+
+- Scope summary:
+- Risk class:
+- Verification summary:
+- Diff scope confirmation:
+- Residual risks:
+- Rollback path:
+- Final owner:
+```
+
+중급 프로젝트에서는 이 머지 패킷을 최소 릴리스 산출물로 두세요.
+
+## 중급 안티패턴
+
+### 의존 작업까지 병렬 분리
+
+순차 의존 작업 분리는 오히려 속도를 떨어뜨립니다.
+
+### 근거를 마지막에 한 번만 생성
+
+리스크가 마지막 단계에 몰립니다.
+
+### 구현 끝나고 리뷰어 지정
+
+리뷰 오너는 구현 전에 지정되어야 합니다.
+
+## 빠른 체크리스트
+
+머지 전:
+
+- 레인 오너십 명시
+- 일일 근거 스냅샷 존재
+- 검증 레인 재실행 완료
+- 머지 패킷 작성 완료
+
+중급 성숙도는 프롬프트가 아니라 운영 규율의 문제입니다.

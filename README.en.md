@@ -27,14 +27,14 @@ Claude Code, GPT Codex, Gemini CLI — find real-world tips for each tool in one
 | Tool | Tips | Status |
 |------|------|--------|
 | Claude Code (Anthropic) | 9 | Live |
-| GPT Codex (OpenAI) | 12 | Live |
+| GPT Codex (OpenAI) | 15 | Live |
 | Gemini CLI (Google) | 9 | Live |
 
 ---
 
 ## Key Features
 
-- **30 practical tips** — each with difficulty level, reading time, and cross-tool connections
+- **33 practical tips** — each with difficulty level, reading time, and cross-tool connections
 - **3 languages** — Korean, English, Spanish (Chinese and Japanese planned)
 - **Cross-tool links** — tips connect to related guides in other tools
 - **What's New** — highlights of game-changing features per tool
