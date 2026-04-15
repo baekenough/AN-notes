@@ -1,0 +1,167 @@
+---
+title: Manual Operativo de Codex — Ritmo Diario, Semanal y de Release para Equipos
+description: >-
+  Manual operativo denso para usar Codex a escala de equipo: ownership por lanes,
+  contratos de artefactos, métricas de calidad y reglas de escalación.
+difficulty: advanced
+tags:
+- operations
+- governance
+- delivery
+- team-rhythm
+connections:
+- slug: codex-release-readiness
+  tool: gpt-codex
+  type: prerequisite
+- slug: codex-team-delivery-playbook
+  tool: gpt-codex
+  type: combines
+- slug: codex-high-risk-change-governance
+  tool: gpt-codex
+  type: enhances
+- slug: multi-agent-workflow
+  tool: claude-code
+  type: compare
+featured: false
+order: 16
+date: '2026-04-15'
+---
+
+> **Referencias Oficiales**: [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [Review](https://developers.openai.com/codex/app/review) · [Worktrees](https://developers.openai.com/codex/app/worktrees) · [Automations](https://developers.openai.com/codex/app/automations)
+
+## Por qué importa un manual operativo
+
+Conseguir un buen resultado puntual con Codex es posible.
+Mantener calidad estable durante semanas es otro problema.
+
+La brecha suele ser de ritmo operativo, no de capacidad del modelo.
+
+## Modelo operativo en una tabla
+
+| Horizonte | Objetivo | Artefacto principal | Owner |
+|-----------|----------|---------------------|-------|
+| Diario | estabilidad de lanes | evidence snapshot | owner del lane |
+| Semanal | entregar alcance revisable | merge packet | owner de review/release |
+| Ventana release | proteger producción | release decision record | owner final de decisión |
+| Ventana incidente | recuperar con previsibilidad | rollback + incident note | on-call + owner de escalación |
+
+Si falta una fila, baja la confiabilidad.
+
+## Contrato de lane (obligatorio)
+
+Todo handoff debe incluir:
+
+1. estado de objetivo
+2. evidencia
+3. alcance de diff
+4. nota de riesgo
+5. siguiente owner
+
+Sin excepciones en trabajo de equipo.
+
+## Cadencia diaria (estructura de 15 minutos)
+
+### Inicio
+
+- confirmar owner del lane
+- confirmar blocker principal
+- confirmar objetivo de verificación del día
+
+### Checkpoint intermedio
+
+- adjuntar salida de comandos fresca
+- confirmar ausencia de scope drift
+- marcar bloqueos temprano
+
+### Snapshot de cierre
+
+- done/partial/blocked
+- salida de comandos
+- directorios cambiados
+- riesgos residuales
+- siguiente owner
+
+Cadencia corta > reportes largos.
+
+## Pipeline semanal de merge
+
+1. congelar alcance
+2. ejecutar lanes + snapshots diarios
+3. rerun del lane verifier
+4. review branch-vs-base
+5. registrar decisión de merge
+
+Si siempre está "casi listo", el scope freeze es débil.
+
+## Bundle de artefactos recomendado
+
+Para cada candidato a merge:
+
+- resumen de implementación
+- resumen de verificación
+- merge packet
+- rollback note
+- borrador de comunicación de release
+
+Este bundle define velocidad de recuperación cuando hay incidentes.
+
+## Métricas útiles
+
+- review lead time
+- tasa de retrabajo post-review
+- blocker age
+- frecuencia de rollback
+- cumplimiento de frescura de evidencia
+
+Menos métricas, más utilidad.
+
+## Política de escalación
+
+Si un blocker se repite dos loops:
+
+1. marcar `blocked`
+2. adjuntar evidencia
+3. reasignar owner
+4. fijar deadline
+5. rerun de verificación antes de desbloquear
+
+Bloqueos sin owner son más peligrosos que tests fallando.
+
+## Modo incidente
+
+Si el riesgo en producción se materializa:
+
+- pausar merges de feature lanes
+- pasar a lane de contención
+- ejecutar política de rollback trigger
+- documentar decisiones en tiempo real
+- volver a ritmo normal tras estabilizar
+
+No inventes workflow de incidente durante el incidente.
+
+## Calibración trimestral
+
+Cada trimestre, revisar:
+
+- qué gates detectan defectos reales
+- qué artefactos nadie consume
+- dónde cae la calidad de handoff
+- qué checks son demasiado lentos para la cadencia diaria
+
+Luego simplificar con evidencia.
+
+## Checklist rápido
+
+Antes del merge semanal:
+
+- contratos de lane completos
+- evidencia de verifier lane en verde
+- merge packet listo
+
+Antes del release en producción:
+
+- release decision record completo
+- owner de rollback localizable
+- paquete de comunicación preparado
+
+Codex acelera. El manual operativo mantiene repetibilidad.

@@ -1,0 +1,167 @@
+---
+title: Codex 운영 매뉴얼 — 팀의 일/주/릴리스 리듬 정렬하기
+description: >-
+  팀 단위 Codex 운영을 위한 고밀도 매뉴얼: 레인 오너십, 산출물 계약,
+  품질 지표, 에스컬레이션 규칙을 일상 운영에 통합합니다.
+difficulty: advanced
+tags:
+- operations
+- governance
+- delivery
+- team-rhythm
+connections:
+- slug: codex-release-readiness
+  tool: gpt-codex
+  type: prerequisite
+- slug: codex-team-delivery-playbook
+  tool: gpt-codex
+  type: combines
+- slug: codex-high-risk-change-governance
+  tool: gpt-codex
+  type: enhances
+- slug: multi-agent-workflow
+  tool: claude-code
+  type: compare
+featured: false
+order: 16
+date: '2026-04-15'
+---
+
+> **공식 참고 자료**: [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [Review](https://developers.openai.com/codex/app/review) · [Worktrees](https://developers.openai.com/codex/app/worktrees) · [Automations](https://developers.openai.com/codex/app/automations)
+
+## 왜 운영 매뉴얼이 필요한가
+
+Codex로 좋은 결과를 한 번 만드는 건 어렵지 않습니다.
+어려운 건 몇 주 동안 품질을 안정적으로 유지하는 일입니다.
+
+모델 능력보다 운영 리듬이 성패를 가릅니다.
+
+## 운영 모델 한눈에 보기
+
+| 시간축 | 목표 | 핵심 산출물 | 오너 |
+|--------|------|-------------|------|
+| 일간 | 레인 진행 안정화 | evidence snapshot | 레인 오너 |
+| 주간 | 리뷰 가능한 범위 안전 출하 | merge packet | 리뷰/릴리스 오너 |
+| 릴리스 윈도우 | 프로덕션 보호 | release decision record | 최종 의사결정 오너 |
+| 인시던트 윈도우 | 복구 예측 가능성 확보 | rollback + incident note | 온콜 + 에스컬레이션 오너 |
+
+행 하나라도 비면 신뢰성이 급격히 떨어집니다.
+
+## 레인 계약(필수)
+
+모든 핸드오프에 5개 필드:
+
+1. 목표 상태
+2. 근거
+3. diff 범위
+4. 리스크 노트
+5. 다음 오너
+
+작은 작업에도 팀 작업이면 예외를 두지 마세요.
+
+## 일일 리듬(15분 구조)
+
+### 시작 체크
+
+- 레인 오너 확인
+- 최우선 blocker 확인
+- 오늘의 검증 목표 확인
+
+### 중간 체크
+
+- 최신 커맨드 출력 첨부
+- 스코프 드리프트 여부 확인
+- blocked 상태 조기 표시
+
+### 종료 스냅샷
+
+- done/partial/blocked
+- 커맨드 출력
+- 변경 디렉터리
+- 잔여 리스크
+- 다음 오너
+
+짧은 리듬이 긴 상태 보고보다 강합니다.
+
+## 주간 머지 파이프라인
+
+1. 스코프 동결
+2. 레인 실행 + 일일 스냅샷
+3. verifier 레인 재실행
+4. branch-vs-base 리뷰
+5. 머지 결정 기록
+
+매주 "거의 준비됨"이라면 스코프 동결이 약한 신호입니다.
+
+## 표준 산출물 번들
+
+머지 후보마다:
+
+- 구현 요약
+- 검증 요약
+- merge packet
+- rollback note
+- release communication draft
+
+인시던트 때 복구 속도를 가르는 건 이 번들입니다.
+
+## 실전 지표
+
+- review lead time
+- review 이후 재작업률
+- blocker age
+- rollback 빈도
+- evidence freshness 준수율
+
+결정에 쓸 수 있는 작은 지표 세트가 좋습니다.
+
+## 에스컬레이션 정책
+
+blocker가 2회 반복되면:
+
+1. `blocked` 표시
+2. 근거 첨부
+3. 새 오너 지정
+4. 기한 설정
+5. 해제 전 검증 재실행
+
+오너 없는 blocker는 실패 테스트보다 더 위험합니다.
+
+## 인시던트 모드 전환
+
+프로덕션 리스크가 현실화되면:
+
+- 기능 머지 일시 중지
+- containment 레인으로 전환
+- rollback trigger 정책 실행
+- 의사결정을 실시간 기록
+- 안정화 후 정상 레인 복귀
+
+인시던트 중에 워크플로우를 즉석 발명하지 마세요.
+
+## 분기별 보정 루틴
+
+분기마다 점검:
+
+- 어떤 게이트가 실제 결함을 잡는가
+- 어떤 산출물은 아무도 안 보는가
+- 어느 지점에서 핸드오프 품질이 떨어지는가
+- 일일 리듬에 너무 느린 체크는 무엇인가
+
+근거 기반으로 단순화하는 게 핵심입니다.
+
+## 빠른 체크리스트
+
+주간 머지 전:
+
+- 레인 계약 완성
+- verifier 레인 통과 근거
+- merge packet 준비
+
+프로덕션 릴리스 전:
+
+- release decision record 완성
+- rollback 오너 연락 가능
+- 커뮤니케이션 패키지 준비
+
+Codex는 가속을 줍니다. 운영 매뉴얼은 반복 가능성을 줍니다.

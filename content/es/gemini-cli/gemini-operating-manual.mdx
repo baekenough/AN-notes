@@ -1,0 +1,114 @@
+---
+title: "Manual Operativo de Gemini — Ritmo Escalable de Entrega por CLI"
+description: >-
+  Manual denso para equipos Gemini CLI: límites de confianza, orquestación por lanes,
+  verificación repetible y ejecución gobernada para release.
+difficulty: advanced
+tags: ["operations", "governance", "delivery", "team-rhythm"]
+connections:
+  - slug: "gemini-high-risk-change-controls"
+    tool: "gemini-cli"
+    type: "prerequisite"
+  - slug: "sub-agents-and-skills"
+    tool: "gemini-cli"
+    type: "combines"
+  - slug: "headless-automation"
+    tool: "gemini-cli"
+    type: "enhances"
+  - slug: "codex-operating-manual"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 10
+date: "2026-04-15"
+---
+
+> **Referencias Oficiales**: [Get Started](https://geminicli.com/docs/get-started/) · [Sub-agents](https://geminicli.com/docs/core/subagents/) · [Skills](https://geminicli.com/docs/cli/skills/) · [CLI Commands](https://geminicli.com/docs/cli/commands/)
+
+## Por qué hace falta un manual operativo
+
+A escala de equipo, el éxito con Gemini depende más de disciplina operativa que de generación puntual.
+
+## Capas operativas
+
+| Capa | Propósito | Artefacto mínimo |
+|---|---|---|
+| Capa de confianza | evitar incidentes de límites | declaración trust/sandbox |
+| Capa de lanes | coordinar ejecución | contrato de handoff |
+| Capa de verificación | probar cambios | resumen de evidencia |
+| Capa de release | controlar riesgo | registro de decisión |
+
+## Loop diario
+
+- confirmar trust boundary
+- ejecutar checkpoint de lane
+- registrar evidencia
+- asignar siguiente owner
+
+## Política de orquestación
+
+Lanes base:
+
+- planeación
+- implementación
+- verificación
+- release (cuando aplique)
+
+Exploración solo cuando la incertidumbre lo exige.
+
+## Subagentes vs skills
+
+- subagentes: delegar ruido paralelo
+- skills: endurecer proceso en el lane actual
+
+Usarlos bien reduce ruido sin perder rigor.
+
+## Estándar de snapshot
+
+Cada lane deja:
+
+- estado
+- comandos ejecutados
+- alcance cambiado
+- riesgo residual
+- siguiente owner
+
+## Ritmo semanal
+
+- Lun: alcance y roles
+- Mar–Mié: ejecutar/verificar
+- Jue: review y ajustes
+- Vie: decisión de release
+
+## Controles de alto riesgo
+
+Para auth/billing/permisos/migraciones:
+
+- nivel de riesgo declarado
+- trigger de rollback explícito
+- owner de escalación nombrado
+- owner final de decisión nombrado
+
+## Métricas de deriva
+
+- blocker age
+- frescura de evidencia
+- completitud de handoffs
+- incidentes de rollback
+- rework rate
+
+## Checklist rápido
+
+Antes de merge:
+
+- trust boundary confirmado
+- snapshot completo
+- verifier lane aprobado
+
+Antes de release:
+
+- gates evaluados
+- owner de rollback disponible
+- decisión final registrada
+
+Gemini da velocidad; el manual operativo da estabilidad de equipo.

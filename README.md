@@ -26,15 +26,15 @@ Claude Code, GPT Codex, Gemini CLI — 각 도구의 실전 팁을 한곳에서 
 
 | 도구 | 팁 수 | 상태 |
 |------|-------|------|
-| Claude Code (Anthropic) | 9 | 운영 중 |
-| GPT Codex (OpenAI) | 15 | 운영 중 |
-| Gemini CLI (Google) | 9 | 운영 중 |
+| Claude Code (Anthropic) | 10 | 운영 중 |
+| GPT Codex (OpenAI) | 16 | 운영 중 |
+| Gemini CLI (Google) | 10 | 운영 중 |
 
 ---
 
 ## 주요 기능
 
-- **33개 실전 팁** — 난이도, 읽기 시간, 관련 도구 연결 포함
+- **36개 실전 팁** — 난이도, 읽기 시간, 관련 도구 연결 포함
 - **3개 언어 지원** — 한국어, 영어, 스페인어 (중국어, 일본어 예정)
 - **크로스툴 연결** — 각 팁에서 다른 도구의 관련 가이드로 바로 이동
 - **What's New** — 도구별 최신 주요 기능 하이라이트

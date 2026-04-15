@@ -1,0 +1,126 @@
+---
+title: "Claude 운영 매뉴얼 — 팀 단위 딜리버리 리듬"
+description: >-
+  로컬 루프, 서브에이전트 레인, hooks 자동화, 릴리스 의사결정을 포함한
+  Claude Code 팀 운영용 고밀도 매뉴얼.
+difficulty: advanced
+tags: ["operations", "governance", "delivery", "team-rhythm"]
+connections:
+  - slug: "claude-high-risk-change-governance"
+    tool: "claude-code"
+    type: "prerequisite"
+  - slug: "github-actions-workflows"
+    tool: "claude-code"
+    type: "combines"
+  - slug: "hooks-automation"
+    tool: "claude-code"
+    type: "enhances"
+  - slug: "codex-operating-manual"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 10
+date: "2026-04-15"
+---
+
+> **공식 참고 자료**: [Best Practices](https://docs.anthropic.com/en/docs/claude-code/best-practices) · [Sub-agents](https://docs.anthropic.com/en/docs/claude-code/sub-agents) · [Hooks](https://docs.anthropic.com/en/docs/claude-code/hooks) · [GitHub Actions](https://docs.anthropic.com/en/docs/claude-code/github-actions)
+
+## 왜 운영 매뉴얼이 필요한가
+
+Claude Code는 잘 쓸 수 있어도, 팀 리듬이 없으면 품질이 주 단위로 흔들립니다.
+운영 매뉴얼은 이 흔들림을 줄이는 장치입니다.
+
+## 핵심 운영 레이어
+
+| 레이어 | 핵심 질문 | 산출물 |
+|---|---|---|
+| 로컬 루프 | 올바른 변경을 했는가? | 범위 제한 diff + 검증 출력 |
+| 레인 루프 | 다음 레인이 안전하게 이어갈 수 있는가? | 핸드오프 계약 |
+| 자동화 루프 | 반복 작업이 안정적으로 재현되는가? | 실행 로그 + 요약 |
+| 릴리스 루프 | 지금 배포해도 되는가? | 최종 의사결정 기록 |
+
+## 일일 운영 표준
+
+- 레인 오너 확인
+- 의미 있는 체크포인트 1개 이상 수행
+- 근거 스냅샷 기록
+- 다음 오너 명시
+
+근거 스냅샷이 없으면 연속성이 깨집니다.
+
+## 서브에이전트 사용 정책
+
+다음에만 적극 사용:
+
+- 탐색 범위가 넓을 때
+- 작업 간 독립성이 높을 때
+- 메인 스레드가 과밀해질 때
+
+강한 순차 의존 작업에는 남용하지 마세요.
+
+## hooks는 마법이 아니라 가드레일
+
+좋은 hooks:
+
+- 위험한 사전 동작 차단
+- 작업 후 lint/security 확인
+- compact 시 컨텍스트 보존
+
+나쁜 hooks:
+
+- 안전한 기본 작업까지 과도 차단
+- 실패를 로그 노이즈에 묻어버림
+
+## 팀 핸드오프 계약
+
+모든 핸드오프에 필수:
+
+- 목표 상태
+- 근거
+- diff 범위
+- 리스크 노트
+- 다음 오너
+
+이 5개가 최소 전달 프로토콜입니다.
+
+## 주간 리듬
+
+- 월: 스코프/오너십 동결
+- 화~수: 구현 + 검증 체크포인트
+- 목: 브랜치 리뷰 + 보정
+- 금: 머지 결정 + 정리
+
+## 릴리스 모드 요구사항
+
+고위험 변경에서는:
+
+- 리스크 클래스 선언
+- 롤백 트리거 문서화
+- 최종 오너 지정
+- 에스컬레이션 채널 활성화
+
+## 추적할 지표
+
+- review lead time
+- review 이후 재작업률
+- blocker age
+- rollback 사용 빈도
+- 스냅샷 완결률
+
+적고 강한 지표가 좋습니다.
+
+## 빠른 체크리스트
+
+머지 전:
+
+- 핸드오프 계약 완성
+- 검증 근거 최신
+- 최종 오너 명확
+
+릴리스 전:
+
+- 거버넌스 게이트 통과
+- 롤백 준비 완료
+- 커뮤니케이션 패킷 준비
+
+Claude는 속도를 줍니다. 운영 매뉴얼은 통제력을 유지하게 해줍니다.

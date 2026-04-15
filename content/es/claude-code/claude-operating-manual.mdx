@@ -1,0 +1,121 @@
+---
+title: "Manual Operativo de Claude — Ritmo de Entrega para Equipos"
+description: >-
+  Manual denso para operar Claude Code a escala de equipo: loop local, lanes con
+  subagentes, guardrails con hooks y decisiones de release gobernadas.
+difficulty: advanced
+tags: ["operations", "governance", "delivery", "team-rhythm"]
+connections:
+  - slug: "claude-high-risk-change-governance"
+    tool: "claude-code"
+    type: "prerequisite"
+  - slug: "github-actions-workflows"
+    tool: "claude-code"
+    type: "combines"
+  - slug: "hooks-automation"
+    tool: "claude-code"
+    type: "enhances"
+  - slug: "codex-operating-manual"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 10
+date: "2026-04-15"
+---
+
+> **Referencias Oficiales**: [Best Practices](https://docs.anthropic.com/en/docs/claude-code/best-practices) · [Sub-agents](https://docs.anthropic.com/en/docs/claude-code/sub-agents) · [Hooks](https://docs.anthropic.com/en/docs/claude-code/hooks) · [GitHub Actions](https://docs.anthropic.com/en/docs/claude-code/github-actions)
+
+## Por qué hace falta un manual operativo
+
+Claude puede producir buen output puntual, pero sin ritmo operativo la calidad deriva semana a semana.
+
+## Capas operativas
+
+| Capa | Pregunta clave | Artefacto |
+|---|---|---|
+| Loop local | ¿cambiamos lo correcto? | diff acotado + salida de checks |
+| Loop de lanes | ¿otro lane puede continuar seguro? | contrato de handoff |
+| Loop de automatización | ¿el trabajo repetido es estable? | run + resumen |
+| Loop de release | ¿debemos desplegar ahora? | registro de decisión |
+
+## Estándar diario
+
+- confirmar owner del lane
+- ejecutar checkpoint útil
+- registrar snapshot de evidencia
+- nombrar siguiente owner
+
+Sin snapshot no hay continuidad confiable.
+
+## Política de subagentes
+
+Úsalos cuando:
+
+- la exploración es amplia
+- las tareas son independientes
+- el hilo principal se vuelve ruidoso
+
+Evítalos para trabajo secuencial acoplado.
+
+## Hooks como guardrails
+
+Buen uso:
+
+- chequeos previos en acciones riesgosas
+- controles post-tool de lint/seguridad
+- preservación de contexto antes de compactar
+
+Mal uso:
+
+- bloquear operaciones seguras comunes
+- esconder fallos en logs ruidosos
+
+## Contrato de handoff
+
+Siempre incluir:
+
+- estado de objetivo
+- evidencia
+- alcance de diff
+- nota de riesgo
+- siguiente owner
+
+## Ritmo semanal
+
+- Lun: congelar alcance y owners
+- Mar–Mié: ejecución + verificación
+- Jue: review de rama + ajustes
+- Vie: decisión de merge y limpieza
+
+## Requisitos de modo release
+
+Para cambios de alto riesgo:
+
+- clase de riesgo declarada
+- trigger de rollback documentado
+- owner final nombrado
+- canal de escalación activo
+
+## Métricas útiles
+
+- lead time de review
+- retrabajo post-review
+- blocker age
+- frecuencia de rollback
+- completitud de snapshots
+
+## Checklist rápido
+
+Antes de merge:
+
+- contrato de handoff completo
+- evidencia fresca
+- owner final claro
+
+Antes de release:
+
+- gates de gobernanza en verde
+- rollback listo
+- paquete de comunicación listo
+
+Claude acelera. El manual operativo mantiene el control.

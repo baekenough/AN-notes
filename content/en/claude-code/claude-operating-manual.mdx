@@ -1,0 +1,128 @@
+---
+title: Claude Operating Manual — Team-Scale Delivery Rhythm
+description: >-
+  A dense team operating manual for Claude Code across local loops, sub-agent lanes,
+  hooks automation, and release-governed decision points.
+difficulty: advanced
+tags: ["operations", "governance", "delivery", "team-rhythm"]
+connections:
+  - slug: "claude-high-risk-change-governance"
+    tool: "claude-code"
+    type: "prerequisite"
+  - slug: "github-actions-workflows"
+    tool: "claude-code"
+    type: "combines"
+  - slug: "hooks-automation"
+    tool: "claude-code"
+    type: "enhances"
+  - slug: "codex-operating-manual"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 10
+date: "2026-04-15"
+---
+
+> **Official References**: [Best Practices](https://docs.anthropic.com/en/docs/claude-code/best-practices) · [Sub-agents](https://docs.anthropic.com/en/docs/claude-code/sub-agents) · [Hooks](https://docs.anthropic.com/en/docs/claude-code/hooks) · [GitHub Actions](https://docs.anthropic.com/en/docs/claude-code/github-actions)
+
+## Why this manual exists
+
+Claude Code workflows degrade when teams rely on ad-hoc habits.
+A stable operating rhythm is what keeps output quality from drifting week to week.
+
+## Core operating layers
+
+| Layer | Main question | Artifact |
+|---|---|---|
+| Local loop | Did we change the right thing? | scoped diff + check output |
+| Lane loop | Can another lane continue safely? | handoff contract |
+| Automation loop | Is repeated work deterministic? | workflow run + summary |
+| Release loop | Should this ship now? | decision record |
+
+## Daily loop standard
+
+- confirm lane owner
+- run one meaningful checkpoint
+- capture evidence snapshot
+- assign next owner explicitly
+
+No evidence snapshot means no reliable continuation.
+
+## Sub-agent usage policy
+
+Use sub-agents when:
+
+- exploration is broad
+- tasks are independent
+- main thread would become noisy
+
+Avoid sub-agents when tasks are tightly coupled and sequential.
+
+## Hooks as guardrails, not magic
+
+Good hook usage:
+
+- pre-tool checks for obvious unsafe actions
+- post-tool checks for lint/security hygiene
+- compact-time context preservation
+
+Bad hook usage:
+
+- blocking common safe operations
+- hiding failures behind noisy logs
+
+## Team handoff contract
+
+Each handoff must include:
+
+- goal status
+- evidence
+- diff scope
+- risk note
+- next owner
+
+That is the minimum readable transfer protocol.
+
+## Weekly rhythm
+
+- Mon: scope and ownership freeze
+- Tue–Wed: lane execution + verifier checkpoints
+- Thu: branch review + rework
+- Fri: merge decision and cleanup
+
+Consistency beats heroics.
+
+## Release-mode requirements
+
+For high-risk changes:
+
+- risk class declared
+- rollback trigger documented
+- final owner named
+- escalation channel live
+
+## Metrics worth tracking
+
+- review lead time
+- rework after review
+- blocker age
+- rollback usage
+- snapshot completeness rate
+
+Keep metrics small and decision-relevant.
+
+## Quick checklist
+
+Before merge:
+
+- handoff contract complete
+- verifier evidence fresh
+- final owner known
+
+Before release:
+
+- governance gates passed
+- rollback ready
+- communication packet ready
+
+Claude can accelerate your team. This manual keeps acceleration controllable.

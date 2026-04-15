@@ -1,0 +1,116 @@
+---
+title: "Gemini 운영 매뉴얼 — 팀 단위 CLI 딜리버리 리듬"
+description: >-
+  trust boundary, 레인 오케스트레이션, 반복 검증, 릴리스 통제까지 포함한
+  Gemini CLI 팀 운영용 고밀도 매뉴얼.
+difficulty: advanced
+tags: ["operations", "governance", "delivery", "team-rhythm"]
+connections:
+  - slug: "gemini-high-risk-change-controls"
+    tool: "gemini-cli"
+    type: "prerequisite"
+  - slug: "sub-agents-and-skills"
+    tool: "gemini-cli"
+    type: "combines"
+  - slug: "headless-automation"
+    tool: "gemini-cli"
+    type: "enhances"
+  - slug: "codex-operating-manual"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 10
+date: "2026-04-15"
+---
+
+> **공식 참고 자료**: [Get Started](https://geminicli.com/docs/get-started/) · [Sub-agents](https://geminicli.com/docs/core/subagents/) · [Skills](https://geminicli.com/docs/cli/skills/) · [CLI Commands](https://geminicli.com/docs/cli/commands/)
+
+## 왜 운영 매뉴얼이 필요한가
+
+팀 규모에서 Gemini 성패는 모델 품질보다 운영 신뢰성에 의해 결정됩니다.
+
+## 운영 레이어
+
+| 레이어 | 목적 | 최소 산출물 |
+|---|---|---|
+| 신뢰 레이어 | 경계 사고 방지 | trust/sandbox 선언 |
+| 레인 레이어 | 실행 조율 | 핸드오프 계약 |
+| 검증 레이어 | 변경 증명 | 커맨드 근거 요약 |
+| 릴리스 레이어 | 리스크 통제 | 의사결정 기록 |
+
+## 일일 운영 루프
+
+- trust boundary 확인
+- 레인 체크포인트 수행
+- 근거 출력 기록
+- 다음 오너 지정
+
+## 레인 오케스트레이션 정책
+
+기본 레인:
+
+- 계획 레인
+- 구현 레인
+- 검증 레인
+- 필요 시 릴리스 레인
+
+불확실성이 높을 때만 탐색 레인 추가.
+
+## skill vs sub-agent 분리
+
+- sub-agent: noisy 병렬 작업 위임
+- skill: 현재 레인 절차를 더 엄격하게 강제
+
+두 수단을 의도적으로 섞어야 컨텍스트와 품질을 동시에 잡을 수 있습니다.
+
+## 근거 스냅샷 표준
+
+각 레인 기록:
+
+- 상태
+- 실행 커맨드
+- 변경 범위
+- 잔여 리스크
+- 다음 오너
+
+이게 없으면 레인 전환이 깨집니다.
+
+## 주간 리듬
+
+- 월: 스코프/역할 고정
+- 화~수: 실행/검증
+- 목: 리뷰/보정
+- 금: 릴리스 여부 결정
+
+## 고위험 통제
+
+권한/billing/auth/migration에서는:
+
+- 리스크 티어 선언
+- 롤백 트리거 명시
+- 에스컬레이션 오너 지정
+- 최종 의사결정 오너 지정
+
+## 드리프트를 보여주는 지표
+
+- blocker age
+- 검증 근거 신선도
+- 핸드오프 완결률
+- rollback incidents
+- rework rate
+
+## 빠른 체크리스트
+
+머지 전:
+
+- trust boundary 확인
+- 근거 스냅샷 완성
+- verifier 레인 통과
+
+릴리스 전:
+
+- 통제 게이트 평가 완료
+- 롤백 오너 연락 가능
+- 최종 결정 로그 기록
+
+Gemini의 속도는 쉽게 얻습니다. 팀 단위 신뢰성은 운영 매뉴얼로 얻습니다.

@@ -1,0 +1,172 @@
+---
+title: Codex Operating Manual — Daily, Weekly, and Release Rhythms for Teams
+description: >-
+  A dense operational manual for running Codex at team scale: lane ownership,
+  artifact contracts, quality metrics, and escalation rules across day-to-day delivery.
+difficulty: advanced
+tags:
+- operations
+- governance
+- delivery
+- team-rhythm
+connections:
+- slug: codex-release-readiness
+  tool: gpt-codex
+  type: prerequisite
+- slug: codex-team-delivery-playbook
+  tool: gpt-codex
+  type: combines
+- slug: codex-high-risk-change-governance
+  tool: gpt-codex
+  type: enhances
+- slug: multi-agent-workflow
+  tool: claude-code
+  type: compare
+featured: false
+order: 16
+date: '2026-04-15'
+---
+
+> **Official References**: [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [Review](https://developers.openai.com/codex/app/review) · [Worktrees](https://developers.openai.com/codex/app/worktrees) · [Automations](https://developers.openai.com/codex/app/automations)
+
+## Why an operating manual matters
+
+Most teams can get good one-off outputs from Codex.
+Fewer teams can keep quality stable for weeks.
+
+The gap is rarely model capability.
+The gap is missing operating rhythm.
+
+This manual is the “how we run” layer between prompts and production.
+
+## Operating model in one table
+
+| Time horizon | Goal | Main artifact | Owner |
+|--------------|------|---------------|-------|
+| Daily | keep lane progress reliable | evidence snapshot | lane owner |
+| Weekly | ship reviewable scope safely | merge packet | review/release owner |
+| Release window | protect production | release decision record | final decision owner |
+| Incident window | recover predictably | rollback + incident note | on-call + escalation owner |
+
+If one row is missing, reliability drops fast.
+
+## Lane contract (non-negotiable)
+
+Each lane handoff must include five fields:
+
+1. goal status
+2. evidence
+3. diff scope
+4. risk note
+5. next owner
+
+No exceptions for “small” changes if teamwork is involved.
+
+## Daily cadence (15-minute structure)
+
+### Start-of-day
+
+- confirm lane owner
+- confirm top blocker
+- confirm today’s verification target
+
+### Mid-day checkpoint
+
+- attach fresh command output
+- confirm scope drift has not occurred
+- flag blocked status early
+
+### End-of-day snapshot
+
+- done/partial/blocked
+- command outputs
+- changed directories
+- residual risks
+- next owner
+
+Short cadence beats long status reports.
+
+## Weekly merge pipeline
+
+1. scope freeze
+2. lane execution with daily snapshots
+3. verifier lane rerun
+4. branch-vs-base review
+5. merge decision record
+
+If work is “almost ready” every Friday, scope freeze is probably weak.
+
+## Artifact bundle you should standardize
+
+For each merge candidate, keep this bundle:
+
+- implementation summary
+- verification summary
+- merge packet
+- rollback note
+- release communication draft
+
+When incidents happen, this bundle determines recovery speed.
+
+## Quality metrics that actually help
+
+Track a small set consistently:
+
+- review lead time
+- rework rate after review
+- blocker age
+- rollback frequency
+- evidence freshness compliance
+
+Avoid vanity metrics like prompt count or token usage without outcome context.
+
+## Escalation policy
+
+When a blocker repeats across two loops:
+
+1. mark `blocked`
+2. attach evidence
+3. assign new owner
+4. set deadline
+5. rerun verification before unblocking
+
+Unowned blockers are more dangerous than failing checks.
+
+## Incident-time mode switch
+
+If production risk materializes:
+
+- pause feature lane merges
+- shift to containment lane
+- execute rollback trigger policy
+- document decisions in real time
+- resume normal lanes only after stabilization
+
+Don’t invent incident workflow during the incident.
+
+## Quarterly calibration routine
+
+Every quarter, review:
+
+- which gates catch real defects
+- which artifacts nobody uses
+- where handoff quality still degrades
+- which checks are too slow for daily cadence
+
+Then simplify ruthlessly. An operating manual should evolve with evidence.
+
+## Quick checklist
+
+Before weekly merge:
+
+- lane contracts complete
+- verifier lane pass captured
+- merge packet ready
+
+Before production release:
+
+- release decision record complete
+- rollback owner reachable
+- communication package prepared
+
+Codex gives you acceleration. The operating manual gives you repeatability.

@@ -1,0 +1,120 @@
+---
+title: Gemini Operating Manual — Scalable Team Rhythm for CLI Delivery
+description: >-
+  A dense operating manual for Gemini CLI teams: trust boundaries, lane orchestration,
+  repeatable verification, and release-governed execution.
+difficulty: advanced
+tags: ["operations", "governance", "delivery", "team-rhythm"]
+connections:
+  - slug: "gemini-high-risk-change-controls"
+    tool: "gemini-cli"
+    type: "prerequisite"
+  - slug: "sub-agents-and-skills"
+    tool: "gemini-cli"
+    type: "combines"
+  - slug: "headless-automation"
+    tool: "gemini-cli"
+    type: "enhances"
+  - slug: "codex-operating-manual"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 10
+date: "2026-04-15"
+---
+
+> **Official References**: [Get Started](https://geminicli.com/docs/get-started/) · [Sub-agents](https://geminicli.com/docs/core/subagents/) · [Skills](https://geminicli.com/docs/cli/skills/) · [CLI Commands](https://geminicli.com/docs/cli/commands/)
+
+## Why an operating manual is needed
+
+At team scale, Gemini success depends less on model output quality and more on process reliability.
+
+This manual defines the reliability layer.
+
+## Operating layers
+
+| Layer | Purpose | Minimum artifact |
+|---|---|---|
+| Trust layer | prevent boundary incidents | trust/sandbox declaration |
+| Lane layer | coordinate execution | handoff contract |
+| Verification layer | prove changes | command evidence summary |
+| Release layer | control risk | decision record |
+
+## Daily operating loop
+
+- confirm trust boundary and in-scope surface
+- execute one lane checkpoint
+- capture evidence output
+- assign next owner
+
+## Lane orchestration policy
+
+Use:
+
+- planning lane
+- implementation lane
+- verification lane
+- release lane (when needed)
+
+Add exploration lane only for high uncertainty.
+
+## Skill and sub-agent split
+
+- sub-agents: offload noisy parallel work
+- skills: enforce stricter process behavior in current lane
+
+Mixing the two deliberately keeps context clean while preserving rigor.
+
+## Evidence snapshot standard
+
+Each lane snapshot should include:
+
+- status
+- commands run
+- changed scope
+- residual risks
+- next owner
+
+Without this, lane-to-lane continuity breaks.
+
+## Weekly rhythm
+
+- Mon: freeze scope and roles
+- Tue–Wed: execute and verify
+- Thu: review and rework
+- Fri: release/no-release decision
+
+## High-risk execution controls
+
+For auth/billing/permission/migration flows:
+
+- risk tier declared
+- rollback trigger explicit
+- escalation owner named
+- final decision owner named
+
+## Metrics that expose drift
+
+- blocker age
+- verification freshness
+- handoff completeness
+- rollback incidents
+- rework rate
+
+Track trend, not vanity totals.
+
+## Quick checklist
+
+Before merge:
+
+- trust boundary confirmed
+- evidence snapshot complete
+- verifier lane pass captured
+
+Before release:
+
+- control gates evaluated
+- rollback owner reachable
+- final decision logged
+
+Gemini speed is easy to get. Gemini reliability at team scale requires an operating manual.
