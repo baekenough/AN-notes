@@ -160,6 +160,87 @@ Unused worktrees accumulate quickly and confuse branch ownership.
 
 If you are still comparing options, stay in subagent mode first. Create a worktree once you commit to one path.
 
+## Prompt templates you can copy
+
+### Template A — implementation lane
+
+```text
+Work in this task worktree only: ../wt-{topic}
+
+Goal:
+- Implement <feature/fix> with the smallest reviewable diff.
+
+Constraints:
+- Do not edit files outside <directories>.
+- Run lint + tests before proposing commit.
+- Summarize risks and rollback path.
+```
+
+### Template B — verification lane
+
+```text
+Use this verification worktree to audit branch <branch-name>.
+
+Check:
+- failing tests
+- type and lint regressions
+- security-sensitive diff segments
+
+Return:
+- PASS/FAIL
+- concrete file/line findings
+- minimal fix plan
+```
+
+### Template C — docs/release lane
+
+```text
+In this docs worktree, update docs and release notes only.
+
+Do:
+- read merged PRs since <date>
+- group by user-facing impact
+- produce concise release notes draft
+
+Do not modify application source files.
+```
+
+## Failure recovery playbook
+
+When worktrees fail, the failure mode is usually operational, not technical.
+
+### Case 1: dirty worktree blocks removal
+
+```bash
+git -C ../wt-auth-retry status
+git -C ../wt-auth-retry stash -u   # or commit
+git worktree remove ../wt-auth-retry
+```
+
+### Case 2: branch drift gets too large
+
+```bash
+git -C ../wt-auth-retry fetch origin
+git -C ../wt-auth-retry rebase origin/main
+```
+
+If conflicts are heavy, open a fresh worktree and replay only the still-valid commits.
+
+### Case 3: wrong base branch used at creation
+
+Close the worktree early. Recreate from the correct base instead of forcing a risky rebase chain.
+
+## Team metrics that prove this is working
+
+Track worktree adoption with a few lightweight indicators:
+
+- **review lead time per PR** (did isolation speed review?)
+- **rework rate after review** (did scope isolation reduce back-and-forth?)
+- **context-collision incidents** (stash churn, accidental cross-task edits)
+- **age of open worktrees** (old trees usually predict merge friction)
+
+If these metrics improve over 2–4 weeks, your worktree practice is paying off.
+
 ## Quick checklist
 
 Before opening a worktree:

@@ -161,6 +161,87 @@ Los worktrees no usados se acumulan rápido y confunden ownership de branches.
 
 Si aún estás comparando enfoques, usa subagentes primero. Crea el worktree cuando ya elegiste una ruta.
 
+## Plantillas de prompt listas para usar
+
+### Plantilla A — lane de implementación
+
+```text
+Trabaja solo dentro de este worktree de tarea: ../wt-{tema}
+
+Goal:
+- Implementar <feature/fix> con el diff más pequeño y revisable.
+
+Constraints:
+- No editar archivos fuera de <directorios>.
+- Ejecutar lint + tests antes de proponer commit.
+- Resumir riesgos y ruta de rollback.
+```
+
+### Plantilla B — lane de verificación
+
+```text
+Usa este worktree de verificación para auditar el branch <branch-name>.
+
+Check:
+- tests fallando
+- regresiones de type/lint
+- segmentos de diff sensibles en seguridad
+
+Return:
+- PASS/FAIL
+- hallazgos concretos (archivo/línea)
+- plan mínimo de corrección
+```
+
+### Plantilla C — lane de docs/release
+
+```text
+En este worktree de docs, modifica solo documentación y release notes.
+
+Do:
+- leer PRs mergeados desde <date>
+- agrupar por impacto para usuario
+- producir borrador conciso de release notes
+
+No modificar archivos fuente de la aplicación.
+```
+
+## Playbook de recuperación de fallos
+
+Cuando falla un worktree, normalmente el problema es operativo, no de código.
+
+### Caso 1: worktree sucio bloquea el remove
+
+```bash
+git -C ../wt-auth-retry status
+git -C ../wt-auth-retry stash -u   # o commit
+git worktree remove ../wt-auth-retry
+```
+
+### Caso 2: drift de branch demasiado grande
+
+```bash
+git -C ../wt-auth-retry fetch origin
+git -C ../wt-auth-retry rebase origin/main
+```
+
+Si el conflicto es grande, abre un worktree nuevo y reaplica solo los commits aún válidos.
+
+### Caso 3: se creó desde una base equivocada
+
+Cierra ese worktree pronto. Recrearlo desde la base correcta suele ser más seguro que forzar una cadena riesgosa de rebases.
+
+## Métricas para demostrar que esto funciona
+
+Mide adopción de worktrees con indicadores ligeros:
+
+- **lead time de review por PR** (¿el aislamiento acelera la review?)
+- **tasa de retrabajo tras review** (¿baja el ida y vuelta?)
+- **incidentes de colisión de contexto** (stash churn, ediciones cruzadas accidentales)
+- **edad media de worktrees abiertos** (worktrees viejos suelen anticipar fricción de merge)
+
+Si mejoran en 2–4 semanas, la práctica de worktrees está dando retorno.
+
 ## Checklist rápido
 
 Antes de abrir un worktree:
