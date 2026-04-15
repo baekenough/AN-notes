@@ -282,3 +282,35 @@ Retire a control when:
 
 Retirement requires a short note with replacement or rationale.
 
+<!-- expansion:depth-v5 -->
+## Control rollout sequencing
+
+Roll out new controls in three phases:
+
+1. **Shadow mode** — observe behavior without blocking flow
+2. **Warn mode** — surface violations with owner attribution
+3. **Enforce mode** — block on defined high-risk conditions
+
+This sequencing avoids abrupt disruption while increasing safety.
+
+## Hardening adoption score
+
+Track adoption with a simple score (0–5):
+
+- control enabled in target environment
+- owners trained and acknowledged
+- runbook updated with execution steps
+- dashboard signal confirms runtime execution
+- one real incident/drill used the control
+
+Score below 4 means adoption is incomplete.
+
+## Reliability debt ledger
+
+Keep a dedicated ledger for deferred hardening work:
+
+| Debt item | Why deferred | Risk if delayed | Revisit date |
+|---|---|---|---|
+
+Deferred work without revisit dates tends to become permanent risk.
+

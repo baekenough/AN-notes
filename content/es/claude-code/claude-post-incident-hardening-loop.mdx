@@ -280,3 +280,35 @@ Retira cuando:
 
 Retirar requiere nota de reemplazo o justificación.
 
+<!-- expansion:depth-v5 -->
+## Secuenciación de rollout de controles
+
+Despliega controles en tres fases:
+
+1. **Shadow mode** — observar sin bloquear
+2. **Warn mode** — exponer violaciones con ownership
+3. **Enforce mode** — bloquear en condiciones de alto riesgo
+
+Esto eleva seguridad sin romper operación abruptamente.
+
+## Score de adopción de hardening
+
+Gestiona adopción con score 0–5:
+
+- control habilitado en entorno objetivo
+- owners entrenados y confirmados
+- runbook actualizado con pasos ejecutables
+- señal de dashboard confirma ejecución real
+- al menos un incidente/simulacro usó el control
+
+Menos de 4 significa adopción incompleta.
+
+## Ledger de deuda de confiabilidad
+
+Mantén ledger dedicado para trabajo diferido:
+
+| Debt item | Why deferred | Risk if delayed | Revisit date |
+|---|---|---|---|
+
+Trabajo diferido sin fecha de revisión se vuelve riesgo permanente.
+

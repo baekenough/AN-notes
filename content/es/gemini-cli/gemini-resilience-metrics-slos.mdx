@@ -291,3 +291,34 @@ Cada mes conecta métrica con acción:
 
 Esta cadena guía inversión correcta en confiabilidad.
 
+<!-- expansion:depth-v5 -->
+## Política de rotación de ownership de métricas
+
+Rota owner secundario cada trimestre y mantiene un owner primario estable.
+
+- primario: continuidad
+- secundario rotativo: mirada fresca y detección de puntos ciegos
+
+Esto evita estancamiento del sistema métrico.
+
+## Forecast de resiliencia
+
+Añade sección mensual de forecast:
+
+- banda esperada de MTTD/MTTR
+- riesgo top de breach por severidad
+- nivel de confianza del forecast
+- controles planificados que afectan forecast
+
+Así las métricas pasan de reporte a planificación.
+
+## Reconciliación alerta↔métrica
+
+Revisión semanal:
+
+1. alertas disparadas sin incidente asociado
+2. incidentes sin alerta correspondiente
+3. breaches no reflejados en dashboard
+
+Estas brechas indican deriva del modelo de monitoreo.
+

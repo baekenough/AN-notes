@@ -327,3 +327,42 @@ Etiqueta cada checkpoint:
 
 No cierres response con decisiones en nivel L1.
 
+<!-- expansion:depth-v5 -->
+## Matriz de estrategia de ramas de recuperación
+
+Selecciona estrategia de rama de forma deliberada.
+
+| Tipo de rama | Cuándo usar | Riesgo |
+|---|---|---|
+| Rama hotfix | regresión localizada | efectos colaterales ocultos |
+| Rama rollback | incertidumbre amplia o riesgo de seguridad | reintroducir deuda conocida |
+| Rama contención | mitigación parcial mientras investigas | estado temporal prolongado |
+
+No mantengas las tres ramas activas sin un owner principal.
+
+## Paquete de revisión de cierre
+
+Antes del cierre final, entrega un paquete único:
+
+- timeline (timestamps + decisiones)
+- resumen de diff de mitigación
+- bundle de comandos de verificación
+- registro de riesgos residuales
+- enlaces al backlog de hardening
+
+Debe permitir que un owner nuevo entienda el caso en 10 minutos.
+
+## Plantilla de nota para liderazgo
+
+```md
+### Incident Leadership Note
+- What happened:
+- Why this decision path was chosen:
+- Current confidence level (L1/L2/L3):
+- What remains uncertain:
+- What we need from leadership:
+- Owner for next 24h watch:
+```
+
+Notas cortas y explícitas reducen re-discusión de decisiones.
+

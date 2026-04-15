@@ -300,3 +300,42 @@ Tag each checkpoint decision with confidence:
 
 Never close incident response with L1 confidence.
 
+<!-- expansion:depth-v5 -->
+## Recovery branch strategy matrix
+
+Choose branch strategy deliberately:
+
+| Branch type | When to use | Risk |
+|---|---|---|
+| Hotfix branch | isolated code path regression | hidden side-effect risk |
+| Rollback branch | broad uncertainty or safety risk | reintroducing known debt |
+| Containment branch | partial mitigation while investigating | prolonged temporary state |
+
+Do not maintain all three branches active without one branch owner.
+
+## Incident closure review package
+
+Before final closure, produce one package containing:
+
+- timeline (key timestamps + decisions)
+- mitigation diff summary
+- verification command bundle
+- residual risk register
+- hardening backlog links
+
+This package should let a new owner understand the incident in 10 minutes.
+
+## Leadership handoff note template
+
+```md
+### Incident Leadership Note
+- What happened:
+- Why this decision path was chosen:
+- Current confidence level (L1/L2/L3):
+- What remains uncertain:
+- What we need from leadership:
+- Owner for next 24h watch:
+```
+
+Short, explicit leadership notes reduce re-litigation of decisions.
+
