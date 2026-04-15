@@ -252,3 +252,50 @@ Antes de pasar ownership:
 
 Este test reduce pérdida de contexto entre lanes.
 
+<!-- expansion:depth-v4 -->
+## Blueprint de comando en 60 minutos
+
+Úsalo cuando la severidad es incierta pero el impacto ya existe.
+
+- **T+00–10**: validar hipótesis de severidad, congelar merges riesgosos, asignar commander+deputy.
+- **T+10–20**: definir ramas de mitigación y comprobar rollback ejecutable.
+- **T+20–35**: ejecutar una rama de forma decisiva, sin mitigaciones contradictorias en paralelo.
+- **T+35–50**: correr verificación y comparar contra baseline pre-incidente.
+- **T+50–60**: publicar nota de decisión y fijar próximo checkpoint.
+
+No es solo velocidad; es calidad de decisión sincronizada bajo presión.
+
+## Matriz de riesgo por dependencia
+
+Clasifica dependencias antes de elegir mitigación.
+
+| Clase | Síntoma de fallo | Postura por defecto |
+|---|---|---|
+| Auth/identity | denegación o bypass | rollback-first + captura de auditoría |
+| Billing/ledger | inconsistencia transaccional | freeze de escritura + frontera de reconciliación |
+| Messaging/queue | retraso y duplicados | throttling + guard de replay |
+| Observability | señales ausentes/tardías | umbral conservador de rollback |
+
+Esta matriz evita decisiones “arreglamos todo con un parche”.
+
+## Protocolo para recomendaciones en conflicto
+
+Si dos owners recomiendan rutas distintas:
+
+1. registrar ambas en un único decision record
+2. puntuar reversibilidad y radio de impacto
+3. elegir la ruta más reversible salvo evidencia contraria
+4. fijar checkpoint de reevaluación rápida (<=10 min)
+
+El conflicto es normal; el conflicto sin estructura es riesgo.
+
+## Escalera de confianza de decisión
+
+Etiqueta cada checkpoint:
+
+- **L1 (low):** evidencia incompleta, solo acciones reversibles
+- **L2 (medium):** evidencia parcial, mitigación acotada
+- **L3 (high):** evidencia consistente, cierre o expansión permitidos
+
+No cierres response con decisiones en nivel L1.
+

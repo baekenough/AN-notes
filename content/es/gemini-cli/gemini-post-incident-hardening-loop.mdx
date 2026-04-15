@@ -229,3 +229,50 @@ Si hay retraso, reduce alcance pero no recortes verificación.
 
 Riesgo residual sin trigger/fecha es riesgo sin gestión.
 
+<!-- expansion:depth-v4 -->
+## Marco económico de controles
+
+Cada control de hardening tiene costo. Haz explícitos los trade-offs.
+
+| Tipo de control | Horizonte de mejora | Costo operativo | Uso recomendado |
+|---|---|---|---|
+| Gate de policy bloqueante | inmediato | medio | fallos repetidos de alta severidad |
+| Expansión de suite de regresión | corto/medio | medio/alto | recurrencia por clase raíz |
+| Mejora de runbook/plantillas | corto | bajo | ambigüedad de ownership |
+| Simplificación arquitectural | medio/largo | alto | cadenas de fallo complejas crónicas |
+
+Prioriza primero mejor relación riesgo-reducción/esfuerzo.
+
+## Checklist de adopción
+
+Un control no termina al merge.
+
+- owners pueden ejecutarlo sin conocimiento implícito
+- ruta de fallo del propio control documentada
+- checklist on-call actualizado
+- logs/dashboard prueban ejecución real del control
+
+Control mergeado pero no usado = confianza falsa.
+
+## Gate QA de hardening
+
+Antes de `verified`, exige:
+
+1. evidencia de implementación (diff + salida de comandos)
+2. evidencia de comportamiento (señal en simulacro/replay)
+3. evidencia de ownership (signoff de owner + verifier)
+
+Si falta uno, permanece `in_progress`.
+
+## Protocolo de retiro de controles
+
+No todos los controles deben vivir para siempre.
+
+Retira cuando:
+
+- no mejora métricas objetivo
+- duplica un control más fuerte
+- costo operativo supera reducción de riesgo medida
+
+Retirar requiere nota de reemplazo o justificación.
+

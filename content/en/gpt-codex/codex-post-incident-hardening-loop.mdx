@@ -239,3 +239,50 @@ If schedule slips, reduce scope but keep verification intact.
 
 Residual risk without trigger/date is unmanaged risk.
 
+<!-- expansion:depth-v4 -->
+## Control economics framework
+
+Every hardening control has cost. Make tradeoffs explicit.
+
+| Control type | Reliability gain horizon | Ongoing cost | Recommended use |
+|---|---|---|---|
+| Blocking policy gate | immediate | medium | high-severity repeat failures |
+| Regression suite expansion | short/medium | medium/high | root-cause class recurrence |
+| Runbook + template upgrade | short | low | ownership ambiguity problems |
+| Architecture simplification | medium/long | high | chronic complex failure chains |
+
+Choose controls that improve signal-to-effort ratio first.
+
+## Adoption hardening checklist
+
+A control is not complete at merge time. Confirm adoption explicitly.
+
+- owners can execute the new control without side-channel knowledge
+- failure path for the control itself is documented
+- on-call checklist includes the new control point
+- dashboard or log evidence proves the control actually runs
+
+Merged-but-unused controls create false confidence.
+
+## Hardening QA gate
+
+Before marking a hardening item `verified`, require:
+
+1. implementation evidence (diff + command output)
+2. behavioral evidence (drill or incident replay signal)
+3. ownership evidence (named operator + verifier signoff)
+
+Missing any one keeps status at `in_progress`.
+
+## Control sunset protocol
+
+Controls should not live forever by default.
+
+Retire a control when:
+
+- it no longer improves target metrics
+- it duplicates a stronger control
+- operational cost exceeds measured risk reduction
+
+Retirement requires a short note with replacement or rationale.
+

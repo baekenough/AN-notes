@@ -244,3 +244,50 @@ Retira una métrica cuando se cumpla todo:
 
 Retira con nota explícita, no borrado silencioso.
 
+<!-- expansion:depth-v4 -->
+## Contrato métrica→acción
+
+Cada métrica debe tener ruta de acción predefinida.
+
+| Estado de métrica | Acción obligatoria | Owner |
+|---|---|---|
+| Green stable | solo monitoreo | metric owner |
+| Yellow drift | abrir nota de investigación | reliability owner |
+| Red breach | ejecutar playbook de escalación | commander + service owner |
+
+Sin contrato de acción, la métrica es decorativa.
+
+## Rúbrica de negociación SLO
+
+Si hay desacuerdo en objetivos SLO, decide con:
+
+1. severidad de impacto al cliente
+2. baseline real de capacidad del sistema
+3. reversibilidad de fallos en ese dominio
+4. costo operativo de endurecer objetivo
+
+Define SLO por economía de riesgo, no por optimismo.
+
+## Checks de confiabilidad del propio sistema métrico
+
+Ejecuta semanalmente:
+
+- ratio de completitud de timestamps
+- consistencia de etiquetas de severidad
+- tasa de incidentes duplicados
+- retraso de refresco de fuentes
+
+Equipos resilientes miden servicio y también calidad de medición.
+
+## Plantilla narrativa ejecutiva
+
+Cada mes conecta métrica con acción:
+
+- qué empeoró
+- qué control se añadió
+- qué mejoró tras el control
+- qué sigue en riesgo alto
+- quién es owner de la siguiente corrección
+
+Esta cadena guía inversión correcta en confiabilidad.
+

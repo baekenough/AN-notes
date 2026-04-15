@@ -246,3 +246,50 @@ Retire a metric when all are true:
 
 Retire with a note, not silent deletion.
 
+<!-- expansion:depth-v4 -->
+## Metric-to-action contract
+
+Every tracked metric must have a predefined action path.
+
+| Metric state | Mandatory action | Owner |
+|---|---|---|
+| Green stable | monitor only | metric owner |
+| Yellow drift | open investigation note | reliability owner |
+| Red breach | execute escalation playbook | commander + service owner |
+
+No action contract means the metric is decorative.
+
+## SLO negotiation rubric
+
+When teams disagree on SLO targets, resolve with rubric:
+
+1. customer impact severity
+2. current system capability baseline
+3. reversibility of failures in that domain
+4. operational cost to meet tighter target
+
+Choose SLOs by risk economics, not optimism.
+
+## Data reliability checks for dashboards
+
+Run weekly checks on the measurement system itself:
+
+- timestamp completeness ratio
+- severity label consistency
+- duplicate incident record rate
+- source refresh delay
+
+A resilient team measures both service reliability and metric reliability.
+
+## Executive narrative template
+
+Tie metrics to action every month:
+
+- what degraded
+- what control was added
+- what improved after control
+- what remains high-risk
+- who owns next correction
+
+Leadership needs this chain to fund the right fixes.
+

@@ -280,3 +280,50 @@ Before handing to next owner, verify:
 
 Use this quick test to reduce context loss across lanes.
 
+<!-- expansion:depth-v4 -->
+## 60-minute command timeline blueprint
+
+Use this timeline when severity is unclear but impact is real.
+
+- **T+00–10**: confirm severity hypothesis, freeze risky merges, assign commander + deputy.
+- **T+10–20**: establish mitigation branch options and rollback readiness.
+- **T+20–35**: execute one branch decisively; avoid parallel contradictory mitigations.
+- **T+35–50**: run verification and compare against pre-incident baseline.
+- **T+50–60**: publish decision note and commit the next checkpoint schedule.
+
+The point is not speed alone; it is synchronized decision quality under pressure.
+
+## Dependency risk matrix
+
+Classify affected dependencies before choosing mitigation.
+
+| Dependency class | Failure symptom | Default incident posture |
+|---|---|---|
+| Auth/identity | access denial or bypass | rollback-first + audit capture |
+| Billing/ledger | transaction mismatch | write freeze + reconciliation boundary |
+| Messaging/queue | lag and duplicate processing | flow throttling + replay guard |
+| Observability | missing/late signals | conservative rollback threshold |
+
+This matrix prevents overconfident “single-fix” decisions.
+
+## Contradiction handling protocol
+
+If two owners provide conflicting mitigation recommendations:
+
+1. capture both recommendations in one decision record
+2. score reversibility and blast radius for each
+3. choose the more reversible path unless evidence disproves it
+4. schedule a rapid reassessment checkpoint (<=10 minutes)
+
+Conflicts are normal. Unstructured conflicts are dangerous.
+
+## Decision confidence ladder
+
+Tag each checkpoint decision with confidence:
+
+- **L1 (low):** incomplete evidence, reversible action only
+- **L2 (medium):** partial evidence, bounded mitigation allowed
+- **L3 (high):** consistent evidence, broader rollout or closure allowed
+
+Never close incident response with L1 confidence.
+
