@@ -1,0 +1,137 @@
+---
+title: Codex 사고 복구 플레이북 — 프로덕션 압박 상황에서의 결정론적 대응
+description: Codex 팀을 위한 고급 사고 대응 플레이북. 명시적 오너십, 가역적 의사결정, 복구 근거 기준을 통해 통제 가능한 복구를 보장합니다.
+difficulty: advanced
+tags:
+- advanced
+- incident-response
+- operations
+- release
+connections:
+- slug: codex-operating-manual
+  tool: gpt-codex
+  type: prerequisite
+- slug: codex-high-risk-change-governance
+  tool: gpt-codex
+  type: enhances
+- slug: codex-verification-loops
+  tool: gpt-codex
+  type: combines
+- slug: claude-incident-recovery-playbook
+  tool: claude-code
+  type: compare
+featured: false
+order: 17
+date: '2026-04-15'
+---
+
+> **Official References**: [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [Review](https://developers.openai.com/codex/app/review) · [Worktrees](https://developers.openai.com/codex/app/worktrees) · [Automations](https://developers.openai.com/codex/app/automations)
+
+## 왜 이 플레이북이 필요한가
+
+사고 상황의 실패는 대부분 기술보다 프로세스에서 먼저 발생합니다.
+
+- 오너십 불명확
+- 약한 근거 스냅샷
+- 늦은 롤백 의사결정
+
+이 플레이북은 복구 속도를 유지하면서도 Codex 사고 대응을 결정론적으로 유지하기 위한 기준입니다.
+
+## 심각도 매트릭스
+
+| 레벨 | 대표 영향 | 기본 대응 자세 |
+|---|---|---|
+| SEV-1 | 사용자 안전, auth, billing, 데이터 정합성 위험 | 롤백 우선 평가 |
+| SEV-2 | 주요 워크플로우 성능/품질 저하 | 범위 제한 hotfix + 강한 검증 |
+| SEV-3 | 제한적 비핵심 회귀 | 계획된 보정 릴리스 |
+
+심각도는 사고 시작 시 선언하고, 근거가 생길 때만 수정하세요.
+
+## 최초 15분 프로토콜
+
+- 사고 오너와 대행 오너 지정
+- 영향 영역의 무관한 머지 동결
+- 기준 근거 수집(실패 명령, 로그, 영향 반경)
+- 레인별 next owner를 포함한 트래커 오픈
+
+next owner가 없으면 연속성 있는 복구가 어렵습니다.
+
+## 4-레인 복구 모델
+
+경계를 명시한 병렬 실행 기준:
+
+- **Triage 레인**: 심각도와 신뢰도 분류
+- **Mitigation 레인**: feature-flag 비활성화 / hotfix / rollback 준비
+- **Verification 레인**: 재현 가능한 재실행 + 안전성 점검
+- **Comms 레인**: 내부/외부 이해관계자 업데이트 주기 운영
+
+레인이 같은 파일을 만지면 즉시 단일 merge owner를 지정하세요.
+
+## 가역 의사결정 사다리
+
+가장 안전하고 되돌리기 쉬운 옵션부터 선택합니다.
+
+1. flag/config로 위험 경로 비활성화
+2. 범위 제한 패치 적용
+3. 마지막 안정 리비전으로 전체 롤백
+
+선택한 안뿐 아니라 제외한 대안의 이유도 기록하세요.
+
+## 근거 패킷 표준
+
+각 주요 체크포인트마다 아래를 남기세요.
+
+- 현재 심각도 + 오너 + 시각
+- 영향 시스템/사용자
+- 실행한 명령과 결과
+- 잔여 리스크 문장
+- 다음 체크포인트 시각 + 오너
+
+이 패킷이 핸드오프의 단일 진실 원천입니다.
+
+## 복구 종료 게이트
+
+아래를 모두 만족할 때만 종료합니다.
+
+- 완화 조치 반영 완료
+- 최신 재실행 근거가 green
+- 잔여 리스크 문서화
+- 후속 하드닝 작업 오너/기한 지정
+
+"안정적으로 보인다"는 종료 조건이 아닙니다.
+
+## 사고 후 하드닝 루프
+
+24시간 내에:
+
+- 핵심 의사결정 타임라인 공개
+- 가드레일 자동화 최소 1개 추가
+- 원인 클래스 회귀 테스트 1개 추가
+- 후속 작업 오너/기한 지정
+
+사고는 비용이 큰 학습입니다. 통제 체계로 전환하세요.
+
+## 고급 안티패턴
+
+### 단일 영웅 레인
+
+초반에는 빨라 보이지만, 핸드오프/피로 구간에서 취약해집니다.
+
+### 커뮤니케이션 주기 없는 완화 조치
+
+코드는 반영돼도 팀은 오래된 가정으로 움직입니다.
+
+### 재실행 증거 없는 종료 선언
+
+확신 표현은 명령 근거를 대체할 수 없습니다.
+
+## 빠른 체크리스트
+
+해결 선언 전:
+
+- 심각도/오너십 기록
+- 완화 경로 선택 근거 명시
+- 최신 재실행 근거 첨부
+- 하드닝 후속 작업 배정
+
+Codex는 복구 속도를 높여주고, 이 플레이북은 복구를 통제 가능하게 만듭니다.

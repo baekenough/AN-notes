@@ -1,0 +1,137 @@
+---
+title: Codex Incident Recovery Playbook — Deterministic Response Under Production Pressure
+description: Advanced incident-response playbook for Codex delivery teams with explicit ownership, reversible decisions, and recovery evidence standards.
+difficulty: advanced
+tags:
+- advanced
+- incident-response
+- operations
+- release
+connections:
+- slug: codex-operating-manual
+  tool: gpt-codex
+  type: prerequisite
+- slug: codex-high-risk-change-governance
+  tool: gpt-codex
+  type: enhances
+- slug: codex-verification-loops
+  tool: gpt-codex
+  type: combines
+- slug: claude-incident-recovery-playbook
+  tool: claude-code
+  type: compare
+featured: false
+order: 17
+date: '2026-04-15'
+---
+
+> **Official References**: [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [Review](https://developers.openai.com/codex/app/review) · [Worktrees](https://developers.openai.com/codex/app/worktrees) · [Automations](https://developers.openai.com/codex/app/automations)
+
+## Why this playbook exists
+
+Incident-time failures are usually process failures first:
+
+- unclear ownership
+- weak evidence snapshots
+- late rollback decisions
+
+This playbook keeps Codex incident response deterministic while preserving recovery speed.
+
+## Severity matrix
+
+| Level | Typical impact | Default response posture |
+|---|---|---|
+| SEV-1 | user safety, auth, billing, or data correctness at risk | rollback-first evaluation |
+| SEV-2 | major workflow degradation | bounded hotfix with tight verification |
+| SEV-3 | isolated non-critical regression | scheduled corrective release |
+
+Declare severity at incident start and revise only with evidence.
+
+## First-15-minutes protocol
+
+- assign incident owner and deputy
+- freeze unrelated merges in impacted surfaces
+- capture baseline evidence (failing commands, logs, blast radius)
+- open lane tracker with explicit next owner per lane
+
+No next owner means no reliable continuity.
+
+## Four-lane recovery model
+
+Run in parallel with explicit boundaries:
+
+- **Triage lane**: classify severity and confidence
+- **Mitigation lane**: prepare feature-flag disable / hotfix / rollback
+- **Verification lane**: run reproducible reruns and safety checks
+- **Comms lane**: update internal/external stakeholders on cadence
+
+If lanes edit the same files, define one merge owner immediately.
+
+## Reversible decision ladder
+
+Prefer the safest reversible option first:
+
+1. disable risky path via flag/config
+2. targeted patch with bounded scope
+3. full rollback to last known-good revision
+
+Document rejected alternatives, not only chosen action.
+
+## Evidence packet standard
+
+Every major checkpoint must include:
+
+- current severity + owner + timestamp
+- impacted systems/users
+- commands executed and outputs
+- residual risk statement
+- next checkpoint time + owner
+
+This packet is the source of truth for handoffs.
+
+## Recovery completion gate
+
+Close only when all are true:
+
+- mitigation applied
+- fresh rerun evidence is green
+- residual risks documented
+- follow-up hardening task assigned with owner/date
+
+"Looks stable" is not closure criteria.
+
+## Post-incident hardening loop
+
+Within 24 hours:
+
+- publish incident timeline with key decisions
+- add at least one guardrail automation
+- add one regression test for root-cause class
+- assign follow-up owner and deadline
+
+Incidents are expensive. Convert them into durable controls.
+
+## Advanced anti-patterns
+
+### Hero mode in one lane
+
+Fast initially, fragile during handoff and fatigue windows.
+
+### Mitigation without communication cadence
+
+Code changes ship, but teams operate on stale assumptions.
+
+### Closure without rerun proof
+
+Confidence language cannot replace command evidence.
+
+## Quick checklist
+
+Before declaring resolved:
+
+- severity + ownership recorded
+- mitigation path justified
+- fresh rerun evidence attached
+- hardening follow-up assigned
+
+Codex can accelerate recovery. This playbook keeps recovery governable.

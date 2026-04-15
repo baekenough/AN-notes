@@ -1,0 +1,137 @@
+---
+title: Playbook de Recuperación de Incidentes en Codex — Respuesta Determinista Bajo Presión
+description: Playbook avanzado para equipos de Codex con ownership explícito, decisiones reversibles y estándares de evidencia para recuperar sin perder control.
+difficulty: advanced
+tags:
+- advanced
+- incident-response
+- operations
+- release
+connections:
+- slug: codex-operating-manual
+  tool: gpt-codex
+  type: prerequisite
+- slug: codex-high-risk-change-governance
+  tool: gpt-codex
+  type: enhances
+- slug: codex-verification-loops
+  tool: gpt-codex
+  type: combines
+- slug: claude-incident-recovery-playbook
+  tool: claude-code
+  type: compare
+featured: false
+order: 17
+date: '2026-04-15'
+---
+
+> **Official References**: [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [Review](https://developers.openai.com/codex/app/review) · [Worktrees](https://developers.openai.com/codex/app/worktrees) · [Automations](https://developers.openai.com/codex/app/automations)
+
+## Por qué existe este playbook
+
+En incidentes, los fallos suelen ser primero de proceso y después de tecnología:
+
+- ownership ambiguo
+- snapshots de evidencia débiles
+- decisiones de rollback tardías
+
+Este playbook mantiene la respuesta con Codex en modo determinista sin perder velocidad de recuperación.
+
+## Matriz de severidad
+
+| Nivel | Impacto típico | Postura de respuesta por defecto |
+|---|---|---|
+| SEV-1 | riesgo en seguridad del usuario, auth, billing o corrección de datos | evaluación rollback-first |
+| SEV-2 | degradación fuerte del flujo principal | hotfix acotado con verificación estricta |
+| SEV-3 | regresión no crítica y localizada | release correctivo planificado |
+
+Declara severidad al inicio y ajústala solo con evidencia.
+
+## Protocolo de los primeros 15 minutos
+
+- asignar owner del incidente y suplente
+- congelar merges no relacionados en la superficie afectada
+- capturar evidencia base (comandos fallidos, logs, radio de impacto)
+- abrir tracker de lanes con next owner explícito por lane
+
+Sin next owner no hay continuidad confiable.
+
+## Modelo de recuperación en 4 lanes
+
+Ejecuta en paralelo con fronteras claras:
+
+- **Lane de triage**: clasificar severidad y confianza
+- **Lane de mitigación**: preparar desactivación por flag / hotfix / rollback
+- **Lane de verificación**: reruns reproducibles y checks de seguridad
+- **Lane de comunicación**: cadencia de updates para stakeholders
+
+Si varios lanes tocan los mismos archivos, define un merge owner de inmediato.
+
+## Escalera de decisión reversible
+
+Elige primero la opción más segura y reversible:
+
+1. desactivar ruta riesgosa por flag/config
+2. aplicar patch acotado y verificable
+3. rollback completo a la última revisión estable
+
+Registra por qué descartas alternativas, no solo la opción elegida.
+
+## Estándar de paquete de evidencia
+
+Cada checkpoint mayor debe incluir:
+
+- severidad actual + owner + timestamp
+- sistemas/usuarios afectados
+- comandos ejecutados y salida
+- riesgos residuales
+- siguiente checkpoint + owner
+
+Este paquete es la fuente de verdad para handoffs.
+
+## Gate de cierre de recuperación
+
+Cierra solo cuando todo sea verdadero:
+
+- mitigación aplicada
+- rerun fresco en verde
+- riesgos residuales documentados
+- tarea de hardening asignada con owner/fecha
+
+"Parece estable" no es criterio de cierre.
+
+## Bucle de hardening post-incidente
+
+Dentro de 24 horas:
+
+- publicar timeline con decisiones clave
+- añadir al menos una automatización de guardrail
+- añadir una prueba de regresión para la clase de causa raíz
+- asignar owner y fecha para seguimiento
+
+Los incidentes cuestan caro. Conviértelos en controles duraderos.
+
+## Anti-patrones avanzados
+
+### Modo héroe en un solo lane
+
+Rápido al inicio, frágil en handoffs y ventanas de fatiga.
+
+### Mitigación sin cadencia de comunicación
+
+Se despliega código, pero el equipo opera con supuestos desactualizados.
+
+### Cierre sin evidencia de rerun
+
+El lenguaje de confianza no reemplaza evidencia de comandos.
+
+## Checklist rápido
+
+Antes de declarar resuelto:
+
+- severidad y ownership registrados
+- ruta de mitigación justificada
+- evidencia fresca de rerun adjunta
+- seguimiento de hardening asignado
+
+Codex acelera la recuperación. Este playbook mantiene la recuperación gobernable.

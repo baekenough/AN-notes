@@ -1,0 +1,109 @@
+---
+title: "Gemini Playbook de Recuperación de Incidentes"
+description: "Modelo operativo avanzado para equipos de Gemini CLI que gestionan regresiones en producción con controles reversibles."
+difficulty: advanced
+tags: ["advanced", "incident-response", "operations", "release"]
+connections:
+  - slug: "gemini-operating-manual"
+    tool: "gemini-cli"
+    type: "prerequisite"
+  - slug: "headless-automation"
+    tool: "gemini-cli"
+    type: "enhances"
+  - slug: "codex-release-readiness"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 11
+date: "2026-04-15"
+---
+
+> **Referencias oficiales**: [Get Started](https://geminicli.com/docs/get-started/) · [CLI Commands](https://geminicli.com/docs/cli/commands/) · [Sub-agents](https://geminicli.com/docs/core/subagents/) · [Skills](https://geminicli.com/docs/cli/skills/)
+
+## Por qué existe este playbook
+
+Los incidentes en producción castigan a los equipos que no separan velocidad de control.
+
+Este playbook define cómo un equipo de Gemini CLI se recupera rápido sin perder trazabilidad.
+
+## Matriz de severidad
+
+| Nivel | Impacto típico | Respuesta por defecto |
+|---|---|---|
+| SEV-1 | viaje crítico del usuario o confianza de datos comprometida | evaluación rollback-first |
+| SEV-2 | degradación importante del flujo principal | mitigación controlada + lane de hotfix |
+| SEV-3 | regresión aislada | release correctivo planificado |
+
+## Estándar de los primeros 15 minutos
+
+- asignar owner del incidente y suplente
+- congelar merges riesgosos del dominio afectado
+- capturar evidencia base (comando fallido, logs, radio de impacto)
+- abrir tracker de lanes con campos de next-owner
+
+Si faltan campos next-owner, la calidad de escalación cae rápidamente.
+
+## Estructura de incidente en 4 lanes
+
+- **Lane de triage**: clasificar impacto y nivel de confianza
+- **Lane de mitigación**: preparar feature flag / hotfix / rollback
+- **Lane de verificación**: reruns reproducibles y checks de seguridad
+- **Lane de comunicación**: cadencia de updates internos/externos
+
+Mantén scopes de escritura separados entre lanes siempre que sea posible.
+
+## Política de decisión
+
+Prioriza la opción más reversible que restaure primero la seguridad del usuario.
+
+Orden de decisión:
+
+1. desactivar ruta riesgosa por flag/config
+2. aplicar patch acotado y verificable
+3. rollback completo a revisión estable conocida
+
+## Paquete de evidencia del incidente
+
+En cada checkpoint relevante guarda:
+
+- severidad, owner, timestamp
+- sistemas/usuarios afectados
+- comandos ejecutados y salida
+- riesgos residuales
+- hora del siguiente checkpoint
+
+## Bucle de hardening post-incidente
+
+Dentro de 24 horas:
+
+- publicar línea temporal con pivotes de decisión
+- agregar al menos una automatización de guardrail
+- agregar una prueba de regresión para la clase de causa raíz
+- asignar owner y fecha de seguimiento
+
+Sin tarea de hardening, el incidente tiende a repetirse.
+
+## Anti-patrones avanzados
+
+### Ediciones paralelas en archivos compartidos sin mapa de ownership
+
+Esto aumenta presión de merge justo cuando más importa la velocidad.
+
+### Declarar “resuelto” solo por intuición
+
+Usa evidencia de rerun, no lenguaje de confianza.
+
+### Comunicar solo al cierre del incidente
+
+Los stakeholders necesitan cadencia, no un único resumen final.
+
+## Checklist rápido
+
+Antes de cerrar:
+
+- severidad y owner registrados
+- ruta de mitigación justificada
+- evidencia de rerun adjunta
+- seguimiento de hardening asignado
+
+Gemini acelera la respuesta. Este playbook mantiene la respuesta gobernable.

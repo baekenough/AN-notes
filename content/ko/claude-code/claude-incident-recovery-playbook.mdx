@@ -1,0 +1,110 @@
+---
+title: "Claude 사고 복구 플레이북"
+description: "프로덕션 회귀 이슈에서 Claude 기반 레인을 활용해 롤백 안전성을 지키며 복구하는 고급 사고 대응 모델."
+difficulty: advanced
+tags: ["advanced", "incident-response", "operations", "release"]
+connections:
+  - slug: "claude-operating-manual"
+    tool: "claude-code"
+    type: "prerequisite"
+  - slug: "github-actions-workflows"
+    tool: "claude-code"
+    type: "enhances"
+  - slug: "codex-release-readiness"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 11
+date: "2026-04-15"
+---
+
+> **공식 참고 자료**: [Best Practices](https://docs.anthropic.com/en/docs/claude-code/best-practices) · [Hooks](https://docs.anthropic.com/en/docs/claude-code/hooks) · [GitHub Actions](https://docs.anthropic.com/en/docs/claude-code/github-actions) · [Security](https://docs.anthropic.com/en/docs/claude-code/security)
+
+## 왜 이 플레이북이 필요한가
+
+사고 상황에서는 오너십과 근거 기준이 모호할 때 시간이 가장 많이 손실됩니다.
+
+이 플레이북은 압박 상황에서도 Claude 기반 복구를 결정론적으로 유지하기 위한 기준입니다.
+
+## 사고 심각도 매트릭스
+
+| 레벨 | 대표 영향 | 기본 대응 자세 |
+|---|---|---|
+| SEV-1 | auth/billing/데이터 정합성 위험 | 즉시 롤백 후보 |
+| SEV-2 | 주요 워크플로우 심각 저하 | feature-flag 또는 제한적 hotfix |
+| SEV-3 | 비핵심 동작 회귀 | 계획된 보정 패치 |
+
+## 최초 15분 프로토콜
+
+- 심각도와 사고 오너 선언
+- 영향 범위의 무관한 머지 일시 동결
+- 첫 근거 스냅샷 수집(로그, 실패 체크, 범위)
+- 레인별 다음 오너 지정
+
+오너도 없고 스냅샷도 없으면 통제 가능한 복구가 어렵습니다.
+
+## 복구 레인 분할
+
+아래 레인을 병렬로 돌리되 경계를 명시하세요.
+
+- **조사 레인**: 원인 가설 수립 + 재현
+- **완화 레인**: 롤백/hotfix 준비
+- **커뮤니케이션 레인**: 상태 타임라인 + 이해관계자 공유
+- **검증 레인**: 회귀 테스트 + 롤백 안전성 확인
+
+오너 없는 레인 중복은 중복 작업과 사각지대를 만듭니다.
+
+## 의사결정 사다리
+
+1. Feature-flag 비활성화(가장 빠르고 되돌리기 쉬움)
+2. 제한 범위 hotfix(범위가 좁고 검증 가능할 때)
+3. 전체 롤백(불확실성이 높거나 안전성 민감 영역일 때)
+
+선택한 이유뿐 아니라 제외한 대안의 이유도 남기세요.
+
+## 근거 패킷 템플릿
+
+각 결정 체크포인트에 아래를 남기세요.
+
+- 현재 심각도 + 오너
+- 영향 범위
+- 명령/로그 근거
+- 잔여 리스크
+- 다음 액션 + 기한
+
+## 사고 후 회고 최소 항목
+
+24시간 안에 아래를 문서화하세요.
+
+- 트리거와 탐지 공백
+- 완화를 늦춘 요인
+- 복구를 빠르게 만든 요인
+- 가드레일 개선 제안
+- 오너 + 완료 기한
+
+사고는 비싼 학습 기회입니다. 디테일이 생생할 때 기록하세요.
+
+## 고급 안티패턴
+
+### 단일 영웅 레인 운영
+
+초반은 빨라 보여도 후반 복구가 취약해집니다. 레인을 초기에 분리하세요.
+
+### 타임라인 공유 없는 hotfix 머지
+
+코드는 배포됐지만 팀은 오래된 가정 위에서 계속 움직입니다.
+
+### 재검증 근거 없이 사고 종료 선언
+
+재실행 근거 없는 "문제 없음"은 종료가 아닙니다.
+
+## 빠른 체크리스트
+
+종료 전:
+
+- 심각도 + 오너 문서화
+- 완화 의사결정 기록
+- 재검증 근거 첨부
+- 후속 가드레일 작업 오너 지정
+
+Claude는 속도를 높여주지만, 이 플레이북이 속도 속에서도 통제를 지켜줍니다.

@@ -1,0 +1,110 @@
+---
+title: "Claude Playbook de Recuperación de Incidentes"
+description: "Modelo avanzado de comando de incidentes para regresiones en producción y recuperación segura con lanes asistidos por Claude."
+difficulty: advanced
+tags: ["advanced", "incident-response", "operations", "release"]
+connections:
+  - slug: "claude-operating-manual"
+    tool: "claude-code"
+    type: "prerequisite"
+  - slug: "github-actions-workflows"
+    tool: "claude-code"
+    type: "enhances"
+  - slug: "codex-release-readiness"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 11
+date: "2026-04-15"
+---
+
+> **Referencias oficiales**: [Best Practices](https://docs.anthropic.com/en/docs/claude-code/best-practices) · [Hooks](https://docs.anthropic.com/en/docs/claude-code/hooks) · [GitHub Actions](https://docs.anthropic.com/en/docs/claude-code/github-actions) · [Security](https://docs.anthropic.com/en/docs/claude-code/security)
+
+## Por qué existe este playbook
+
+En incidentes, los equipos pierden tiempo cuando la propiedad y el estándar de evidencia no están claros.
+
+Este playbook mantiene la recuperación asistida por Claude de forma determinista bajo presión.
+
+## Matriz de severidad
+
+| Nivel | Impacto típico | Postura por defecto |
+|---|---|---|
+| SEV-1 | riesgo en auth/billing/corrección de datos | candidato inmediato a rollback |
+| SEV-2 | degradación fuerte del flujo principal | feature-flag o hotfix acotado |
+| SEV-3 | regresión no crítica | parche correctivo planificado |
+
+## Protocolo de los primeros 15 minutos
+
+- declarar severidad y owner del incidente
+- congelar merges no relacionados en la superficie afectada
+- capturar primer snapshot de evidencia (logs, checks fallidos, alcance)
+- asignar siguiente owner por lane
+
+Sin owner y sin snapshot no hay control confiable.
+
+## División de lanes de recuperación
+
+Ejecuta lanes en paralelo con límites explícitos:
+
+- **Lane de investigación**: hipótesis de causa raíz + reproducción
+- **Lane de mitigación**: preparación de rollback/hotfix
+- **Lane de comunicación**: línea temporal y actualización a stakeholders
+- **Lane de verificación**: pruebas de regresión + seguridad de rollback
+
+La superposición sin ownership suele producir trabajo duplicado y puntos ciegos.
+
+## Escalera de decisión
+
+1. Desactivar feature-flag (opción más rápida y reversible)
+2. Hotfix acotado (cuando el alcance es pequeño y verificable)
+3. Rollback completo (si hay alta incertidumbre o superficie crítica)
+
+Registra por qué descartaste alternativas, no solo por qué elegiste una.
+
+## Plantilla de paquete de evidencia
+
+Cada checkpoint de decisión debe incluir:
+
+- severidad actual + owner
+- alcance impactado
+- evidencia de comandos/logs
+- riesgos residuales
+- siguiente acción + fecha límite
+
+## Retro mínima post-incidente
+
+Dentro de 24 horas documenta:
+
+- disparador y brecha de detección
+- qué ralentizó la mitigación
+- qué aceleró la recuperación
+- propuesta de cambio de guardrail
+- owner + fecha objetivo
+
+Un incidente es una lección cara. Captúrala mientras está fresca.
+
+## Anti-patrones avanzados
+
+### Modo héroe en un solo lane
+
+Rápido al inicio, frágil después. Divide lanes temprano.
+
+### Hotfix mergeado sin cronología de comunicación
+
+Se publica código, pero el equipo sigue con supuestos desactualizados.
+
+### Cierre del incidente sin rerun de verificación
+
+Una afirmación "verde" sin evidencia de rerun no es cierre real.
+
+## Checklist rápido
+
+Antes de cerrar:
+
+- severidad + owner documentados
+- decisión de mitigación registrada
+- evidencia de rerun de verificación adjunta
+- tarea de guardrail de seguimiento asignada
+
+Claude ayuda con la velocidad. Este playbook preserva el control mientras avanzas rápido.

@@ -1,0 +1,109 @@
+---
+title: "Gemini Incident Recovery Playbook"
+description: "Advanced incident response operating model for Gemini CLI teams handling production regressions with reversible controls."
+difficulty: advanced
+tags: ["advanced", "incident-response", "operations", "release"]
+connections:
+  - slug: "gemini-operating-manual"
+    tool: "gemini-cli"
+    type: "prerequisite"
+  - slug: "headless-automation"
+    tool: "gemini-cli"
+    type: "enhances"
+  - slug: "codex-release-readiness"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 11
+date: "2026-04-15"
+---
+
+> **Official References**: [Get Started](https://geminicli.com/docs/get-started/) · [CLI Commands](https://geminicli.com/docs/cli/commands/) · [Sub-agents](https://geminicli.com/docs/core/subagents/) · [Skills](https://geminicli.com/docs/cli/skills/)
+
+## Why this playbook exists
+
+Production incidents punish teams that cannot separate speed from control.
+
+This playbook defines how Gemini CLI teams recover quickly without losing auditability.
+
+## Severity matrix
+
+| Level | Typical impact | Default response |
+|---|---|---|
+| SEV-1 | core user journey or data trust compromised | rollback-first evaluation |
+| SEV-2 | major workflow degraded | controlled mitigation + hotfix lane |
+| SEV-3 | isolated regression | scheduled corrective release |
+
+## First-15-minutes standard
+
+- assign incident owner and deputy
+- freeze risky merges touching the affected domain
+- capture baseline evidence (failing command, logs, blast radius)
+- open lane tracker with next-owner fields
+
+If next-owner fields are missing, escalation quality collapses.
+
+## Four-lane incident structure
+
+- **Triage lane**: classify impact and confidence
+- **Mitigation lane**: feature flag / hotfix / rollback candidate
+- **Verification lane**: reproducible reruns and safety checks
+- **Comms lane**: update cadence for internal/external stakeholders
+
+Keep lane write scopes disjoint whenever possible.
+
+## Decision policy
+
+Prefer the most reversible option that restores user safety first.
+
+Decision order:
+
+1. disable risky path by flag/config
+2. targeted patch with bounded scope
+3. full rollback to known-good revision
+
+## Incident evidence packet
+
+At every major decision point, save:
+
+- severity, owner, timestamp
+- impacted systems and users
+- executed commands and outputs
+- residual risk statement
+- next checkpoint time
+
+## Post-incident hardening loop
+
+Within one day:
+
+- publish timeline with key decision pivots
+- add at least one guardrail automation
+- add one regression test for root cause class
+- assign follow-up owner and due date
+
+No hardening task means the incident is likely to repeat.
+
+## Advanced anti-patterns
+
+### Parallel edits in shared files without ownership map
+
+This creates merge pressure exactly when speed matters most.
+
+### Declaring "resolved" from intuition only
+
+Use rerun evidence, not confidence language.
+
+### Communication updates only at incident end
+
+Stakeholders need cadence, not one big summary.
+
+## Quick checklist
+
+Before closure:
+
+- severity and owner logged
+- mitigation path justified
+- rerun evidence attached
+- hardening follow-up assigned
+
+Gemini can accelerate response. This playbook keeps the response governable.

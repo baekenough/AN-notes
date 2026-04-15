@@ -1,0 +1,110 @@
+---
+title: "Claude Incident Recovery Playbook"
+description: "Advanced incident command model for production regressions and rollback-safe recovery with Claude-assisted lanes."
+difficulty: advanced
+tags: ["advanced", "incident-response", "operations", "release"]
+connections:
+  - slug: "claude-operating-manual"
+    tool: "claude-code"
+    type: "prerequisite"
+  - slug: "github-actions-workflows"
+    tool: "claude-code"
+    type: "enhances"
+  - slug: "codex-release-readiness"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 11
+date: "2026-04-15"
+---
+
+> **Official References**: [Best Practices](https://docs.anthropic.com/en/docs/claude-code/best-practices) · [Hooks](https://docs.anthropic.com/en/docs/claude-code/hooks) · [GitHub Actions](https://docs.anthropic.com/en/docs/claude-code/github-actions) · [Security](https://docs.anthropic.com/en/docs/claude-code/security)
+
+## Why this playbook exists
+
+During incidents, teams lose time when ownership and evidence standards are unclear.
+
+This playbook keeps Claude-assisted recovery deterministic under pressure.
+
+## Incident severity matrix
+
+| Level | Typical impact | Default posture |
+|---|---|---|
+| SEV-1 | auth/billing/data correctness at risk | immediate rollback candidate |
+| SEV-2 | major workflow degraded | feature-flag or targeted hotfix |
+| SEV-3 | non-critical behavior regression | scheduled corrective patch |
+
+## First-15-minutes protocol
+
+- declare severity and incident owner
+- freeze unrelated merges on impacted surface
+- capture first evidence snapshot (logs, failing checks, scope)
+- assign next owner per lane
+
+No owner + no snapshot means no reliable control.
+
+## Recovery lane split
+
+Run lanes in parallel with explicit boundaries:
+
+- **Investigation lane**: root-cause hypothesis and reproduction
+- **Mitigation lane**: rollback/hotfix preparation
+- **Communication lane**: status timeline and stakeholder updates
+- **Verification lane**: regression test + rollback safety checks
+
+Lane overlap without ownership usually creates duplicate work and blind spots.
+
+## Decision ladder
+
+1. Feature-flag disable (fastest reversible option)
+2. Targeted hotfix (when scope is narrow and testable)
+3. Full rollback (for high uncertainty or safety-critical surfaces)
+
+Record why options were rejected, not only why one was chosen.
+
+## Evidence packet template
+
+Every decision checkpoint should include:
+
+- current severity + owner
+- impacted scope
+- command/log evidence
+- residual risks
+- next action + deadline
+
+## Post-incident retro minimum
+
+Within 24 hours, write:
+
+- trigger and detection gap
+- what slowed mitigation
+- what made recovery faster
+- guardrail change proposal
+- owner + due date
+
+Incidents are expensive lessons. Capture them while details are fresh.
+
+## Advanced anti-patterns
+
+### One-lane hero mode
+
+Fast at first, fragile later. Split lanes early.
+
+### Hotfix merged without timeline communication
+
+You ship code, but teams still operate on stale assumptions.
+
+### Incident closed before fresh verification rerun
+
+A green statement without rerun evidence is not closure.
+
+## Quick checklist
+
+Before closing:
+
+- severity + owner documented
+- mitigation decision recorded
+- verification rerun evidence attached
+- follow-up guardrail task assigned
+
+Claude helps with speed. This playbook preserves control while moving fast.
