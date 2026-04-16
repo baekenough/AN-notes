@@ -1,0 +1,133 @@
+---
+title: Codex Ralph Persistence Loops — Running Long Tasks to Verified Completion
+description: Design a bounded Ralph loop that persists state, enforces evidence-based verification, and closes multi-step tasks without premature "done" claims.
+difficulty: advanced
+tags:
+- ralph
+- persistence
+- orchestration
+- verification
+connections:
+- slug: codex-verification-loops
+  tool: gpt-codex
+  type: prerequisite
+- slug: codex-team-delivery-playbook
+  tool: gpt-codex
+  type: combines
+- slug: codex-operating-manual
+  tool: gpt-codex
+  type: enhances
+- slug: codex-resilience-metrics-slos
+  tool: gpt-codex
+  type: enhances
+- slug: multi-agent-workflow
+  tool: claude-code
+  type: compare
+featured: false
+order: 21
+date: '2026-04-16'
+---
+
+> **Official References**: [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [Subagents](https://developers.openai.com/codex/subagents) · [Review](https://developers.openai.com/codex/app/review)
+
+## Why Ralph loops exist
+
+Fast output is not the same as finished work.
+Ralph-style persistence loops exist to prevent two common failures:
+
+1. partial implementation being reported as complete
+2. stale verification evidence being reused after new edits
+
+Ralph gives you a loop contract: continue until requirements are met, proof is fresh, and a reviewer lane approves.
+
+## 50-turn loop design (bounded, not endless)
+
+A long-running loop still needs explicit bounds.
+For a `50-turn` run, define these controls before iteration 1:
+
+- **Task boundary**: what must be updated, and what is out of scope
+- **Evidence boundary**: which commands prove completion
+- **Retry policy**: what qualifies as recoverable vs hard blocker
+- **Exit contract**: exact conditions for `complete`, `failed`, `cancelled`
+
+Persistence is safer when your stop conditions are clearer than your "keep going" condition.
+
+## Required loop phases
+
+### 1) Context snapshot before execution
+
+Create a context snapshot in `.omx/context/` before implementation.
+Minimum fields:
+
+- task statement
+- desired outcome
+- known facts/evidence
+- constraints
+- unknowns
+- likely touchpoints
+
+This gives every lane the same ground truth.
+
+### 2) Execution phase with explicit ownership
+
+Use independent lanes in parallel when possible:
+
+- **Implementation lane**: content/code edits
+- **Evidence lane**: validation commands and output capture
+- **Sign-off lane**: architect-level review against acceptance criteria
+
+Parallelism is useful only when ownership is clear and non-overlapping.
+
+### 3) Verification phase with fresh proof
+
+Do not reuse old logs.
+After final meaningful edits, rerun proof commands (for example lint/test/build) and capture current output.
+
+### 4) Fix-or-complete gate
+
+- if reviewer rejects: return to fixing with explicit defect list
+- if reviewer approves and all checks pass: complete and clean state
+
+## Delegation pattern that scales
+
+For medium/high complexity tasks, route work with explicit lanes:
+
+- **Executor lane**: create/update target artifacts
+- **Verifier lane**: run and interpret checks
+- **Architect lane**: challenge assumptions and approve/reject
+
+This separates "made a change" from "proved the change."
+
+## Common failure patterns
+
+### Declaring done because progress "looks good"
+
+Confidence language is not evidence.
+Always bind claims to command output.
+
+### Running one giant lane for everything
+
+If the same lane writes code, judges quality, and approves merge,
+you have no independent validation.
+
+### Infinite looping without diagnosis
+
+If the same defect repeats 3+ times, stop and reframe root cause instead of continuing blind retries.
+
+## Operational checklist for Ralph runs
+
+Before starting:
+
+- context snapshot written
+- iteration cap and stop conditions defined
+- verification commands listed
+
+Before completion:
+
+- no pending TODOs
+- fresh verification output captured
+- architect review verdict recorded
+- mode state set to complete and cleanup executed
+
+Ralph is not about doing more turns.
+It is about making each turn accountable until the task is truly done.

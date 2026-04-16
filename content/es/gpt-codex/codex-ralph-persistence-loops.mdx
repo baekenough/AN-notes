@@ -1,0 +1,136 @@
+---
+title: Loops de Persistencia Ralph en Codex — Llevar Tareas Largas a Cierre Verificado
+description: Diseña un loop Ralph acotado que persista estado, fuerce verificación con evidencia fresca y evite cierres prematuros en tareas de múltiples pasos.
+difficulty: advanced
+tags:
+- ralph
+- persistencia
+- orquestación
+- verificación
+connections:
+- slug: codex-verification-loops
+  tool: gpt-codex
+  type: prerequisite
+- slug: codex-team-delivery-playbook
+  tool: gpt-codex
+  type: combines
+- slug: codex-operating-manual
+  tool: gpt-codex
+  type: enhances
+- slug: codex-resilience-metrics-slos
+  tool: gpt-codex
+  type: enhances
+- slug: multi-agent-workflow
+  tool: claude-code
+  type: compare
+featured: false
+order: 21
+date: '2026-04-16'
+---
+
+> **Referencias Oficiales**: [Best Practices](https://developers.openai.com/codex/learn/best-practices) · [Subagents](https://developers.openai.com/codex/subagents) · [Review](https://developers.openai.com/codex/app/review)
+
+## Por qué existen los loops Ralph
+
+Generar output rápido no equivale a terminar bien.
+Los loops de persistencia tipo Ralph evitan dos fallas frecuentes:
+
+1. reportar implementación parcial como completa
+2. reutilizar evidencia vieja después de nuevos cambios
+
+Ralph impone un contrato: seguir iterando hasta cumplir requisitos,
+tener evidencia fresca y obtener aprobación del carril de revisión.
+
+## Diseño de 50 turnos (acotado, no infinito)
+
+Un loop largo necesita límites explícitos.
+Antes del turno 1 en una ejecución de `50 turnos`, define:
+
+- **Límite de tarea**: qué se actualiza y qué queda fuera
+- **Límite de evidencia**: qué comandos prueban completitud
+- **Política de reintento**: qué es recuperable vs bloqueador duro
+- **Contrato de salida**: condiciones exactas para `completado`, `fallido`, `cancelado`
+
+La persistencia es más segura cuando las condiciones de salida son más claras que el "seguir".
+
+## Fases obligatorias del loop
+
+### 1) Contexto inicial antes de ejecutar
+
+Crea un contexto inicial en `.omx/context/` antes de implementar.
+Campos mínimos:
+
+- enunciado de la tarea
+- resultado esperado
+- hechos/evidencia conocidos
+- restricciones
+- incógnitas
+- puntos de contacto probables
+
+Así todos los carriles parten de la misma realidad.
+
+### 2) Ejecución con responsabilidad explícita
+
+Paraleliza trabajo independiente con responsabilidad separada:
+
+- **Lane de implementación**: edita contenido/código
+- **Lane de evidencia**: ejecuta validaciones y captura salidas
+- **Carril de aprobación**: revisión tipo arquitecto contra criterios de aceptación
+
+El paralelismo ayuda solo cuando la responsabilidad no se superpone.
+
+### 3) Verificación con evidencia fresca
+
+No reutilices logs antiguos.
+Tras los últimos cambios relevantes, re-ejecuta comandos de prueba (por ejemplo lint/test/build)
+y usa solo la salida actual.
+
+### 4) Gate de reparar o completar
+
+- si el revisor rechaza: volver a corrección con lista explícita de defectos
+- si aprueba y todos los checks pasan: completar y limpiar estado
+
+## Patrón de delegación escalable
+
+Para tareas de complejidad media/alta, separa carriles:
+
+- **Lane Executor**: crea/actualiza artefactos objetivo
+- **Lane Verifier**: corre e interpreta checks
+- **Lane Architect**: cuestiona supuestos y aprueba/rechaza
+
+Esto separa "hice cambios" de "demostré los cambios".
+
+## Patrones de fallo comunes
+
+### Declarar done porque "se ve bien"
+
+El lenguaje de confianza no es evidencia.
+Toda afirmación debe atarse a salida de comandos.
+
+### Usar un solo carril para todo
+
+Si el mismo carril edita, valida y aprueba,
+no existe verificación independiente.
+
+### Iterar sin diagnóstico
+
+Si el mismo defecto reaparece 3+ veces,
+detén los reintentos ciegos y replantea causa raíz.
+
+## Checklist operativo para Ralph
+
+Antes de empezar:
+
+- contexto inicial creado
+- límite de iteraciones y condiciones de salida definidos
+- comandos de verificación listados
+
+Antes de completar:
+
+- cero tareas pendientes
+- evidencia fresca capturada
+- veredicto del arquitecto registrado
+- estado del modo marcado como completado y limpieza ejecutada
+
+Ralph no se trata de hacer más turnos.
+Se trata de que cada turno sea una unidad de responsabilidad verificable hasta cerrar de verdad.

@@ -26,15 +26,15 @@ Claude Code, GPT Codex, Gemini CLI — encuentra consejos del mundo real para ca
 
 | Herramienta | Consejos | Estado |
 |-------------|----------|--------|
-| Claude Code (Anthropic) | 10 | Activo |
-| GPT Codex (OpenAI) | 16 | Activo |
-| Gemini CLI (Google) | 10 | Activo |
+| Claude Code (Anthropic) | 14 | Activo |
+| GPT Codex (OpenAI) | 21 | Activo |
+| Gemini CLI (Google) | 14 | Activo |
 
 ---
 
 ## Características Principales
 
-- **36 consejos prácticos** — cada uno con nivel de dificultad, tiempo de lectura y conexiones entre herramientas
+- **49 consejos prácticos** — cada uno con nivel de dificultad, tiempo de lectura y conexiones entre herramientas
 - **3 idiomas** — coreano, inglés, español (chino y japonés planificados)
 - **Conexiones entre herramientas** — los consejos enlazan a guías relacionadas en otras herramientas
 - **What's New** — destacados de las funciones más importantes por herramienta
@@ -66,11 +66,9 @@ Abre http://localhost:3000 en tu navegador.
 
 ```
 content/
-  {tool}/           # claude-code | gpt-codex | gemini-cli
-    {slug}/
-      ko.mdx        # Coreano
-      en.mdx        # Inglés
-      es.mdx        # Español
+  {locale}/         # ko | en | es
+    {tool}/         # claude-code | gpt-codex | gemini-cli
+      {slug}.mdx
 ```
 
 ---
