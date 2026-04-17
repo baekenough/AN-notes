@@ -1,9 +1,0 @@
-node_modules
-.next
-.git
-.claude
-.venv
-guides
-*.md
-!README.md
-.env*
