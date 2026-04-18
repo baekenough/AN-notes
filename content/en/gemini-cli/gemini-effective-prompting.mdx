@@ -1,0 +1,81 @@
+---
+title: "Gemini Effective Prompting — Mastering the 1M Token Context"
+description: "Move beyond short chat prompts to specialized prompt engineering for the Gemini CLI and its massive 1M token context window."
+difficulty: advanced
+tags: ["prompting", "engineering", "context-management", "xml-tags", "efficiency"]
+connections:
+  - slug: "million-token-context"
+    tool: "gemini-cli"
+    type: "prerequisite"
+  - slug: "effective-prompting"
+    tool: "claude-code"
+    type: "compare"
+  - slug: "gemini-task-decomposition"
+    tool: "gemini-cli"
+    type: "enhances"
+featured: true
+order: 10
+date: "2026-04-18"
+---
+
+> **Core Principle**: Having a 1-million-token context window does not mean the model's attention is infinite. The density and structure of your prompt determine the quality of the result.
+
+## Chat Prompts vs. Agent Prompts
+
+When talking to ChatGPT or Claude in a browser, a short, abstract prompt like "Make me this" might work. But for an **agent** modifying your file system directly from the terminal, a completely different approach is needed.
+
+- **Bad Example**: "Add a Google login button to the login page."
+- **Good Example**: "Analyze the structure of `/src/components/auth`, then add a Google login button applying the same Tailwind style guide as existing buttons. Follow the existing `api/auth/` pattern for the API endpoint."
+
+## 1. Structured Instructions with XML Tags
+
+The Gemini CLI model parses chunks of information much better when they are wrapped in XML tags. Actively use tags when giving long instructions.
+
+```xml
+<context>
+We are currently migrating from the Pages Router to the App Router.
+</context>
+
+<goal>
+Convert `/pages/dashboard.tsx` to `/app/dashboard/page.tsx`.
+</goal>
+
+<constraints>
+- Minimize the use of client components (`"use client"`).
+- Perform data fetching in server components.
+- Delete the existing `getServerSideProps`.
+</constraints>
+
+Based on these guidelines, please set up a migration plan in `/plan` mode first.
+```
+
+## 2. Enforcing Chain of Thought
+
+Directing the agent to go through an analysis and planning phase before modifying code drastically reduces hallucinations.
+
+**Prompt Example:**
+> "Before performing the next task, you must: 1) Read 3 related existing files first, 2) Present a list of parts to be modified to me, and 3) Get my approval before executing."
+
+## 3. Negative Prompting
+
+Clarifying what **NOT to do** is just as important as what to do. Especially in large refactors, AI often deviates from the original goal to do unnecessary "cleanup."
+
+> "Focus solely on the requested bug fix. If you find lint errors or outdated comments in related files, **do NOT modify them** unless they are within the scope of this specific task."
+
+## 4. Preventing Context Dilution
+
+Just because you can fill 1 million tokens doesn't mean you should. Mixing irrelevant files can cause the model to borrow wrong variable names or patterns.
+
+- **Explicit Inclusion**: `gemini "@src/components/button.tsx @src/styles/colors.css Apply color variables"`
+- **Use Exclusion Patterns**: When having it use the `grep_search` tool, specify: "Always exclude `node_modules` or `dist` folders when searching." (It's best to put this as a global rule in `GEMINI.md`.)
+
+## 5. Persona Adoption
+
+Assigning a role sharpens the model's response tone and the nature of the code it generates.
+
+> "You are a senior security engineer with 10 years of experience. From now on, relentlessly find potential SQL Injection, XSS, and SSRF vulnerabilities in the code I present and write defensive code."
+
+## Next to Read
+
+- How to enforce these prompts across the team: [GEMINI.md Mastery](/gemini-cli/gemini-md-mastery)
+- How to apply short prompts to local hooks: [Gemini Hooks Automation](/gemini-cli/gemini-hooks-automation)

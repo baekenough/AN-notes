@@ -1,0 +1,77 @@
+---
+title: "Ralph Persistence Loops — 끝까지 물고 늘어지는 자가 치유"
+description: "테스트가 통과할 때까지 에이전트 스스로 에러를 분석하고 코드를 수정하는 무한 검증 루프(Ralph Loop) 구축 가이드"
+difficulty: advanced
+tags: ["ralph", "persistence", "자가-치유", "tdd", "무한-루프"]
+connections:
+  - slug: "gemini-task-decomposition"
+    tool: "gemini-cli"
+    type: "prerequisite"
+  - slug: "codex-ralph-persistence-loops"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 14
+date: "2026-04-18"
+---
+
+> AI가 코드를 짜고 한 번에 성공할 확률은 낮습니다. 진정한 자동화는 "틀렸을 때 스스로 다시 고치는 루프"를 만드는 데 있습니다.
+
+## 1. Ralph Loop란 무엇인가?
+
+Ralph Loop(또는 자가 치유 루프)는 에이전트가 단발성 지시에 그치지 않고, **목표 조건(예: 모든 테스트 통과)을 달성할 때까지 스스로 코드를 수정하고 검증을 반복하는 패턴**을 말합니다.
+에이전트에게 "수정해"라고 말하는 대신, "이 테스트 스크립트를 실행하고, 에러가 나면 원인을 파악해서 고친 뒤 다시 실행해. 통과할 때까지 멈추지 마"라고 지시하는 것입니다.
+
+## 2. 완벽한 Ralph 프롬프트 작성법
+
+무한 루프에 빠지거나 엉뚱한 코드를 지우지 않도록 제약을 명확히 해야 합니다.
+
+```xml
+<objective>
+`src/utils/date-parser.ts`의 모든 유닛 테스트가 통과하도록 코드를 수정하세요.
+</objective>
+
+<execution_loop>
+1. `npm run test:date-parser` 명령을 실행합니다.
+2. 테스트가 통과(Exit Code 0)하면 작업을 종료합니다.
+3. 테스트가 실패하면 에러 로그를 분석하여 원인을 파악합니다.
+4. 소스 코드를 수정한 뒤 다시 1번으로 돌아갑니다.
+</execution_loop>
+
+<constraints>
+- 최대 5번까지만 루프를 반복하세요. 5번을 넘기면 작업을 중단하고 나에게 보고하세요.
+- 테스트 파일(`*.test.ts`) 자체는 절대 수정하지 마세요. 오직 구현 파일만 수정해야 합니다.
+- 새로운 외부 라이브러리(moment, date-fns 등)를 설치하지 말고 네이티브 Date API만 사용하세요.
+</constraints>
+
+위 지침을 숙지했다면 루프를 시작하세요.
+```
+
+## 3. TDD(Test-Driven Development)와의 시너지
+
+Ralph Loop는 TDD 환경에서 가장 강력합니다. 인간 개발자가 "실패하는 테스트(Red)"를 먼저 작성해 두면, 에이전트가 루프를 돌며 이를 "성공(Green)"으로 만들고, 최종적으로 코드를 다듬습니다(Refactor).
+
+- **인간**: 엣지 케이스를 포함한 깐깐한 테스트 코드를 작성합니다.
+- **에이전트**: 코드를 구현하고, 테스트를 실행하고, 실패하면 고치는 과정을 초고속으로 반복합니다.
+
+이 방식은 에이전트가 "기능이 잘 작동하는지" 인간에게 묻지 않고, **명확한 판사(Test Runner)**에게 판결을 받도록 위임하는 것입니다.
+
+## 4. Headless 모드를 활용한 백그라운드 봇
+
+로컬 터미널을 점유하지 않고, 다른 탭에서 Headless 모드로 Ralph 봇을 띄워두세요. 인간은 뼈대를 잡고, 봇은 뼈대에 살을 붙이는 완벽한 비동기 협업이 가능해집니다.
+
+```bash
+gemini --headless "@tests/auth.test.ts 이 테스트 파일이 통과할 때까지 src/auth/ 내의 로직을 수정해. 최대 5회 반복해."
+```
+
+## 5. 루프 실패(Loop Break)를 다루는 법
+
+에이전트가 5번의 시도 후에도 실패한다면, 그것은 에이전트의 지능 문제가 아니라 **컨텍스트 부족**일 확률이 높습니다.
+
+1. **테스트 자체가 잘못되었을 때**: 의존성 모킹(Mocking)이 누락되었을 수 있습니다.
+2. **필수 지식이 없을 때**: 특정 외부 API의 최신 명세가 필요한 경우입니다. [MCP](/gemini-cli/gemini-mcp)를 통해 문서를 제공하거나 `/memory add`로 힌트를 주세요.
+
+## 다음에 읽으면 좋은 글
+
+- 이 루프를 CI 환경에 올리는 법: [Gemini GitHub Actions](/gemini-cli/gemini-github-actions)
+- TDD 기반의 작업 분해 전략: [Gemini Task Decomposition](/gemini-cli/gemini-task-decomposition)

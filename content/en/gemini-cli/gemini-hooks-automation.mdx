@@ -1,0 +1,95 @@
+---
+title: "Gemini Hooks Automation — The Shield of Local Automation"
+description: "Combine Gemini CLI with Git pre-commit hooks to automatically inspect and fix code before every commit."
+difficulty: advanced
+tags: ["git-hooks", "pre-commit", "automation", "headless", "guardrails"]
+connections:
+  - slug: "headless-automation"
+    tool: "gemini-cli"
+    type: "prerequisite"
+  - slug: "hooks-automation"
+    tool: "claude-code"
+    type: "compare"
+  - slug: "gemini-github-actions"
+    tool: "gemini-cli"
+    type: "enhances"
+featured: true
+order: 11
+date: "2026-04-18"
+---
+
+> **If you don't block it locally, you can't block it in CI.** Connect Gemini CLI to your local Git hooks to prevent bad code from ever reaching the server.
+
+## 1. What is a Hook?
+
+Git hooks are scripts that automatically execute when specific Git events occur, such as a commit or push. By connecting Gemini CLI's **Headless mode** here, the AI acts as your "pair programmer," reviewing code right before a commit.
+
+## 2. Setting Up a Pre-commit Hook
+
+The most useful is the `pre-commit` hook, which runs the moment a user types `git commit`.
+
+Create a `.git/hooks/pre-commit` file in your project (ensure it's executable: `chmod +x`), and write the following script:
+
+```bash
+#!/bin/bash
+
+# Get the list of staged files
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM)
+
+if [ -z "$STAGED_FILES" ]; then
+  exit 0
+fi
+
+echo "🤖 Gemini CLI is inspecting staged files..."
+
+# Request inspection from Gemini (Headless mode)
+# GEMINI_API_KEY must be set in the environment
+REVIEW_OUTPUT=$(gemini --headless "@$STAGED_FILES Check this code for security vulnerabilities, exposed API keys, or debugging code like console.log. If there is a problem, answer only 'FAIL', otherwise answer 'PASS'.")
+
+if [[ "$REVIEW_OUTPUT" == *"FAIL"* ]]; then
+  echo "❌ Gemini found an issue in the code. Commit aborted."
+  echo "Detailed review:"
+  
+  # You can ask for details again, or prompt the user to enter interactive mode.
+  gemini --headless "@$STAGED_FILES Point out exactly the security vulnerabilities or debugging code you found earlier."
+  exit 1
+else
+  echo "✅ Gemini inspection passed. Proceeding with commit."
+  exit 0
+fi
+```
+
+## 3. Practical Hook Pattern: Auto-generating Commit Messages
+
+Hooks can also be used to reduce busywork. Use the `prepare-commit-msg` hook to auto-generate a commit message summarizing the staged changes.
+
+```bash
+#!/bin/bash
+# .git/hooks/prepare-commit-msg
+
+COMMIT_MSG_FILE=$1
+
+# Summarize changes
+DIFF=$(git diff --cached)
+
+echo "🤖 Gemini CLI is proposing a commit message..."
+
+# Enforce Conventional Commits format
+SUGGESTED_MSG=$(gemini --headless "Read the following changes and write a 1-line commit message in Conventional Commits format (feat/fix/docs/refactor, etc). Changes: $DIFF")
+
+# Insert the suggested message at the top of the existing file
+echo "$SUGGESTED_MSG" > tmp_msg
+cat $COMMIT_MSG_FILE >> tmp_msg
+mv tmp_msg $COMMIT_MSG_FILE
+```
+
+## 4. Cautions When Applying Hooks
+
+1. **Ensure Execution Speed**: If local hooks take too long (e.g., over 30 seconds), developers will experience fatigue. Keep prompts in hooks as narrow and specific as possible (e.g., "Only find console logs").
+2. **Token Costs**: API calls happen on every commit. Consider your team's token usage policy. It's even better if you can heavily utilize token caching.
+3. **Share the Bypass Method**: Sometimes you need to ignore the AI's misjudgment and force a commit. Let your teammates know about the `--no-verify` flag (`git commit --no-verify`).
+
+## Next to Read
+
+- Extending to the CI/CD environment: [Gemini GitHub Actions](/gemini-cli/gemini-github-actions)
+- Distributing this hook across the organization: [Gemini Extensions & MCP](/gemini-cli/gemini-extensions)

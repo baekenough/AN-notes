@@ -1,0 +1,75 @@
+---
+title: "Release Readiness Automation"
+description: "A playbook leveraging Gemini CLI's massive context to automate tedious release prep: version bumps, changelog generation, and security audits."
+difficulty: intermediate
+tags: ["release", "deployment", "changelog", "automation", "security-audit"]
+connections:
+  - slug: "headless-automation"
+    tool: "gemini-cli"
+    type: "prerequisite"
+  - slug: "codex-release-readiness"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 15
+date: "2026-04-18"
+---
+
+> Development doesn't end with coding; it ends with release preparation. Delegate the most tedious, yet critical, Release Checklist to Gemini CLI to prevent massive accidents.
+
+## 1. The Pain of Release Eve
+
+When all PRs are merged and the release branch (`main`) is ready, human developers still face a mountain of tasks:
+- Bumping versions in `package.json`.
+- Gathering Git Commit logs since the last release to write `CHANGELOG.md`.
+- Checking for missing environment variables or locale keys.
+- Scanning for final security and dependency vulnerabilities.
+
+Gemini CLI's 1-million-token context compresses this entire process into a single prompt.
+
+## 2. The Release Manager Prompt
+
+When preparing for a release, use the following XML-structured prompt to delegate full authority to the agent.
+
+```xml
+<role>
+You are our team's strict Release Manager. 
+Execute the following checklist in order to bring the project to a Release Ready state.
+</role>
+
+<tasks>
+1. Version Bump: Read `package.json` and increment the Minor version according to SemVer rules.
+2. Write Changelog: Execute `git log $(git describe --tags --abbrev=0)..HEAD` to read commits since the last release. Based on this, write a release note for the new version at the very top of `CHANGELOG.md` (categorize into Bug Fixes and New Features).
+3. Parity Check: Verify that the keys in all language files (ko, en, es) within the `messages/` folder match 100%.
+4. Security Audit: Run `npm audit` and report if there are any High or Critical vulnerabilities.
+</tasks>
+
+<rules>
+- When modifying files, you must use the `replace` tool for precise targeting instead of overwriting the whole file.
+- When all tasks are complete, print a final summary report to the terminal.
+</rules>
+```
+
+## 3. Auto-Generating PR Descriptions
+
+When opening a release PR containing multiple commits, you can write a hook that reads the commit logs and generates a friendly summary for reviewers.
+
+```bash
+gemini "Read the differences between the current branch and the main branch (git diff main). Write a PR summary explanation in simple language that non-developers (PMs, Designers) can understand."
+```
+
+## 4. Embedding Release Rules in GEMINI.md
+
+Every team has different changelog formats and versioning rules. By explicitly stating release rules in the project root's `GEMINI.md`, you ensure consistent results regardless of who executes the release.
+
+```markdown
+## Release Rules
+- The date format in `CHANGELOG.md` must always follow `YYYY-MM-DD`.
+- If the build script (`npm run build`) fails, do not commit any files.
+- After a version bump, you must create a tag using the command `git tag -a v[VERSION] -m "Release v[VERSION]"`.
+```
+
+## Next to Read
+
+- Fully automating this release process in CI: [Gemini GitHub Actions](/gemini-cli/gemini-github-actions)
+- Having multiple agents divide and conquer the inspection: [Multi-Agent Orchestration](/gemini-cli/gemini-multi-agent-orchestration)

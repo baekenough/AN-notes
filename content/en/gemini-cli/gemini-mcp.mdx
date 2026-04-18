@@ -1,0 +1,123 @@
+---
+title: "Gemini CLI MCP Integration — Connecting External Tools and Data"
+description: "Empower Gemini CLI with external capabilities like databases, GitHub API, and real-time web search through Model Context Protocol (MCP)."
+difficulty: intermediate
+tags: ["mcp", "tools", "integration", "database", "real-time-info"]
+connections:
+  - slug: "gemini-extensions"
+    tool: "gemini-cli"
+    type: "prerequisite"
+  - slug: "mcp-power-tools"
+    tool: "claude-code"
+    type: "compare"
+  - slug: "codex-mcp"
+    tool: "gpt-codex"
+    type: "compare"
+featured: true
+order: 4
+date: "2026-04-18"
+---
+
+> **Official References**: [MCP Overview](https://modelcontextprotocol.io/) · [Gemini CLI Tools](https://geminicli.com/docs/tools/) · [MCP Servers Directory](https://github.com/modelcontextprotocol/servers)
+
+## What is MCP?
+
+**Model Context Protocol (MCP)** is an open standard that gives AI agents access to external data and tools. While Gemini CLI can natively read files and execute shell commands, connecting MCP exponentially expands its capabilities.
+
+- **Direct Database Queries**: Execute SQL to understand schemas and data.
+- **Enterprise API Connections**: Integrate with GitHub, Jira, Slack for ticket management and messaging.
+- **Real-time Information**: Search for latest security patches or library docs via Brave Search.
+- **Specialized Tooling**: Browser automation and screenshots through Puppeteer.
+
+## Configuring MCP in Gemini CLI
+
+Gemini CLI manages MCP configurations at two levels.
+
+### 1) Project-level Configuration (`.mcp.json`)
+
+Tools that should be shared by the entire team (e.g., project DB, custom API servers) are defined in `.mcp.json` at the project root.
+
+```json
+{
+  "mcpServers": {
+    "postgres": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres"],
+      "env": {
+        "DATABASE_URL": "postgresql://user:pass@localhost:5432/mydb"
+      }
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_TOKEN": "YOUR_TOKEN"
+      }
+    }
+  }
+}
+```
+
+### 2) User-level Configuration (`~/.gemini/settings.json`)
+
+General-purpose tools used across all projects (e.g., personal memory, web search) are configured in your user home directory.
+
+```json
+{
+  "mcpServers": {
+    "brave-search": {
+      "command": "npx",
+      "args": ["-y", "@anthropic/server-brave-search"],
+      "env": {
+        "BRAVE_API_KEY": "YOUR_API_KEY"
+      }
+    }
+  }
+}
+```
+
+## Common MCP Server Combinations
+
+| Server | Purpose | Installation/Execution Example |
+|--------|---------|-------------------------------|
+| `server-postgres` | DB schema discovery & data retrieval | `@modelcontextprotocol/server-postgres` |
+| `server-github` | PR review, issue management, repo navigation | `@modelcontextprotocol/server-github` |
+| `server-brave-search` | Latest docs & issue search | `@anthropic/server-brave-search` |
+| `server-puppeteer` | Web UI testing & browsing | `@anthropic/server-puppeteer` |
+| `server-memory` | Persistent knowledge across sessions | `@modelcontextprotocol/server-memory` |
+
+## Specialized Pattern: MCP + Sub-agents
+
+The true power of Gemini CLI emerges when delegating MCP tools to **Sub-agents**.
+
+```text
+User: "Check the DB schema and verify if the content table structure matches the keys in messages/en.json using codebase_investigator."
+Gemini: (Wakes up codebase_investigator, which uses Postgres MCP to query the DB and compares it with files)
+```
+
+By having sub-agents operate specialized tools (MCP), you can achieve high precision while saving the main session's context.
+
+## Debugging and Management
+
+### Verify Active Tools
+Check available tools within a Gemini CLI session.
+```bash
+/tools
+```
+
+### Check Debug Logs
+Use the debug flag to see errors in MCP communication.
+```bash
+gemini --debug
+```
+
+## Implementation Best Practices
+
+1. **Context Overhead**: Connecting too many MCP servers can slow down session startup and distract the model. Aim for 2-3 core servers per project.
+2. **Security Guidelines**: Since `.mcp.json` can be committed to git, use environment variable references instead of hardcoding API keys or passwords.
+3. **Combine with GEMINI.md**: Add instructions like "Always use postgres MCP for DB-related questions" to `GEMINI.md` to ensure the model uses tools instead of guessing.
+
+## Next to Read
+
+- Full structure of extension packaging: [Gemini Extensions & MCP](/gemini-cli/gemini-extensions)
+- Strategies for complex implementations: [Gemini Task Decomposition](/gemini-cli/gemini-task-decomposition)

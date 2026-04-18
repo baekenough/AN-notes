@@ -1,0 +1,88 @@
+---
+title: "Gemini Git Worktrees — Optimizing Parallel Tasks"
+description: "How to leverage Git Worktrees for safe and independent development environments when working with Gemini CLI across multiple branches."
+difficulty: advanced
+tags: ["git", "worktrees", "parallel-development", "workflow", "branch-management"]
+connections:
+  - slug: "gemini-task-decomposition"
+    tool: "gemini-cli"
+    type: "prerequisite"
+  - slug: "codex-worktrees"
+    tool: "gpt-codex"
+    type: "compare"
+  - slug: "headless-automation"
+    tool: "gemini-cli"
+    type: "enhances"
+featured: false
+order: 6
+date: "2026-04-18"
+---
+
+> **Official References**: [Git Worktree Documentation](https://git-scm.com/docs/git-worktree) · [Gemini CLI Trusted Folders](https://geminicli.com/docs/cli/trusted-folders/)
+
+## Why Use Git Worktrees with Gemini?
+
+Gemini CLI modifies local files and executes commands directly. If you switch branches via `git checkout` or `git stash` while the AI is performing a long-running task, the context can break or work-in-progress modifications might collide.
+
+By using **Git Worktrees**, you create independent directories for each task, gaining:
+
+- **Safe Independence**: Work in your own directory while the AI modifies code in another.
+- **Context Isolation**: Maintain separate `GEMINI.md` or local memories for each worktree.
+- **Immediate Parallel Testing**: Run tests for different branch versions simultaneously in different terminals.
+
+## Practical Worktree Workflow
+
+### 1. Create a New Worktree
+
+Leave your current `main` branch as is and create an independent folder for a new feature.
+
+```bash
+# Run from ~/workspace/project-main
+git worktree add ../project-feature-x feature-x-branch
+```
+
+Now `../project-feature-x` contains the source code and `node_modules` environment completely independent of `main`.
+
+### 2. Start Gemini CLI Session
+
+Start Gemini CLI in the worktree directory. Gemini is safe here as it only reads files within that folder.
+
+```bash
+cd ../project-feature-x
+gemini
+```
+
+### 3. Execute and Verify Tasks
+
+Have Gemini implement the feature. While it works, you can continue other tasks or code reviews in the original `main` directory.
+
+### 4. Complete and Clean Up
+
+Once finished, commit your changes and remove the worktree.
+
+```bash
+# After completing the task
+git add .
+git commit -m "feat: add feature X using Gemini CLI"
+git push origin feature-x-branch
+
+# Remove the worktree
+cd ../project-main
+git worktree remove ../project-feature-x
+```
+
+## Tips for Gemini + Worktree
+
+- **Leverage `GEMINI.md`**: Create a temporary `GEMINI.md` in the specific worktree directory to specify task-specific goals and constraints. This guides the AI without affecting the `main` branch.
+- **Trusted Folders**: Ensure the new worktree directory is registered as a trusted folder in Gemini CLI via the `/trust` command.
+- **Shared Module Management**: If `node_modules` is too large, use a package manager that shares packages across worktrees (like pnpm or yarn berry).
+
+## Cautions
+
+1. **DB and External State**: While source code is isolated, local databases or shared environment variables might not be. Be cautious when the AI modifies DB schemas.
+2. **Untracked Files**: Be careful not to lose uncommitted files when removing a worktree.
+
+## Next to Read
+
+- Safety mechanisms to prevent AI errors: [Trusted Folders, Sandboxing, and Restore](/gemini-cli/trusted-folders-sandboxing)
+- Automation in headless mode: [Headless Automation](/gemini-cli/headless-automation)

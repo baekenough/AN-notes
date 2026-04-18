@@ -1,0 +1,75 @@
+---
+title: "Release Readiness Automation — 배포 자동화"
+description: "Gemini CLI의 넓은 컨텍스트를 활용하여 버전 범프, 체인지로그 작성, 보안 감사 등 지루한 배포 준비 과정을 자동화하는 플레이북"
+difficulty: intermediate
+tags: ["배포", "release", "체인지로그", "자동화", "보안-감사"]
+connections:
+  - slug: "headless-automation"
+    tool: "gemini-cli"
+    type: "prerequisite"
+  - slug: "codex-release-readiness"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 15
+date: "2026-04-18"
+---
+
+> 개발의 끝은 코딩이 아니라 배포 준비입니다. 가장 귀찮지만 빼먹으면 대형 사고로 이어지는 Release Checklist를 Gemini CLI에게 위임하세요.
+
+## 1. 배포 전야의 고통
+
+PR(Pull Request)이 모두 머지되고 배포 브랜치(main)가 준비되었을 때, 인간 개발자가 해야 할 일은 산더미입니다.
+- `package.json` 버전 올리기
+- 지난 배포 이후의 Git Commit 로그를 모아 `CHANGELOG.md` 작성하기
+- 누락된 환경변수나 로케일 키가 없는지 확인하기
+- 최종 보안/의존성 취약점 스캔하기
+
+Gemini CLI의 100만 토큰 컨텍스트는 이 작업을 한 번의 프롬프트로 압축합니다.
+
+## 2. Release Manager 프롬프트
+
+배포를 준비할 때 아래의 XML 구조 프롬프트를 사용하여 에이전트에게 전권을 위임하세요.
+
+```xml
+<role>
+당신은 우리 팀의 깐깐한 Release Manager입니다. 
+다음 체크리스트를 순서대로 수행하여 프로젝트를 배포 가능한 상태(Release Readiness)로 만드세요.
+</role>
+
+<tasks>
+1. 버전 업데이트: `package.json`을 읽고 SemVer 규약에 따라 마이너(Minor) 버전을 1단계 올리세요.
+2. 체인지로그 작성: `git log $(git describe --tags --abbrev=0)..HEAD` 명령어를 실행하여 최근 배포 이후의 커밋들을 읽으세요. 이를 바탕으로 `CHANGELOG.md` 최상단에 새 버전의 릴리즈 노트를 작성하세요. (버그 픽스와 신규 기능으로 분류할 것)
+3. 정합성 검사: `messages/` 폴더 안의 모든 언어 파일(ko, en, es)의 키값이 100% 일치하는지 확인하세요.
+4. 보안 검사: `npm audit`을 실행하여 High 등급 이상의 취약점이 있는지 보고하세요.
+</tasks>
+
+<rules>
+- 파일을 수정할 때는 반드시 전체 파일 대신 `replace` 도구를 사용하여 정확히 타겟팅하세요.
+- 모든 태스크가 끝나면 최종 요약 보고서를 터미널에 출력하세요.
+</rules>
+```
+
+## 3. PR Description (배포 요약서) 자동 생성
+
+여러 커밋이 섞인 배포용 PR을 올릴 때, 리뷰어들을 위해 커밋 로그를 읽고 친절한 요약본을 만들어내는 훅을 작성할 수 있습니다.
+
+```bash
+gemini "현재 브랜치와 main 브랜치의 차이점(git diff main)을 읽고, 비개발자(PM, 디자이너)도 이해할 수 있는 쉬운 언어로 PR 요약 설명을 작성해줘."
+```
+
+## 4. `GEMINI.md`에 Release 규칙 박제하기
+
+팀마다 체인지로그 형식이나 버저닝 규칙이 다릅니다. 프로젝트 루트의 `GEMINI.md`에 배포 관련 규칙을 명시해두면, 누가 배포하든 일관된 결과물을 얻을 수 있습니다.
+
+```markdown
+## Release Rules
+- `CHANGELOG.md`의 날짜 형식은 항상 `YYYY-MM-DD`를 따른다.
+- 빌드 스크립트(`npm run build`)가 실패하면 어떠한 파일도 커밋해서는 안 된다.
+- 버전 범프 후에는 반드시 `git tag -a v[VERSION] -m "Release v[VERSION]"` 명령어로 태그를 생성한다.
+```
+
+## 다음에 읽으면 좋은 글
+
+- 이 배포 과정을 CI에서 완전 자동화하려면: [Gemini GitHub Actions](/gemini-cli/gemini-github-actions)
+- 여러 에이전트가 역할을 나누어 검수하게 하려면: [Multi-Agent Orchestration](/gemini-cli/gemini-multi-agent-orchestration)

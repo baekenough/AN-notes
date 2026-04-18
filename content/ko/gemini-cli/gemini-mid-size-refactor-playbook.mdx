@@ -1,0 +1,75 @@
+---
+title: "Mid-size Refactor Playbook — 중규모 리팩터링"
+description: "10개에서 50개 사이의 파일을 다루는, 가장 까다롭고 위험한 '중규모 리팩터링'을 Gemini CLI로 안전하게 수행하는 단계별 가이드"
+difficulty: advanced
+tags: ["리팩터링", "마이그레이션", "작업-분해", "안전성", "플랜-모드"]
+connections:
+  - slug: "gemini-task-decomposition"
+    tool: "gemini-cli"
+    type: "prerequisite"
+  - slug: "claude-mid-size-refactor-playbook"
+    tool: "claude-code"
+    type: "compare"
+featured: true
+order: 12
+date: "2026-04-18"
+---
+
+> 단일 파일 수정은 쉽고, 시스템 전체 재작성은 불가능에 가깝습니다. **현업에서 가장 많이 마주하는 것은 10~50개 파일 규모의 아키텍처 마이그레이션입니다.**
+
+## 1. 왜 중규모 리팩터링이 AI에게 위험한가?
+
+중규모 작업(예: Redux에서 Zustand로 전환, Tailwind에서 CSS-in-JS로 전환)은 단순히 폴더 내 모든 파일을 교체하는 것이 아닙니다. 파일 간의 **비밀스러운 의존성**이 존재하며, 한 번의 잘못된 수정(Replace)이 도미노처럼 수십 개의 에러를 발생시킵니다. 100만 토큰이 있다고 해서 `replace`를 수십 곳에 동시에 때려 부으면 100% 실패합니다.
+
+## Phase 1: 조사와 경계선 긋기 (Boundary Definition)
+
+절대 코드를 바로 수정하게 두지 마세요. `/plan` 모드로 진입하거나 **`codebase_investigator`** 서브 에이전트를 깨웁니다.
+
+```bash
+gemini "@src/store @src/components Redux 액션을 호출하는 컴포넌트들을 모두 찾아. 수정할 파일의 전체 목록을 트리 구조로 만들어줘."
+```
+
+**결과물 확인**: 모델이 제시한 파일 목록이 정말 수정 범위에 해당하는지, 혹시 건드리면 안 되는 공통 라이브러리가 포함되어 있는지 인간(당신)이 확인하고 경계선을 긋습니다.
+
+## Phase 2: 시드 파일 변환 (The Seed Migration)
+
+가장 구조가 단순한 "시드(Seed)" 파일 1~2개를 먼저 변환하도록 지시합니다. 이 단계는 **새로운 패턴의 표준(Standard)**을 확립하는 과정입니다.
+
+> "목록 중 가장 단순한 `src/components/Counter.tsx`부터 Zustand로 변환해봐. 변환 후 `npm run test`를 실행해서 통과하는지 확인해."
+
+시드 파일이 성공적으로 변환되었다면, 그 결과를 `/memory add`로 저장합니다.
+
+> `/memory add "Redux를 Zustand로 바꿀 때 스토어 호출 패턴은 항상 const state = useStore(state => state.value) 형태를 따른다."`
+
+## Phase 3: 배치 처리와 격리 (Batching in Worktrees)
+
+표준 패턴이 확립되었다면, 이제 나머지 40개 파일을 그룹(도메인)별로 쪼개어 작업합니다. 여기서 [Git Worktrees](/gemini-cli/gemini-worktrees)를 활용하면 안전합니다.
+
+- **Batch A**: `src/components/user/` 하위 파일 변환
+- **Batch B**: `src/components/dashboard/` 하위 파일 변환
+
+각 배치 작업이 끝날 때마다 인간이 커밋을 남깁니다(`git commit -m "refactor: migrate user components"`). 만약 Batch B에서 AI가 환각을 일으켜 파일을 엉망으로 만들었다면, `git restore .`를 통해 이전 배치(Batch A)까지만 안전하게 복구할 수 있습니다.
+
+## Phase 4: 컴파일러 주도 개발 (Compiler-Driven Fixes)
+
+배치 작업이 끝나면, 프롬프팅으로 숨은 에러를 찾으려 하지 말고 **린터(Linter)와 타입 체커(TypeScript)**에게 맡기세요.
+
+```bash
+# 린트 에러를 파일로 출력
+npm run type-check > tsc_errors.log
+
+# 에러 파일을 읽혀서 스스로 고치게 함
+gemini --headless "@tsc_errors.log 여기에 나온 타입 에러들을 순차적으로 고쳐줘. 추측하지 말고 에러 메시지에 적힌 대로만 수정해."
+```
+
+## Phase 5: 회고와 청소 (Cleanup)
+
+리팩터링의 마지막은 항상 '과거의 잔재'를 지우는 것입니다. 의존성이 제거된 이전 라이브러리, 사용하지 않는 변수들을 청소합니다.
+
+> "`package.json`에서 더 이상 사용하지 않는 redux 관련 패키지를 찾아 삭제하고, `npm install`을 다시 실행해줘."
+
+## 핵심 요약 (TL;DR)
+
+1. 절대 한 번에 10개 이상 파일을 수정하게 놔두지 마세요.
+2. 1개의 성공적인 "시드 패턴"을 먼저 만들고, 이를 `memory`나 `GEMINI.md`에 고정하세요.
+3. 컴파일러/타입 체커가 쏟아내는 에러 로그를 AI의 다음 먹이(Context)로 던져주세요.

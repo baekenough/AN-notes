@@ -1,0 +1,85 @@
+---
+title: "Multi-Agent Orchestration — Combining Sub-agents and Skills"
+description: "How to combine Gemini CLI's sub-agent system with custom skills to automate complex research-implementation-review pipelines."
+difficulty: advanced
+tags: ["sub-agents", "skills", "orchestration", "automation", "team-workflow"]
+connections:
+  - slug: "sub-agents-and-skills"
+    tool: "gemini-cli"
+    type: "prerequisite"
+  - slug: "multi-agent-workflow"
+    tool: "claude-code"
+    type: "compare"
+  - slug: "gemini-task-decomposition"
+    tool: "gemini-cli"
+    type: "enhances"
+featured: true
+order: 8
+date: "2026-04-18"
+---
+
+> **Official References**: [Sub-agents](https://geminicli.com/docs/core/subagents/) · [Skills](https://geminicli.com/docs/core/skills/) · [Orchestration Patterns](https://geminicli.com/docs/cli/orchestration/)
+
+## Managing a Team, Not Just One AI
+
+One of the most powerful features of Gemini CLI is the ability to delegate complex tasks to specialist **Sub-agents** without cluttering the main session's context. When combined with **Custom Skills**, you can go beyond "fix these files" to "refactor this module according to our team's security standards."
+
+## 1. The Expert Team
+
+Utilize the specialists provided by Gemini CLI for their specific strengths:
+
+- **`codebase_investigator`**: The analyst who understands the entire repository's architecture and dependencies.
+- **`generalist`**: The worker who quickly performs repetitive, batch tasks.
+- **`code-review`**: The reviewer who critically examines code for security, performance, and readability.
+
+## 2. Strategic Skill Activation
+
+Directly calling an agent is good, but activating a specific **Skill** via `activate_skill` is much more precise.
+
+```text
+User: "Have the code-review agent examine my recent changes with the security-review skill activated."
+Gemini: (Summons code-review agent and injects a security audit checklist to guide its verification)
+```
+
+## 3. Practical Orchestration Pipelines
+
+The most recommended pipeline for real-world tasks is the **Research -> Act -> Review** structure.
+
+### Phase 1: Research (Investigator)
+"Have `codebase_investigator` research and report on how the current authentication logic is distributed."
+- **Outcome**: The main session remains clean, holding only the refined architectural map.
+
+### Phase 2: Act (Generalist or Main)
+"Based on that map, have `generalist` migrate the endpoints in these 10 files."
+- **Outcome**: Large-scale file modification logs are processed in the background without overwhelming your focus.
+
+### Phase 3: Review (Reviewer)
+"Have `code-review` verify that the modifications comply with our team's `lint-style` skill."
+- **Outcome**: Mistakes are prevented, and only high-quality work is reported back to the main session.
+
+## 4. Designing and Sharing Custom Skills
+
+Define common skills for your team and bundle them into `extensions` for distribution:
+
+- **`performance-guard`**: A skill that restricts certain library usage (e.g., lodash) and enforces native APIs.
+- **`api-contract-checker`**: A skill that cross-references backend API specs with frontend types.
+
+## 5. Token Economy and Context Efficiency
+
+Doing everything with the main agent quickly fills the context window (Token Overload). Using sub-agents:
+- Keeps independent contexts for each agent.
+- Passes only **summarized results** back to the main session.
+- Maintains session speed even in large repositories with thousands of files.
+
+## Pro Tip: Parallel Delegation
+
+For tasks with no mutual dependencies (e.g., updating locale files while writing unit tests), use two sub-agents simultaneously:
+
+```text
+"Have generalist-A match locale file parity while generalist-B writes tests for the newly added functions."
+```
+
+## Next to Read
+
+- Automation in CI environments: [Gemini GitHub Actions](/gemini-cli/gemini-github-actions)
+- Strategies for safe code modification: [Gemini Task Decomposition](/gemini-cli/gemini-task-decomposition)

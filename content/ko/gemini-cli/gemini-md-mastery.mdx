@@ -1,0 +1,88 @@
+---
+title: "GEMINI.md Mastery — 계층적 컨텍스트 설계"
+description: "Gemini CLI의 핵심 두뇌인 GEMINI.md 파일을 계층적으로 설계하여 프로젝트 전반의 일관성과 정확도를 극대화하는 방법"
+difficulty: intermediate
+tags: ["gemini-md", "컨텍스트", "계층 구조", "jit", "프로젝트-메모리"]
+connections:
+  - slug: "getting-started"
+    tool: "gemini-cli"
+    type: "prerequisite"
+  - slug: "claude-md-mastery"
+    tool: "claude-code"
+    type: "compare"
+  - slug: "gemini-task-decomposition"
+    tool: "gemini-cli"
+    type: "enhances"
+featured: true
+order: 7
+date: "2026-04-18"
+---
+
+> **공식 레퍼런스**: [GEMINI.md 개요](https://geminicli.com/docs/cli/gemini-md/) · [Project Settings](https://geminicli.com/docs/cli/settings/)
+
+## `GEMINI.md`는 단순한 지시문이 아니다
+
+많은 사용자가 `GEMINI.md`를 단순히 "AI에게 주는 프롬프트 파일"로만 생각합니다. 하지만 Gemini CLI에서 이 파일은 **계층적 메모리 시스템**의 핵심 노드입니다. Gemini는 실행 위치에서 상위 디렉토리로 올라가며 발견되는 모든 `GEMINI.md`를 조합하여 현재 작업의 "정체성"을 정의합니다.
+
+## 1. 계층적 설계 전략 (The Hierarchy)
+
+효율적인 프로젝트 관리를 위해 `GEMINI.md`를 세 가지 수준으로 분리하세요.
+
+### 수준 1: 글로벌 수준 (`~/.gemini/GEMINI.md`)
+모든 프로젝트에 공통으로 적용되는 본인의 코딩 스타일이나 보안 원칙을 정의합니다.
+- 예: "항상 한국어로 답변할 것", "API 키 노출 절대 금지", "테스트 없는 코드는 제안하지 말 것"
+
+### 수준 2: 프로젝트 수준 (`/your-project/GEMINI.md`)
+해당 프로젝트의 기술 스택, 아키텍처 패턴, 도구 사용 규칙을 정의합니다.
+- 예: "Next.js 16 App Router 사용", "에러 처리는 항상 `src/lib/errors.ts` 사용", "DB 접근은 Prisma MCP 활용"
+
+### 수준 3: 디렉토리/모듈 수준 (`/your-project/src/components/GEMINI.md`)
+특정 모듈이나 도메인에만 해당하는 미세 규칙(JIT 컨텍스트)을 정의합니다.
+- 예: "UI 컴포넌트는 항상 Tailwind v4 사용", "모든 컴포넌트는 `memo`로 감쌀 것"
+
+## 2. JIT (Just-In-Time) 컨텍스트 활용
+
+Gemini CLI의 강력함은 특정 폴더에 들어갔을 때 그 폴더의 `GEMINI.md`를 **즉시(JIT)** 읽어들인다는 점에 있습니다. 이를 활용해 모델의 주의력(Attention)을 분산시키지 않고 필요한 정보만 공급할 수 있습니다.
+
+**구조 예시:**
+```text
+project/
+├── GEMINI.md (전역 규칙: Next.js, TS)
+├── content/
+│   └── GEMINI.md (콘텐츠 규칙: MDX 구조, 로케일 패리티)
+└── src/
+    └── components/
+        └── GEMINI.md (UI 규칙: 아토믹 디자인, 스타일 가이드)
+```
+
+## 3. `GEMINI.md`에 포함해야 할 5가지 핵심 요소
+
+성공적인 자동화를 위해 파일 안에 다음 섹션을 반드시 포함하세요.
+
+1.  **Project Context**: 현재 프로젝트의 목적과 비즈니스 로직 요약.
+2.  **Tech Stack**: 프레임워크 버전, 핵심 라이브러리 목록.
+3.  **Coding Standards**: 명명 규칙, 파일 구조, 에러 처리 패턴.
+4.  **Tooling Rules**: 특정 상황에서 어떤 MCP나 Sub-agent를 써야 하는지 명시.
+5.  **Verification**: 작업 완료를 판단하는 기준 (빌드 성공, 테스트 통과 등).
+
+## 4. `GEMINI.md` vs `/memory`
+
+- **`GEMINI.md`**: 명시적이고 정적인 규칙. 팀 전체가 공유해야 하는 가이드라인. (Git에 커밋됨)
+- **`/memory`**: 동적이고 개인적인 지식. 세션 중에 배운 특정 파일의 위치나 개인적인 선호도. (로컬에 저장됨)
+
+**프로 팁**: 세션 중에 `/memory`로 배운 내용이 팀 전체에 유용하다고 판단되면, 이를 프로젝트 루트의 `GEMINI.md`로 옮겨 박제하세요.
+
+## 5. 안 좋은 예시 vs 좋은 예시
+
+### 안 좋은 예시 (모호함)
+> "코드를 깔끔하게 짜줘."
+> "테스트를 많이 만들어줘."
+
+### 좋은 예시 (구체적/구조적)
+> "모든 함수는 JSDoc을 포함해야 하며, 복잡도가 10을 넘으면 별도 함수로 분리하라."
+> "비즈니스 로직 수정 시 `tests/unit` 경로에 해당 로직의 엣지 케이스를 포함한 최소 3개의 테스트를 작성하라."
+
+## 다음에 읽으면 좋은 글
+
+- 복잡한 작업을 분해하는 기술은 [Gemini Task Decomposition](/gemini-cli/gemini-task-decomposition)
+- 여러 전문가를 조율하는 법은 [Multi-Agent Orchestration](/gemini-cli/gemini-multi-agent-orchestration)

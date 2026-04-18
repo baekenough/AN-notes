@@ -1,0 +1,77 @@
+---
+title: "Ralph Persistence Loops — Self-Healing Execution"
+description: "How to build infinite verification loops (Ralph Loops) where the agent analyzes errors and fixes code autonomously until tests pass."
+difficulty: advanced
+tags: ["ralph", "persistence", "self-healing", "tdd", "infinite-loop"]
+connections:
+  - slug: "gemini-task-decomposition"
+    tool: "gemini-cli"
+    type: "prerequisite"
+  - slug: "codex-ralph-persistence-loops"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 14
+date: "2026-04-18"
+---
+
+> The probability of an AI writing perfect code on the first try is low. True automation lies in creating a "loop that fixes itself when wrong."
+
+## 1. What is a Ralph Loop?
+
+A Ralph Loop (or self-healing loop) is a pattern where the agent does not just execute a one-off command, but **iteratively modifies code and verifies it until a target condition (e.g., all tests passing) is met.**
+Instead of saying "Fix this," you instruct the agent: "Run this test script. If it errors out, analyze the cause, fix it, and run it again. Do not stop until it passes."
+
+## 2. Writing the Perfect Ralph Prompt
+
+You must establish clear constraints so the agent doesn't fall into an infinite loop or delete unrelated code.
+
+```xml
+<objective>
+Modify the code so that all unit tests in `src/utils/date-parser.ts` pass.
+</objective>
+
+<execution_loop>
+1. Execute the command `npm run test:date-parser`.
+2. If the tests pass (Exit Code 0), terminate the task.
+3. If the tests fail, analyze the error log to determine the cause.
+4. Modify the source code and loop back to step 1.
+</execution_loop>
+
+<constraints>
+- Loop a maximum of 5 times. If you exceed 5 attempts, stop and report back to me.
+- NEVER modify the test file (`*.test.ts`) itself. Only modify the implementation file.
+- Do not install new external libraries (like moment or date-fns); use only native Date APIs.
+</constraints>
+
+If you understand these instructions, begin the loop.
+```
+
+## 3. Synergy with TDD (Test-Driven Development)
+
+The Ralph Loop is most powerful in a TDD environment. When a human developer writes a "failing test (Red)" first, the agent loops to make it "pass (Green)," and finally refines the code (Refactor).
+
+- **Human**: Writes rigorous test code including edge cases.
+- **Agent**: Implements the code, runs the tests, and iterates at high speed to fix failures.
+
+This delegates the judgment of "does this work?" from the human to a **clear, impartial judge (the Test Runner)**.
+
+## 4. Background Bots via Headless Mode
+
+Don't block your local terminal. Spin up a Ralph bot in Headless mode in another tab. The human can set up the skeleton, and the bot fleshes it out—perfect asynchronous collaboration.
+
+```bash
+gemini --headless "@tests/auth.test.ts Fix the logic in src/auth/ until this test file passes. Repeat up to 5 times."
+```
+
+## 5. Handling Loop Breaks
+
+If the agent fails after 5 attempts, it's rarely an intelligence issue; it's usually a **lack of context**.
+
+1. **The test itself is flawed**: Dependency mocking might be missing.
+2. **Missing required knowledge**: The agent might need the latest specs for an external API. Provide documentation via [MCP](/gemini-cli/gemini-mcp) or give a hint with `/memory add`.
+
+## Next to Read
+
+- Deploying this loop to a CI environment: [Gemini GitHub Actions](/gemini-cli/gemini-github-actions)
+- TDD-based task decomposition: [Gemini Task Decomposition](/gemini-cli/gemini-task-decomposition)

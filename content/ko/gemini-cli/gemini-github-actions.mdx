@@ -1,0 +1,93 @@
+---
+title: "Gemini GitHub Actions — CI 자동화와 리뷰"
+description: "Gemini CLI를 GitHub Actions에 통합하여 자동화된 코드 리뷰, 문서 패리티 검증, 그리고 AI 기반의 정적 분석 워크플로를 구축하는 방법"
+difficulty: advanced
+tags: ["github-actions", "ci-cd", "자동화", "코드-리뷰", "headless"]
+connections:
+  - slug: "headless-automation"
+    tool: "gemini-cli"
+    type: "prerequisite"
+  - slug: "github-actions-workflows"
+    tool: "claude-code"
+    type: "compare"
+  - slug: "gemini-multi-agent-orchestration"
+    tool: "gemini-cli"
+    type: "enhances"
+featured: true
+order: 9
+date: "2026-04-18"
+---
+
+> **공식 레퍼런스**: [Headless Mode](https://geminicli.com/docs/cli/headless/) · [Continuous Integration](https://geminicli.com/docs/cli/ci/)
+
+## 터미널을 넘어 CI/CD의 동료로
+
+Gemini CLI의 진가는 개인의 로컬 환경을 넘어 **팀의 워크플로**에 녹아들 때 발휘됩니다. GitHub Actions와 결합하면 모든 Pull Request(PR)에 대해 AI가 코드 리뷰를 남기거나, 복잡한 로케일 파일의 정합성을 자동으로 검사하는 시스템을 구축할 수 있습니다.
+
+## 1. 기본 설정과 인증
+
+CI 환경에서는 대화형 로그인이 불가능하므로 **API Key** 방식의 인증을 사용해야 합니다.
+
+```yaml
+# .github/workflows/gemini-review.yml
+jobs:
+  gemini-review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Gemini CLI
+        run: npm install -g @google/gemini-cli
+      - name: Run Review
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          # Headless 모드로 실행하여 자동 리뷰 수행
+          gemini --headless "변경된 파일들의 보안과 성능을 검토해줘. 결과는 PR 코멘트 형식으로 작성해."
+```
+
+## 2. 실무용 활용 사례 (Use Cases)
+
+### A. 다국어 파일 정합성 검사 (Locale Parity)
+번역 파일(`ko.json`, `en.json`) 사이의 키값이 일치하는지, 누락된 번역은 없는지 에이전트가 검사합니다.
+```bash
+gemini --headless "messages/ 폴더의 모든 JSON 파일을 비교해서 누락된 키를 찾아 보고해줘."
+```
+
+### B. AI 기반 시맨틱 코드 리뷰
+단순한 린터가 잡지 못하는 비즈니스 로직의 논리적 오류나 가독성 문제를 지적합니다.
+```bash
+gemini --headless "이 PR에서 수정된 파일들의 로직이 우리 팀의 GEMINI.md에 정의된 아키텍처 규칙을 따르는지 확인해줘."
+```
+
+### C. 자동 문서화 업데이트 제안
+코드 변경 사항을 읽고 README나 관련 API 문서를 업데이트하는 PR을 자동으로 생성하게 할 수 있습니다.
+
+## 3. `GEMINI.md`와 CI의 시너지
+
+CI 환경의 Gemini CLI도 로컬과 마찬가지로 프로젝트 루트의 `GEMINI.md`를 읽습니다. 이를 통해 로컬에서의 경험과 CI에서의 경험이 동일하게 유지됩니다.
+
+**CI 전용 지침 예시:**
+> "CI 환경에서 실행 중일 때는 답변을 최대한 간결하게 하고, 에러 발견 시에만 구체적인 수정 제안을 포함하라."
+
+## 4. 보안과 비용 최적화 (Caution)
+
+1.  **Secrets 보호**: `GEMINI_API_KEY`는 반드시 GitHub Secrets에 보관하고, 로그에 노출되지 않도록 주의하세요.
+2.  **Headless Mode**: 불필요한 대화형 인터페이스를 생략하여 CI 실행 시간을 단축하세요.
+3.  **Scoped Context**: CI 작업에 필요한 파일들만 읽도록 범위를 제한하여 토큰 사용량을 최적화하세요. (예: `gemini "@src @messages ..."`)
+
+## 5. 고급: 정적 분석과 AI의 결합
+
+전통적인 도구(ESLint, SonarQube)와 Gemini CLI를 함께 쓰면 더욱 강력합니다. 린터가 잡은 에러 메시지를 Gemini에게 넘겨 "어떻게 고칠지"까지 제안하게 하세요.
+
+```bash
+npm run lint > lint-error.txt
+gemini --headless "@lint-error.txt 이 에러들을 고치는 가장 안전한 코드를 작성해줘."
+```
+
+## 다음에 읽으면 좋은 글
+
+- 헤드리스 모드의 상세 옵션은 [Headless Automation](/gemini-cli/headless-automation)
+- 서브 에이전트의 고급 활용은 [Multi-Agent Orchestration](/gemini-cli/gemini-multi-agent-orchestration)

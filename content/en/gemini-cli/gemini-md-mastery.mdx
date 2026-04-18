@@ -1,0 +1,88 @@
+---
+title: "GEMINI.md Mastery — Designing Hierarchical Context"
+description: "How to strategically design hierarchical GEMINI.md files to maximize consistency and precision across your projects."
+difficulty: intermediate
+tags: ["gemini-md", "context", "hierarchy", "jit", "project-memory"]
+connections:
+  - slug: "getting-started"
+    tool: "gemini-cli"
+    type: "prerequisite"
+  - slug: "claude-md-mastery"
+    tool: "claude-code"
+    type: "compare"
+  - slug: "gemini-task-decomposition"
+    tool: "gemini-cli"
+    type: "enhances"
+featured: true
+order: 7
+date: "2026-04-18"
+---
+
+> **Official References**: [GEMINI.md Overview](https://geminicli.com/docs/cli/gemini-md/) · [Project Settings](https://geminicli.com/docs/cli/settings/)
+
+## GEMINI.md is Not Just a Prompt
+
+Many users treat `GEMINI.md` as simply a "prompt file for the AI." However, in Gemini CLI, this file serves as the core node of a **hierarchical memory system**. Gemini traverses up from your current execution directory and combines all discovered `GEMINI.md` files to define the "identity" of the current task.
+
+## 1. The Hierarchy Strategy
+
+For efficient project management, separate your `GEMINI.md` files into three distinct levels.
+
+### Level 1: Global Level (`~/.gemini/GEMINI.md`)
+Define your personal coding style or security principles that apply to all projects.
+- Example: "API keys must never be exposed," "Never suggest code without accompanying tests."
+
+### Level 2: Project Level (`/your-project/GEMINI.md`)
+Define the tech stack, architectural patterns, and tool-use rules for a specific project.
+- Example: "Use Next.js 16 App Router," "Error handling must always use `src/lib/errors.ts`," "Use Prisma MCP for DB access."
+
+### Level 3: Directory/Module Level (`/your-project/src/components/GEMINI.md`)
+Define fine-grained rules (JIT context) specific to a module or domain.
+- Example: "UI components must always use Tailwind v4," "Wrap all components in `memo`."
+
+## 2. Leveraging JIT (Just-In-Time) Context
+
+The power of Gemini CLI lies in its ability to **immediately (JIT)** read the `GEMINI.md` of a folder as soon as you enter it. This prevents attention drift by supplying only the information relevant to the current scope.
+
+**Structure Example:**
+```text
+project/
+├── GEMINI.md (Global Rules: Next.js, TS)
+├── content/
+│   └── GEMINI.md (Content Rules: MDX structure, Locale Parity)
+└── src/
+    └── components/
+        └── GEMINI.md (UI Rules: Atomic Design, Style Guide)
+```
+
+## 3. Five Key Elements for Your GEMINI.md
+
+For successful automation, ensure your file includes these sections:
+
+1.  **Project Context**: A summary of the project's purpose and business logic.
+2.  **Tech Stack**: Framework versions and core library lists.
+3.  **Coding Standards**: Naming conventions, file structure, and error handling patterns.
+4.  **Tooling Rules**: Specific instructions on when to use certain MCPs or Sub-agents.
+5.  **Verification**: Criteria for determining task completion (e.g., successful build, passing tests).
+
+## 4. GEMINI.md vs. /memory
+
+- **GEMINI.md**: Explicit, static rules. Guidelines that should be shared by the entire team (Committed to Git).
+- **`/memory`**: Dynamic, personal knowledge. Specific file locations learned during a session or personal preferences (Stored locally).
+
+**Pro Tip**: If something learned in `/memory` during a session proves useful for the whole team, move it into the root `GEMINI.md`.
+
+## 5. Bad vs. Good Examples
+
+### Bad Example (Vague)
+> "Write clean code."
+> "Add lots of tests."
+
+### Good Example (Specific/Structured)
+> "All functions must include JSDoc; if complexity exceeds 10, split into a separate function."
+> "When modifying business logic, write at least 3 tests in `tests/unit` including edge cases."
+
+## Next to Read
+
+- Techniques for breaking down complex tasks: [Gemini Task Decomposition](/gemini-cli/gemini-task-decomposition)
+- How to coordinate multiple specialists: [Multi-Agent Orchestration](/gemini-cli/gemini-multi-agent-orchestration)

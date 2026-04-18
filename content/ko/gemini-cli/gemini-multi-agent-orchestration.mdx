@@ -1,0 +1,85 @@
+---
+title: "Multi-Agent Orchestration — 서브 에이전트와 스킬 조합"
+description: "Gemini CLI의 서브 에이전트 시스템과 커스텀 스킬을 결합하여 복잡한 조사-구현-검토 파이프라인을 자동화하는 고급 워크플로"
+difficulty: advanced
+tags: ["서브 에이전트", "스킬", "오케스트레이션", "자동화", "팀-워크플로"]
+connections:
+  - slug: "sub-agents-and-skills"
+    tool: "gemini-cli"
+    type: "prerequisite"
+  - slug: "multi-agent-workflow"
+    tool: "claude-code"
+    type: "compare"
+  - slug: "gemini-task-decomposition"
+    tool: "gemini-cli"
+    type: "enhances"
+featured: true
+order: 8
+date: "2026-04-18"
+---
+
+> **공식 레퍼런스**: [Sub-agents](https://geminicli.com/docs/core/subagents/) · [Skills](https://geminicli.com/docs/core/skills/) · [Orchestration Patterns](https://geminicli.com/docs/cli/orchestration/)
+
+## AI 한 명이 아니라 "팀"을 부리는 법
+
+Gemini CLI의 가장 강력한 특징 중 하나는 메인 세션의 컨텍스트를 오염시키지 않으면서도, 특정 분야의 전문가(Sub-agent)에게 복잡한 작업을 위임할 수 있다는 점입니다. 특히 **Custom Skills**와 조합하면, 단순히 "파일을 고쳐줘"가 아니라 "우리 팀의 보안 기준에 맞춰서 이 모듈을 리팩터링해줘"라는 수준의 지시가 가능해집니다.
+
+## 1. 핵심 에이전트 구성 (The Team)
+
+Gemini CLI에서 기본적으로 제공하는 전문가들을 적재적소에 배치하세요.
+
+- **`codebase_investigator`**: 저장소 전체 아키텍처와 의존성을 파악하는 분석가.
+- **`generalist`**: 반복적이고 단순한(batch) 작업을 빠르게 수행하는 일꾼.
+- **`code-review`**: 보안, 성능, 가독성 측면에서 코드를 비판적으로 검토하는 리뷰어.
+
+## 2. 전문가 스킬(Skill) 활성화 전략
+
+단순히 에이전트를 부르는 것보다, **`activate_skill`**을 통해 특정 지침을 주입하는 것이 훨씬 정확합니다.
+
+```text
+사용자: "지금 수정한 코드들을 `security-review` 스킬을 활성화한 code-review 에이전트에게 검토받게 해줘."
+Gemini: (code-review 에이전트를 소환하고, 해당 에이전트에게 보안 점검 체크리스트를 주입하여 검증 진행)
+```
+
+## 3. 실무용 오케스트레이션 파이프라인 (Case Study)
+
+가장 권장되는 실무 파이프라인은 **Research -> Act -> Review** 3단계 구조입니다.
+
+### 1단계: Research (Investigator)
+"기존의 인증 로직이 어떻게 분산되어 있는지 `codebase_investigator`가 조사해서 보고하게 해."
+- **결과**: 메인 세션에는 정제된 아키텍처 지도만 남습니다.
+
+### 2단계: Act (Generalist or Main)
+"조사된 지도를 바탕으로 `generalist`가 10개 파일의 엔드포인트를 마이그레이션해."
+- **결과**: 대량의 파일 수정 로그가 메인 세션의 주의력을 뺏지 않고 백그라운드에서 처리됩니다.
+
+### 3단계: Review (Reviewer)
+"수정된 내용이 우리 팀의 `lint-style` 스킬을 준수하는지 `code-review` 에이전트가 최종 확인해."
+- **결과**: 실수를 방지하고 고품질의 결과물만 메인 세션에 보고됩니다.
+
+## 4. 커스텀 스킬 설계와 공유
+
+팀의 일관성을 위해 공통 스킬을 정의하고 `extensions`로 묶어 배포하세요.
+
+- **`performance-guard`**: 특정 라이브러리(예: lodash) 사용을 제한하고 네이티브 API 사용을 강제하는 스킬.
+- **`api-contract-checker`**: 백엔드 API 명세와 프론트엔드 타입이 일치하는지 대조하는 스킬.
+
+## 5. 컨텍스트 효율성 (Token Economy)
+
+모든 일을 메인 에이전트가 직접 하면 세션의 컨텍스트가 금방 찹니다(Token Overload). 서브 에이전트를 쓰면:
+- 각 에이전트는 독립된 컨텍스트를 가집니다.
+- 메인 에이전트에게는 **요약된 결과**만 전달됩니다.
+- 수천 개의 파일이 있는 대형 저장소에서도 세션 속도가 느려지지 않습니다.
+
+## 프로 팁: 병렬 위임 (Parallel Delegation)
+
+서로 의존성이 없는 작업(예: 로케일 파일 수정과 유닛 테스트 작성)은 두 명의 서브 에이전트에게 동시에 시키세요.
+
+```text
+"generalist-A는 번역 파일 패리티를 맞추고, generalist-B는 새로 추가된 함수들에 대한 테스트를 동시에 작성하게 해줘."
+```
+
+## 다음에 읽으면 좋은 글
+
+- CI 환경에서의 자동화는 [Gemini GitHub Actions](/gemini-cli/gemini-github-actions)
+- 안전한 코드 수정 전략은 [Gemini Task Decomposition](/gemini-cli/gemini-task-decomposition)

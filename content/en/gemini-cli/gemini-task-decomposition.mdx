@@ -1,0 +1,90 @@
+---
+title: "Gemini Task Decomposition — Mastering Complex Implementation"
+description: "How to leverage Gemini CLI's 1M token context while maintaining precision through strategic task breakdown and execution."
+difficulty: intermediate
+tags: ["task-decomposition", "plan-mode", "checklist", "verification", "workflow"]
+connections:
+  - slug: "million-token-context"
+    tool: "gemini-cli"
+    type: "prerequisite"
+  - slug: "codex-task-design"
+    tool: "gpt-codex"
+    type: "compare"
+  - slug: "gemini-mcp"
+    tool: "gemini-cli"
+    type: "enhances"
+featured: true
+order: 5
+date: "2026-04-18"
+---
+
+> **Official References**: [Gemini CLI Workflow](https://geminicli.com/docs/cli/workflow/) · [Sub-agents](https://geminicli.com/docs/core/subagents/) · [GEMINI.md Guide](https://geminicli.com/docs/cli/gemini-md/)
+
+## Context Isn't Everything
+
+Gemini CLI's 1-million-token context is excellent for architectural understanding, but **precise modification of thousands of lines of code** is a different challenge. If a task scope is too broad, models are prone to hallucination or missing subtle constraints.
+
+The secret to success is: **"Understand globally, execute locally."**
+
+## Step 1: Strategy with Plan Mode (`/plan`)
+
+Before starting any implementation, enter **read-only mode** via the `/plan` command. The goal here is not to fix code, but to perfectly define "what needs to be fixed."
+
+### Strategy Question List
+- Where is the core logic for the current implementation?
+- What dependencies are affected by this change?
+- What test cases will verify success?
+- What are the existing architectural patterns or naming conventions?
+
+## Step 2: Create and Agree on a Checklist
+
+Ask Gemini to create a step-by-step execution plan based on its investigation.
+
+```text
+User: "Based on your investigation, create an execution plan with no more than 5 steps. Include verification methods (like tests) for each step."
+```
+
+**Checklist Example:**
+1. Add new authorization logic to `src/lib/auth.ts`
+   - Verify: Run `npm test auth.test.ts`
+2. Apply middleware to API route `src/app/api/data/route.ts`
+   - Verify: Confirm 403 response for unauthorized access via curl
+3. Update state in frontend component `LoginButton.tsx`
+   - Verify: Visual check in Storybook or local dev server
+4. Add error message keys to all translation files (`messages/*.json`)
+   - Verify: Run `check-locale-parity` script
+
+## Step 3: Progressive Execution (Surgical Edits)
+
+Don't let the agent modify all files at once. Verify after each completed step.
+
+- **Use `replace`**: Encourage the agent to use `replace` with precise `old_string` and `new_string` instead of overwriting entire files.
+- **Maintain Session Health**: If the session gets too long and quality drops, save progress with `/memory add` and start a fresh session.
+
+## Step 4: Delegate "Local Tasks" to Sub-agents
+
+While the main agent holds the global context, delegate repetitive or local tasks to sub-agents.
+
+- **`generalist`**: "Update license headers in these 10 files."
+- **`code-review`**: "Review these modified files for potential security vulnerabilities."
+
+This keeps the main agent's context window clean while progressing in parallel.
+
+## Step 5: Final Verification and Memory Persistence
+
+Once finished, run the full build and tests to ensure no side effects. If successful, record repository-specific lessons for your future self.
+
+```bash
+/memory add "API error handling must always go through src/lib/errors.ts in this project."
+```
+
+## Pro Tips for Task Decomposition
+
+- **Start with Failure**: When fixing bugs, ask Gemini to write a "failing test case" first. Seeing the test fail before applying the fix is the safest way to develop.
+- **No Guessing**: If Gemini starts guessing file paths or library versions, stop immediately and ask it to verify facts using `grep_search` or `web_fetch`.
+- **Step-by-Step Prompting**: Instructing "Let's start with the first step" instead of "Do everything at once" can improve accuracy by over 30%.
+
+## Next to Read
+
+- Efficient parallel environments: [Gemini Git Worktrees](/gemini-cli/gemini-worktrees)
+- Automated verification loops: [Headless Automation](/gemini-cli/headless-automation)

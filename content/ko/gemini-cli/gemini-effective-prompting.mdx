@@ -1,0 +1,81 @@
+---
+title: "Gemini Effective Prompting — 100만 토큰을 지배하는 프롬프팅"
+description: "짧은 채팅형 프롬프트를 넘어, 대규모 코드베이스와 100만 토큰 컨텍스트를 다루는 Gemini CLI 전용 프롬프트 엔지니어링"
+difficulty: advanced
+tags: ["프롬프트", "엔지니어링", "컨텍스트-관리", "xml-태그", "효율성"]
+connections:
+  - slug: "million-token-context"
+    tool: "gemini-cli"
+    type: "prerequisite"
+  - slug: "effective-prompting"
+    tool: "claude-code"
+    type: "compare"
+  - slug: "gemini-task-decomposition"
+    tool: "gemini-cli"
+    type: "enhances"
+featured: true
+order: 10
+date: "2026-04-18"
+---
+
+> **핵심 원칙**: 100만 토큰의 여유가 있다고 해서 모델의 주의력(Attention)이 무한한 것은 아닙니다. 프롬프트의 밀도와 구조가 결과의 품질을 결정합니다.
+
+## 채팅형 프롬프트와 에이전트 프롬프트의 차이
+
+웹 브라우저에서 ChatGPT나 Claude와 대화할 때는 "이거 만들어줘"식의 짧고 추상적인 프롬프트가 통할 수 있습니다. 하지만 터미널에서 내 파일 시스템을 직접 수정하는 **에이전트**에게는 완전히 다른 방식이 필요합니다.
+
+- **나쁜 예**: "로그인 페이지에 구글 로그인 버튼 추가해."
+- **좋은 예**: "현재 `/src/components/auth`의 구조를 파악하고, 기존 버튼과 동일한 스타일 가이드(Tailwind)를 적용하여 구글 로그인 버튼을 추가해. API 엔드포인트는 기존의 `api/auth/` 패턴을 따를 것."
+
+## 1. XML 태그를 활용한 구조적 지시 (Structured Prompting)
+
+Gemini CLI 모델은 XML 태그로 감싸진 정보 덩어리를 훨씬 잘 파악합니다. 긴 지시를 내릴 때는 태그를 적극 활용하세요.
+
+```xml
+<context>
+우리는 지금 Pages Router에서 App Router로 마이그레이션 중입니다.
+</context>
+
+<goal>
+`/pages/dashboard.tsx`를 `/app/dashboard/page.tsx`로 변환합니다.
+</goal>
+
+<constraints>
+- 클라이언트 컴포넌트(`"use client"`)는 최소화할 것.
+- 데이터 패칭은 서버 컴포넌트에서 수행할 것.
+- 기존의 `getServerSideProps`는 삭제할 것.
+</constraints>
+
+이 지침을 바탕으로 변환 계획을 먼저 `/plan` 모드로 세워주세요.
+```
+
+## 2. '생각의 과정'을 강제하기 (Chain of Thought)
+
+에이전트가 코드를 바로 수정하기 전에, 반드시 분석과 계획 단계를 거치도록 지시하면 환각(Hallucination)이 획기적으로 줄어듭니다.
+
+**프롬프트 예시:**
+> "다음 작업을 수행하기 전에, 반드시 1) 관련된 기존 파일 3곳을 먼저 읽고, 2) 수정해야 할 부분의 목록을 나에게 제시한 후, 3) 내 승인을 받고 실행해."
+
+## 3. 네거티브 프롬프팅 (Negative Prompting)
+
+무엇을 '할지'만큼이나 무엇을 **'하지 말아야 할지'**를 명확히 하는 것이 중요합니다. 특히 대형 리팩터링에서는 AI가 불필요한 '청소(cleanup)'를 하느라 원래 목적을 벗어나는 경우가 많습니다.
+
+> "요청한 버그 수정에만 집중해. 관련된 파일에서 린트(Lint) 에러나 오래된 주석을 발견하더라도, 이번 작업 범위가 아니면 **절대 수정하지 마.**"
+
+## 4. 컨텍스트 오염 방지 (Context Dilution Prevention)
+
+100만 토큰을 채울 수 있다고 다 채우면 안 됩니다. 무관한 파일이 섞이면 모델이 엉뚱한 변수명이나 패턴을 차용할 수 있습니다.
+
+- **명시적 파일 포함**: `gemini "@src/components/button.tsx @src/styles/colors.css 색상 변수 적용해줘"`
+- **제외 패턴 사용**: `grep_search` 도구를 사용하게 할 때, "검색 시 `node_modules`나 `dist` 폴더는 반드시 제외해"라고 명시하세요. (`GEMINI.md`에 전역 규칙으로 넣는 것이 가장 좋습니다.)
+
+## 5. 역할 부여 (Persona Adoption)
+
+역할을 부여하면 모델의 응답 톤과 생성하는 코드의 성격이 날카로워집니다.
+
+> "당신은 10년 차 수석 보안 엔지니어입니다. 지금부터 제가 제시하는 코드에서 발생할 수 있는 SQL 인젝션, XSS, SSRF 취약점을 집요하게 찾아내고 방어 코드를 작성하세요."
+
+## 다음에 읽으면 좋은 글
+
+- 이런 프롬프트들을 팀 전체에 강제하려면 [GEMINI.md Mastery](/gemini-cli/gemini-md-mastery)
+- 로컬 훅에 짧은 프롬프트를 적용하려면 [Gemini Hooks Automation](/gemini-cli/gemini-hooks-automation)

@@ -1,0 +1,58 @@
+---
+title: "ADR Automation — Architecture Decision Records"
+description: "Leverage the 1M token context to analyze your codebase and automatically generate and maintain up-to-date Architecture Decision Records (ADRs)."
+difficulty: advanced
+tags: ["adr", "documentation", "architecture", "automation", "context"]
+connections:
+  - slug: "million-token-context"
+    tool: "gemini-cli"
+    type: "prerequisite"
+  - slug: "gemini-multi-agent-orchestration"
+    tool: "gemini-cli"
+    type: "enhances"
+featured: false
+order: 16
+date: "2026-04-18"
+---
+
+> "Why did the previous developer choose this library?" Code explains 'how', but rarely explains 'why'. ADRs fill that void.
+
+## 1. What is an ADR?
+
+An Architecture Decision Record (ADR) is a short document capturing a significant architectural decision (e.g., choosing Zustand over Redux for global state), its context, alternatives, and consequences.
+The problem is that busy developers constantly **procrastinate documentation**. Eventually, docs become legacy, and context evaporates.
+
+## 2. How Gemini CLI Writes ADRs
+
+Armed with 1 million tokens, Gemini CLI can ingest thousands of commit logs, PR discussions (when linked via GitHub MCP), and actual source code dependency changes all at once. Based on this, it can **reverse-engineer the decision-making process and generate documentation.**
+
+```bash
+gemini "@src/store @package.json Analyze the reasons and process of our project migrating from Redux to Zustand, including the performance and code volume benefits gained. Write this as docs/adr/0005-migrate-to-zustand.md following the MADR (Markdown ADR) format."
+```
+
+## 3. Periodic Architecture Audits
+
+Regularly execute the `codebase_investigator` sub-agent to find drift between your documentation (ADRs) and the actual code implementation.
+
+```xml
+<instruction>
+Read all architecture decision documents in the `docs/adr/` folder.
+Next, analyze the actual implementation code in the `src/` folder.
+If there are any instances where rules specified in the docs (e.g., "All API calls must pass through fetch-wrapper") are being violated in the actual code, find them and report back.
+</instruction>
+```
+
+## 4. The Virtuous Cycle of GEMINI.md and ADRs
+
+ADRs are documents meant for humans. However, injecting summaries of these ADRs into `GEMINI.md` creates the **most powerful guardrails to prevent the AI agent from repeating past mistakes** when writing code.
+
+1. **Agent**: Analyzes code and generates detailed ADR documentation (`docs/adr/0006-use-tailwind.md`).
+2. **Human**: Reviews and approves the generated ADR.
+3. **Agent**: Extracts the core lesson from the freshly generated ADR and automatically appends it as a single line in the `## Architecture Rules` section of `GEMINI.md` (`- Always use Tailwind for styling; external CSS files are not permitted. (Ref: ADR-0006)`).
+
+Once this loop is established, as your code evolves, the project's knowledge (Memory) autonomously expands and evolves with it.
+
+## Next to Read
+
+- Scheduling this automation to run monthly in CI: [Gemini GitHub Actions](/gemini-cli/gemini-github-actions)
+- More ways to handle massive context: [Gemini Effective Prompting](/gemini-cli/gemini-effective-prompting)

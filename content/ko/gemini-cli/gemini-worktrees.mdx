@@ -1,0 +1,88 @@
+---
+title: "Gemini Git Worktrees — 병렬 작업 최적화"
+description: "Git Worktrees를 활용하여 Gemini CLI와 함께 여러 브랜치에서 안전하고 독립적인 개발 환경을 구축하는 방법"
+difficulty: advanced
+tags: ["git", "worktrees", "병렬-개발", "워크플로", "브랜치-관리"]
+connections:
+  - slug: "gemini-task-decomposition"
+    tool: "gemini-cli"
+    type: "prerequisite"
+  - slug: "codex-worktrees"
+    tool: "gpt-codex"
+    type: "compare"
+  - slug: "headless-automation"
+    tool: "gemini-cli"
+    type: "enhances"
+featured: false
+order: 6
+date: "2026-04-18"
+---
+
+> **공식 레퍼런스**: [Git Worktree Documentation](https://git-scm.com/docs/git-worktree) · [Gemini CLI Trusted Folders](https://geminicli.com/docs/cli/trusted-folders/)
+
+## 왜 Gemini와 Git Worktrees를 함께 써야 할까?
+
+Gemini CLI는 로컬 파일을 직접 수정하고 명령을 실행합니다. 이 과정에서 한 브랜치에서 긴 작업을 하다가 다른 급한 버그를 고쳐야 하는 상황이 생기면, `git stash`나 `checkout` 과정에서 미처 완료되지 않은 AI의 작업물이 엉키거나 컨텍스트가 깨질 수 있습니다.
+
+**Git Worktrees**를 사용하면 각 작업마다 독립된 디렉토리를 생성하여 다음과 같은 이점을 얻을 수 있습니다.
+
+- **안전한 독립성**: AI가 코드를 수정하는 동안 나는 다른 디렉토리에서 내 일을 할 수 있습니다.
+- **컨텍스트 격리**: 각 워크트리마다 별도의 `GEMINI.md`나 로컬 메모리를 유지할 수 있습니다.
+- **즉각적인 병렬 테스트**: 여러 브랜치 버전의 테스트를 서로 다른 터미널에서 동시에 실행할 수 있습니다.
+
+## 실전 워크트리 구성 워크플로
+
+### 1. 새로운 워크트리 생성
+
+현재 작업 중인 `main` 브랜치를 그대로 두고, 새로운 기능을 위한 독립된 폴더를 만듭니다.
+
+```bash
+# ~/workspace/project-main에서 실행
+git worktree add ../project-feature-x feature-x-branch
+```
+
+이제 `../project-feature-x` 디렉토리로 이동하면, `main`과는 완전히 독립된 소스 코드와 `node_modules` 환경을 갖게 됩니다.
+
+### 2. Gemini CLI 세션 시작
+
+해당 워크트리에서 Gemini CLI를 실행합니다. 이때 Gemini는 해당 폴더 내의 파일들만 컨텍스트로 읽으므로 매우 안전합니다.
+
+```bash
+cd ../project-feature-x
+gemini
+```
+
+### 3. 작업 수행 및 검증
+
+Gemini에게 특정 기능을 구현하게 합니다. 작업이 진행되는 동안, 당신은 원래의 `main` 폴더에서 다른 작업을 계속하거나 리뷰를 진행할 수 있습니다.
+
+### 4. 작업 완료 및 정리
+
+작업이 끝나면 변경 사항을 커밋하고 워크트리를 제거합니다.
+
+```bash
+# 작업 완료 후
+git add .
+git commit -m "feat: add feature X using Gemini CLI"
+git push origin feature-x-branch
+
+# 워크트리 삭제
+cd ../project-main
+git worktree remove ../project-feature-x
+```
+
+## Gemini + Worktree 조합 시의 팁
+
+- **`GEMINI.md` 활용**: 특정 워크트리 디렉토리에만 임시로 `GEMINI.md`를 만들어 해당 작업의 목표와 제약 사항을 명시하세요. 이 파일은 `main` 브랜치에 영향을 주지 않고 AI를 가이드하는 좋은 수단이 됩니다.
+- **Trusted Folders 설정**: 새로 만든 워크트리 디렉토리가 Gemini CLI에서 신뢰할 수 있는 폴더로 등록되어 있는지 확인하세요. (`/trust` 명령 활용)
+- **공유 모듈 관리**: `node_modules`가 너무 크다면, 워크트리 간에 패키지를 공유할 수 있는 패키지 매니저(pnpm, yarn berry 등)를 사용하는 것이 효율적입니다.
+
+## 주의사항
+
+1. **DB와 외부 상태**: 소스 코드는 워크트리로 격리되지만, 로컬 데이터베이스나 공유 환경 변수는 격리되지 않을 수 있습니다. AI가 DB 스키마를 변경할 때는 주의가 필요합니다.
+2. **Untracked Files**: 워크트리를 삭제할 때 커밋되지 않은 파일들이 사라지지 않도록 주의하세요.
+
+## 다음에 읽으면 좋은 글
+
+- AI의 실수를 방지하는 안전장치는 [Trusted Folders, Sandboxing, 그리고 Restore](/gemini-cli/trusted-folders-sandboxing)
+- 헤드리스 모드에서의 자동화는 [Headless Automation](/gemini-cli/headless-automation)

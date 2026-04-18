@@ -1,0 +1,93 @@
+---
+title: "Gemini GitHub Actions — CI Automation and Review"
+description: "Integrate Gemini CLI into GitHub Actions to build automated code reviews, document parity checks, and AI-powered static analysis workflows."
+difficulty: advanced
+tags: ["github-actions", "ci-cd", "automation", "code-review", "headless"]
+connections:
+  - slug: "headless-automation"
+    tool: "gemini-cli"
+    type: "prerequisite"
+  - slug: "github-actions-workflows"
+    tool: "claude-code"
+    type: "compare"
+  - slug: "gemini-multi-agent-orchestration"
+    tool: "gemini-cli"
+    type: "enhances"
+featured: true
+order: 9
+date: "2026-04-18"
+---
+
+> **Official References**: [Headless Mode](https://geminicli.com/docs/cli/headless/) · [Continuous Integration](https://geminicli.com/docs/cli/ci/)
+
+## Beyond the Terminal: A Teammate in CI/CD
+
+The true value of Gemini CLI is realized when it is woven into the **team's workflow**. By combining it with GitHub Actions, you can build systems where AI provides code reviews for every Pull Request (PR) or automatically checks the consistency of complex locale files.
+
+## 1. Basic Setup and Authentication
+
+Since interactive login is impossible in a CI environment, use the **API Key** method for authentication.
+
+```yaml
+# .github/workflows/gemini-review.yml
+jobs:
+  gemini-review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Gemini CLI
+        run: npm install -g @google/gemini-cli
+      - name: Run Review
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          # Run in Headless mode for automated review
+          gemini --headless "Review the security and performance of changed files. Write the output in PR comment format."
+```
+
+## 2. Practical Use Cases
+
+### A. Locale Parity Checks
+Ensures that keys between translation files (e.g., `ko.json`, `en.json`) match and identifies missing translations.
+```bash
+gemini --headless "Compare all JSON files in the messages/ folder and report any missing keys."
+```
+
+### B. AI-Powered Semantic Code Review
+Points out logical errors or readability issues in business logic that simple linters might miss.
+```bash
+gemini --headless "Verify if the modified files in this PR follow the architectural rules defined in our GEMINI.md."
+```
+
+### C. Automatic Documentation Proposals
+Automatically suggests PRs to update READMEs or API documentation based on code changes.
+
+## 3. Synergy Between GEMINI.md and CI
+
+Gemini CLI in the CI environment reads the `GEMINI.md` at the project root just like it does locally. This ensures a consistent experience between local and CI environments.
+
+**CI-Specific Instruction Example:**
+> "When running in CI, keep responses as concise as possible; only include specific suggestions when an error is discovered."
+
+## 4. Security and Cost Optimization
+
+1.  **Protect Secrets**: Always store the `GEMINI_API_KEY` in GitHub Secrets and ensure it is not exposed in logs.
+2.  **Headless Mode**: Shorten CI execution time by skipping the interactive interface.
+3.  **Scoped Context**: Limit the range of files the agent reads (e.g., `gemini "@src @messages ..."`) to optimize token usage.
+
+## 5. Advanced: Combining Static Analysis with AI
+
+Static tools (ESLint, SonarQube) are more powerful when combined with Gemini CLI. Pipe the linter's output into Gemini and have it suggest exactly how to fix the errors.
+
+```bash
+npm run lint > lint-error.txt
+gemini --headless "@lint-error.txt Suggest the safest code to fix these errors."
+```
+
+## Next to Read
+
+- Detailed options for headless mode: [Headless Automation](/gemini-cli/headless-automation)
+- Advanced sub-agent orchestration: [Multi-Agent Orchestration](/gemini-cli/gemini-multi-agent-orchestration)

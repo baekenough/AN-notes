@@ -1,0 +1,75 @@
+---
+title: "Mid-size Refactor Playbook — Safe Migrations"
+description: "A step-by-step guide to safely performing 'mid-size refactors' involving 10 to 50 files—the most challenging and risky scale—using Gemini CLI."
+difficulty: advanced
+tags: ["refactoring", "migration", "task-decomposition", "safety", "plan-mode"]
+connections:
+  - slug: "gemini-task-decomposition"
+    tool: "gemini-cli"
+    type: "prerequisite"
+  - slug: "claude-mid-size-refactor-playbook"
+    tool: "claude-code"
+    type: "compare"
+featured: true
+order: 12
+date: "2026-04-18"
+---
+
+> Editing a single file is easy, and rewriting a whole system is nearly impossible. **What developers face most often in the field are architectural migrations at the scale of 10-50 files.**
+
+## 1. Why are Mid-size Refactors Dangerous for AI?
+
+Mid-size tasks (e.g., switching from Redux to Zustand, or Tailwind to CSS-in-JS) are not just about replacing all files in a folder. There are **hidden dependencies** between files, and a single wrong `replace` can trigger a domino effect of dozens of errors. Even with 1 million tokens, mass-replacing dozens of places simultaneously will result in a 100% failure rate.
+
+## Phase 1: Investigation and Defining Boundaries
+
+Never let the AI edit code immediately. Enter `/plan` mode or wake up the **`codebase_investigator`** sub-agent.
+
+```bash
+gemini "@src/store @src/components Find all components that call Redux actions. Create a full list of files to be modified in a tree structure."
+```
+
+**Verification**: A human (you) must verify if the list of files suggested by the model truly falls within the scope of modification, and draw a boundary to ensure shared libraries that shouldn't be touched aren't included.
+
+## Phase 2: The Seed Migration
+
+Instruct the AI to migrate 1-2 of the structurally simplest "Seed" files first. This phase is about establishing the **standard for the new pattern**.
+
+> "Start by converting the simplest one on the list, `src/components/Counter.tsx`, to Zustand. After conversion, run `npm run test` to verify it passes."
+
+If the seed file is successfully converted, save that result via `/memory add`.
+
+> `/memory add "When converting from Redux to Zustand, the store call pattern must always follow the format: const state = useStore(state => state.value)."`
+
+## Phase 3: Batching in Worktrees
+
+Once the standard pattern is established, divide the remaining 40 files by group (domain) and process them. Using [Git Worktrees](/gemini-cli/gemini-worktrees) here is highly safe.
+
+- **Batch A**: Convert files under `src/components/user/`
+- **Batch B**: Convert files under `src/components/dashboard/`
+
+After each batch finishes, a human makes a commit (`git commit -m "refactor: migrate user components"`). If the AI hallucinates and messes up the files in Batch B, you can safely revert back to the previous batch (Batch A) using `git restore .`.
+
+## Phase 4: Compiler-Driven Development
+
+When the batch work is done, don't try to find hidden errors through prompting; leave it to the **Linter and Type Checker (TypeScript)**.
+
+```bash
+# Output lint errors to a file
+npm run type-check > tsc_errors.log
+
+# Have the AI read the error file and fix itself
+gemini --headless "@tsc_errors.log Sequentially fix the type errors listed here. Do not guess; only modify exactly as the error message indicates."
+```
+
+## Phase 5: Cleanup
+
+The end of any refactor is always erasing the 'remnants of the past'. Clean up previous libraries and unused variables whose dependencies have been removed.
+
+> "Find and delete any unused redux-related packages in `package.json`, then run `npm install` again."
+
+## TL;DR
+
+1. Never let it modify more than 10 files at once.
+2. Create 1 successful "seed pattern" first and lock it in `memory` or `GEMINI.md`.
+3. Feed the error logs poured out by the compiler/type checker to the AI as its next context.

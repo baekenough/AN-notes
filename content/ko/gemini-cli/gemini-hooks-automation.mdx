@@ -1,0 +1,96 @@
+---
+title: "Gemini Hooks Automation — 로컬 자동화의 방패"
+description: "Git pre-commit 훅과 결합하여, 커밋 전에 Gemini CLI가 자동으로 코드를 검사하고 수정하게 만드는 워크플로 구축"
+difficulty: advanced
+tags: ["git-hooks", "pre-commit", "자동화", "headless", "가드레일"]
+connections:
+  - slug: "headless-automation"
+    tool: "gemini-cli"
+    type: "prerequisite"
+  - slug: "hooks-automation"
+    tool: "claude-code"
+    type: "compare"
+  - slug: "gemini-github-actions"
+    tool: "gemini-cli"
+    type: "enhances"
+featured: true
+order: 11
+date: "2026-04-18"
+---
+
+> **로컬에서 막지 못하면 CI에서도 막을 수 없습니다.** Gemini CLI를 로컬 Git 훅에 연동하여 나쁜 코드가 서버로 올라가는 것을 원천 차단하세요.
+
+## 1. 훅(Hook)이란 무엇인가요?
+
+Git 훅은 커밋이나 푸시 같은 특정 Git 이벤트가 발생할 때 자동으로 실행되는 스크립트입니다. 여기에 Gemini CLI의 **Headless 모드**를 연결하면, AI가 당신의 "페어 프로그래머"처럼 커밋 직전에 코드를 리뷰해 줍니다.
+
+## 2. Pre-commit 훅 설정하기
+
+가장 유용한 것은 `pre-commit` 훅입니다. 사용자가 `git commit`을 입력하는 순간 실행됩니다.
+
+프로젝트의 `.git/hooks/pre-commit` 파일을 만들고(실행 권한 부여 필수: `chmod +x`), 다음과 같이 스크립트를 작성합니다.
+
+```bash
+#!/bin/bash
+
+# 스테이징된 파일 목록 가져오기
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM)
+
+if [ -z "$STAGED_FILES" ]; then
+  exit 0
+fi
+
+echo "🤖 Gemini CLI가 스테이징된 파일을 검사 중입니다..."
+
+# Gemini에게 검사 요청 (Headless 모드)
+# API 키가 환경변수로 설정되어 있어야 합니다 (GEMINI_API_KEY)
+REVIEW_OUTPUT=$(gemini --headless "@$STAGED_FILES 이 코드에 보안 취약점, API 키 노출, 또는 console.log 같은 디버깅 코드가 있는지 확인해. 문제가 있으면 'FAIL', 없으면 'PASS'라고만 대답해.")
+
+if [[ "$REVIEW_OUTPUT" == *"FAIL"* ]]; then
+  echo "❌ Gemini가 코드에서 문제를 발견했습니다. 커밋이 취소됩니다."
+  echo "상세 리뷰 내용:"
+  
+  # 상세 내용을 다시 물어보거나(추가 프롬프트), 
+  # 터미널에서 대화형 모드로 진입하도록 유도할 수 있습니다.
+  gemini --headless "@$STAGED_FILES 아까 발견한 보안 취약점이나 디버깅 코드를 정확히 지적해줘."
+  exit 1
+else
+  echo "✅ Gemini 검사 통과. 커밋을 진행합니다."
+  exit 0
+fi
+```
+
+## 3. 실무 훅 패턴: 자동 커밋 메시지 생성
+
+검사뿐만 아니라 잡무를 줄이는 데도 쓸 수 있습니다. `prepare-commit-msg` 훅을 사용해 스테이징된 변경 사항을 요약한 커밋 메시지를 자동 생성하세요.
+
+```bash
+#!/bin/bash
+# .git/hooks/prepare-commit-msg
+
+COMMIT_MSG_FILE=$1
+
+# 변경 사항 요약
+DIFF=$(git diff --cached)
+
+echo "🤖 Gemini CLI가 커밋 메시지를 제안 중입니다..."
+
+# Conventional Commits 형식을 강제
+SUGGESTED_MSG=$(gemini --headless "다음 변경사항을 읽고 Conventional Commits 형식(feat/fix/docs/refactor 등)으로 커밋 메시지를 1줄로 작성해줘. 변경사항: $DIFF")
+
+# 제안된 메시지를 기존 파일의 맨 위에 삽입
+echo "$SUGGESTED_MSG" > tmp_msg
+cat $COMMIT_MSG_FILE >> tmp_msg
+mv tmp_msg $COMMIT_MSG_FILE
+```
+
+## 4. 훅 적용 시 주의사항
+
+1. **실행 속도 보장**: 로컬 훅이 너무 오래 걸리면(예: 30초 이상) 개발자가 피로감을 느낍니다. 훅에 들어가는 프롬프트는 최대한 좁고 구체적으로(예: "콘솔 로그만 찾아") 작성하세요.
+2. **토큰 비용**: 커밋할 때마다 API 호출이 발생합니다. 팀 내 토큰 사용량 정책을 고려하세요. 토큰 캐싱을 적극 활용할 수 있는 구조라면 더욱 좋습니다.
+3. **Bypass 방법 공유**: 때로는 AI의 오판을 무시하고 강제로 커밋해야 할 때가 있습니다. 팀원들에게 `--no-verify` 플래그(`git commit --no-verify`)의 존재를 알려주세요.
+
+## 다음에 읽으면 좋은 글
+
+- CI/CD 환경으로 확장하기: [Gemini GitHub Actions](/gemini-cli/gemini-github-actions)
+- 이 훅을 조직 전체에 배포하기: [Gemini Extensions & MCP](/gemini-cli/gemini-extensions)

@@ -1,0 +1,72 @@
+---
+title: "Human-Agent Handoffs — The Collaborative Relay"
+description: "Strategies for saving state and executing smooth handoffs between AI agents and human developers without losing context."
+difficulty: intermediate
+tags: ["handoff", "collaboration", "state-management", "memory"]
+connections:
+  - slug: "gemini-md-mastery"
+    tool: "gemini-cli"
+    type: "prerequisite"
+  - slug: "codex-handoffs"
+    tool: "gpt-codex"
+    type: "compare"
+featured: false
+order: 13
+date: "2026-04-18"
+---
+
+> AI agents get exhausted (Token Limits), and humans get exhausted (End of workday). A successful project depends on how you eliminate the question, "Where were we again?"
+
+## What is a Handoff?
+
+A Handoff is the process of passing the initiative of a specific task from an AI agent to a human developer, or vice versa. 
+When an agent writes half the code and gets stuck on an error, the human steps in, resolves the logical block, and hands the implementation back to the agent. This is a typical Handoff flow.
+
+## 1. Agent -> Human (The AI's Legacy Before Clocking Out)
+
+What should you do when you've assigned the agent a difficult investigation or refactoring, but it's getting too late, or the agent hits its context limit?
+
+Before terminating the AI session (`ctrl+c`), make the agent itself document its current state.
+
+```bash
+User: "Let's stop here for today. So that I (or you in a newly opened session) can pick up right where we left off tomorrow morning, 
+record the progress so far, 2 unresolved issues, and 1 thing to do first thing tomorrow 
+in a `HANDOFF.md` file in the project root."
+```
+
+By doing this, the agent's "short-term memory" is safely preserved in the file system even if you close the terminal window.
+
+## 2. Human -> Agent (Waking the AI the Next Morning)
+
+The next morning, the human developer arrives and opens a new Gemini session. Yesterday's agent is gone from memory. But the legacy remains.
+
+```bash
+gemini "@HANDOFF.md Read this file to grasp yesterday's progress. 
+Tell me your plan to resume work starting with 'unresolved issue number 1' listed here."
+```
+
+With this simple flow, the agent instantly restores last night's context.
+
+## 3. Micro-Handoff: Resolving Errors
+
+The most frequent handoffs occur when the agent cannot resolve a specific error (e.g., config file permission issues, external API service outages) on its own.
+
+In these cases, the AI might get stuck in an infinite loop, repeatedly executing `run_shell_command`. Immediately interrupt (`ctrl+c`) and take back control.
+
+1. **Human Intervention**: The human developer opens a browser to modify permissions, or changes settings in the AWS console.
+2. **Explicit Feedback**: "I went into the AWS console and fixed the IAM permissions. You should be able to access S3 now. Try building again."
+3. **Agent Resumes**: The agent accepts this feedback, stops its previous futile attempts, and moves forward to the next step.
+
+## 4. Using Git as Memory (Commit Handoff)
+
+A memory even more powerful than `HANDOFF.md` is the **Git Commit Message**.
+Have the agent commit the state every time a specific unit of work is completed.
+
+> "Leave a commit every time you complete a task, but be sure to write a hint for the next step in the body (e.g., `Next step: UI styling needed`)."
+
+A new agent can perfectly understand the previous agent's intentions just by reading `git log -n 1`.
+
+## Next to Read
+
+- Doing all this safely across multiple branches: [Gemini Git Worktrees](/gemini-cli/gemini-worktrees)
+- Mastering the global context: [GEMINI.md Mastery](/gemini-cli/gemini-md-mastery)
